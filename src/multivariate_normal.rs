@@ -38,7 +38,7 @@ impl MultivariateDistribution for MultivariateNormal {
             z[i][0] = thread_rng.sample(StandardNormal);
         }
 
-        let (u, sigma, _) = self.covariance.singular_value_decomposition()?;
+        let (u, sigma, _) = self.covariance.svd()?;
 
         for i in 0..sigma.get_rows() {
             sigma[i][i] = sigma[i][i].sqrt();
