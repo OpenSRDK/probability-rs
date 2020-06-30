@@ -12,9 +12,9 @@ impl Normal {
         Self { mean, variance }
     }
 
-    pub fn from(mean: f64, variance: f64) -> Result<Self, ()> {
+    pub fn from(mean: f64, variance: f64) -> Result<Self, String> {
         if variance <= 0.0 {
-            Err(())
+            Err("variance must be greater than zero".to_owned())
         } else {
             Ok(Self::new(mean, variance))
         }

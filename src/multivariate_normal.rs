@@ -16,7 +16,7 @@ impl MultivariateNormal {
 
     pub fn from(mean: Matrix, covariance: Matrix<PositiveSemiDefinite>) -> Result<Self, String> {
         if mean.get_columns() != 1 || mean.get_rows() != covariance.get_rows() {
-            Err("dimension mismatch")
+            Err("dimension mismatch".to_owned())
         } else {
             Ok(Self::new(mean, covariance))
         }
