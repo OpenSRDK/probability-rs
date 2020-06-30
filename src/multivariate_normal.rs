@@ -14,9 +14,9 @@ impl MultivariateNormal {
         Self { mean, covariance }
     }
 
-    pub fn from(mean: Matrix, covariance: Matrix<PositiveSemiDefinite>) -> Result<Self, ()> {
+    pub fn from(mean: Matrix, covariance: Matrix<PositiveSemiDefinite>) -> Result<Self, String> {
         if mean.get_columns() != 1 || mean.get_rows() != covariance.get_rows() {
-            Err(())
+            Err("dimension mismatch")
         } else {
             Ok(Self::new(mean, covariance))
         }
@@ -32,7 +32,7 @@ impl MultivariateNormal {
 }
 
 impl MultivariateDistribution for MultivariateNormal {
-    fn sample(&self, thread_rng: &mut ThreadRng) -> Result<Matrix, ()> {
+    fn sample(&self, thread_rng: &mut ThreadRng) -> Result<Matrix, String> {
         let mut z = Matrix::<Standard, f64>::zeros(self.mean.get_rows(), 1);
         for i in 0..self.mean.get_rows() {
             z[i][0] = thread_rng.sample(StandardNormal);
@@ -46,6 +46,6 @@ impl MultivariateDistribution for MultivariateNormal {
 
         let y = self.mean.clone() + (u * sigma) * z;
 
-        y
+        Ok(y)
     }
 }

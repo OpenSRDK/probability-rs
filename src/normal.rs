@@ -30,8 +30,13 @@ impl Normal {
 }
 
 impl Distribution for Normal {
-    fn sample(&self, thread_rng: &mut ThreadRng) -> Result<f64, ()> {
-        let normal = RandNormal::new(self.mean, self.variance.sqrt())?;
+    fn sample(&self, thread_rng: &mut ThreadRng) -> Result<f64, String> {
+        let normal = match RandNormal::new(self.mean, self.variance.sqrt()) {
+            Ok(n) => n,
+            Err(err) => {
+                return Err(err.to_string());
+            }
+        };
 
         Ok(thread_rng.sample(normal))
     }

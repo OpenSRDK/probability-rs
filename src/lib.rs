@@ -10,11 +10,11 @@ use opensrdk_linear_algebra::prelude::*;
 use rand::prelude::*;
 
 pub trait Distribution {
-    fn sample(&self, thread_rng: &mut ThreadRng) -> Result<f64, ()>;
+    fn sample(&self, thread_rng: &mut ThreadRng) -> Result<f64, String>;
 }
 
 pub trait MultivariateDistribution {
-    fn sample(&self, thread_rng: &mut ThreadRng) -> Result<Matrix, ()>;
+    fn sample(&self, thread_rng: &mut ThreadRng) -> Result<Matrix, String>;
 }
 
 #[cfg(test)]
