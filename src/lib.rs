@@ -1,3 +1,5 @@
+#[cfg(test)]
+extern crate openblas_src;
 extern crate opensrdk_linear_algebra;
 extern crate rand;
 extern crate rand_distr;
