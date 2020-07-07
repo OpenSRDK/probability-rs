@@ -3,6 +3,11 @@ name = "opensrdk-probability"
 version = "0.1.0"
 authors = ["Kimura Yu <33382781+KimuraYu45z@users.noreply.github.com>"]
 edition = "2018"
+description = "Standard probability library for OpenSRDK toolchain."
+repository = "https://github.com/OpenSRDK/probability-rs"
+license = "Apache-2.0"
+keywords = ["sampling", "stochastics", "random", "probability", "distribution"]
+categories = ["mathematics", "science"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
