@@ -3,7 +3,6 @@ use opensrdk_linear_algebra::prelude::*;
 use rand::prelude::*;
 use rand_distr::StandardNormal;
 
-/// covariance matrix must be stored in upper triangle at least
 pub struct MultivariateNormal {
     mean: Matrix,
     covariance: Matrix<PositiveSemiDefinite>,
@@ -26,7 +25,7 @@ impl MultivariateNormal {
         &self.mean
     }
 
-    pub fn get_covariance(&self) -> &Matrix {
+    pub fn get_covariance(&self) -> &Matrix<PositiveSemiDefinite> {
         &self.covariance
     }
 }
@@ -38,7 +37,7 @@ impl MultivariateDistribution for MultivariateNormal {
             z[i][0] = thread_rng.sample(StandardNormal);
         }
 
-        let (u, sigma, _) = self.covariance.svd()?;
+        let (u, mut sigma, _) = self.covariance.svd()?;
 
         for i in 0..sigma.get_rows() {
             sigma[i][i] = sigma[i][i].sqrt();
