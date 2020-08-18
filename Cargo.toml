@@ -1,6 +1,6 @@
 [package]
 name = "opensrdk-probability"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Kimura Yu <33382781+KimuraYu45z@users.noreply.github.com>"]
 edition = "2018"
 description = "Standard probability library for OpenSRDK toolchain."
@@ -14,7 +14,7 @@ categories = ["mathematics", "science"]
 [dependencies]
 rand = "0.7"
 rand_distr = "0.2.2"
-opensrdk-linear-algebra = "0.2.0"
+opensrdk-linear-algebra = "0.2.1"
 
 [dev-dependencies]
 openblas-src = "0.9"
