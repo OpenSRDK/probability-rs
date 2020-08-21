@@ -9,10 +9,12 @@ pub struct MultivariateNormal {
 }
 
 impl MultivariateNormal {
-    pub fn new(mean: Vec<f64>, decomposed: Matrix) -> Self {
+    /// # Multivariate normal
+    /// `L` is needed as second argument under decomposition `Sigma = L * L^T`
+    pub fn new(mean: Vec<f64>, covariance_decomposed: Matrix) -> Self {
         Self {
             mean,
-            covariance_decomposed: decomposed,
+            covariance_decomposed,
         }
     }
 

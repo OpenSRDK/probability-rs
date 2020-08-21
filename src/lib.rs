@@ -1,7 +1,7 @@
 #[cfg(test)]
 extern crate openblas_src;
-extern crate opensrdk_linear_algebra;
-extern crate rand;
+pub extern crate opensrdk_linear_algebra;
+pub extern crate rand;
 extern crate rand_distr;
 
 pub mod multivariate_normal;
