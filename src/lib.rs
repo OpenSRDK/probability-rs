@@ -8,7 +8,6 @@ pub mod multivariate_normal;
 pub mod normal;
 pub mod prelude;
 
-use opensrdk_linear_algebra::prelude::*;
 use rand::prelude::*;
 
 pub trait Distribution {
@@ -16,7 +15,7 @@ pub trait Distribution {
 }
 
 pub trait MultivariateDistribution {
-    fn sample(&self, thread_rng: &mut ThreadRng) -> Result<Matrix, String>;
+    fn sample(&self, thread_rng: &mut ThreadRng) -> Result<Vec<f64>, String>;
 }
 
 #[cfg(test)]

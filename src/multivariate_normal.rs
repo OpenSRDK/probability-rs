@@ -4,47 +4,51 @@ use rand::prelude::*;
 use rand_distr::StandardNormal;
 
 pub struct MultivariateNormal {
-    mean: Matrix,
-    covariance: Matrix<PositiveSemiDefinite>,
+    mean: Vec<f64>,
+    covariance_decomposed: Matrix,
 }
 
 impl MultivariateNormal {
-    fn new(mean: Matrix, covariance: Matrix<PositiveSemiDefinite>) -> Self {
-        Self { mean, covariance }
-    }
-
-    pub fn from(mean: Matrix, covariance: Matrix<PositiveSemiDefinite>) -> Result<Self, String> {
-        if mean.get_columns() != 1 || mean.get_rows() != covariance.get_rows() {
-            Err("dimension mismatch".to_owned())
-        } else {
-            Ok(Self::new(mean, covariance))
+    pub fn new(mean: Vec<f64>, decomposed: Matrix) -> Self {
+        Self {
+            mean,
+            covariance_decomposed: decomposed,
         }
     }
 
-    pub fn get_mean(&self) -> &Matrix {
+    pub fn from(mean: Vec<f64>, covariance: Matrix) -> Result<Self, String> {
+        if mean.len() != covariance.get_rows() {
+            return Err("dimension mismatch".to_owned());
+        }
+
+        let decomposed = {
+            let (u, sigma, _) = covariance.dgesvd()?;
+
+            u * sigma.dipowf(0.5)
+        };
+
+        Ok(Self::new(mean, decomposed))
+    }
+
+    pub fn get_mean(&self) -> &[f64] {
         &self.mean
     }
 
-    pub fn get_covariance(&self) -> &Matrix<PositiveSemiDefinite> {
-        &self.covariance
+    pub fn get_covariance(&self) -> Matrix {
+        &self.covariance_decomposed * self.covariance_decomposed.t()
     }
 }
 
 impl MultivariateDistribution for MultivariateNormal {
-    fn sample(&self, thread_rng: &mut ThreadRng) -> Result<Matrix, String> {
-        let mut z = Matrix::<Standard, f64>::zeros(self.mean.get_rows(), 1);
-        for i in 0..self.mean.get_rows() {
-            z[i][0] = thread_rng.sample(StandardNormal);
-        }
+    fn sample(&self, thread_rng: &mut ThreadRng) -> Result<Vec<f64>, String> {
+        let z = (0..self.covariance_decomposed.get_rows())
+            .into_iter()
+            .map(|_| thread_rng.sample(StandardNormal))
+            .collect::<Vec<_>>();
 
-        let (u, mut sigma, _) = self.covariance.svd()?;
+        let y = self.mean.clone().to_column_vector()
+            + &self.covariance_decomposed * z.to_column_vector();
 
-        for i in 0..sigma.get_rows() {
-            sigma[i][i] = sigma[i][i].sqrt();
-        }
-
-        let y = self.mean.clone() + (u * sigma) * z;
-
-        Ok(y)
+        Ok(y.get_elements().to_vec())
     }
 }
