@@ -1,5 +1,5 @@
 use crate::MultivariateDistribution;
-use opensrdk_linear_algebra::prelude::*;
+use opensrdk_linear_algebra::{Matrix, Vector};
 use rand::prelude::*;
 use rand_distr::StandardNormal;
 
@@ -22,7 +22,7 @@ impl MultivariateNormal {
         }
 
         let decomposed = {
-            let (u, sigma, _) = covariance.dgesvd()?;
+            let (u, sigma, _) = covariance.gesvd()?;
 
             u * sigma.dipowf(0.5)
         };
@@ -46,9 +46,21 @@ impl MultivariateDistribution for MultivariateNormal {
             .map(|_| thread_rng.sample(StandardNormal))
             .collect::<Vec<_>>();
 
-        let y = self.mean.clone().to_column_vector()
-            + &self.covariance_decomposed * z.to_column_vector();
+        let y = self.mean.clone().to_column_vector().gemm(
+            &self.covariance_decomposed,
+            &z.to_column_vector(),
+            1.0,
+            1.0,
+        )?;
 
         Ok(y.get_elements().to_vec())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {
+        assert_eq!(2 + 2, 4);
     }
 }

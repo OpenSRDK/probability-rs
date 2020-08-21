@@ -41,3 +41,11 @@ impl Distribution for Normal {
         Ok(thread_rng.sample(normal))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {
+        assert_eq!(2 + 2, 4);
+    }
+}

@@ -6,8 +6,9 @@ extern crate rand_distr;
 
 pub mod multivariate_normal;
 pub mod normal;
-pub mod prelude;
 
+pub use crate::multivariate_normal::*;
+pub use crate::normal::*;
 use rand::prelude::*;
 
 pub trait Distribution {
@@ -16,12 +17,4 @@ pub trait Distribution {
 
 pub trait MultivariateDistribution {
     fn sample(&self, thread_rng: &mut ThreadRng) -> Result<Vec<f64>, String>;
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
 }
