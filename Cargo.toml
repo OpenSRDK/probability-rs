@@ -14,7 +14,7 @@ categories = ["mathematics", "science"]
 [dependencies]
 rand = "0.7"
 rand_distr = "0.2.2"
-opensrdk-linear-algebra = "0.3.2"
+opensrdk-linear-algebra = { git = "https://github.com/OpenSRDK/linear-algebra-rs.git" }
 
 [dev-dependencies]
 openblas-src = "0.9"
