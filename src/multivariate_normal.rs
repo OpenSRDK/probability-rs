@@ -55,7 +55,7 @@ impl MultivariateDistribution for MultivariateNormal {
             1.0,
         )?;
 
-        Ok(y.get_elements().to_vec())
+        Ok(y.get_elements())
     }
 }
 
