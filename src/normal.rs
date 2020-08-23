@@ -30,7 +30,7 @@ impl Normal {
 }
 
 impl Distribution for Normal {
-    fn sample(&self, thread_rng: &mut ThreadRng) -> Result<f64, String> {
+    fn sample(&self, rng: &mut StdRng) -> Result<f64, String> {
         let normal = match RandNormal::new(self.mean, self.var.sqrt()) {
             Ok(n) => n,
             Err(_) => {
@@ -38,7 +38,7 @@ impl Distribution for Normal {
             }
         };
 
-        Ok(thread_rng.sample(normal))
+        Ok(rng.sample(normal))
     }
 }
 

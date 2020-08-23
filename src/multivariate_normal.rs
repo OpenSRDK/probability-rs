@@ -43,10 +43,10 @@ impl MultivariateNormal {
 }
 
 impl MultivariateDistribution for MultivariateNormal {
-    fn sample(&self, thread_rng: &mut ThreadRng) -> Result<Vec<f64>, String> {
+    fn sample(&self, rng: &mut StdRng) -> Result<Vec<f64>, String> {
         let z = (0..self.l_cov.rows())
             .into_iter()
-            .map(|_| thread_rng.sample(StandardNormal))
+            .map(|_| rng.sample(StandardNormal))
             .collect::<Vec<_>>();
 
         let y = Matrix::col(self.mean.clone()).gemm(&self.l_cov, &Matrix::col(z), 1.0, 1.0)?;

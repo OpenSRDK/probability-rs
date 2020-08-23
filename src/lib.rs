@@ -12,9 +12,9 @@ pub use crate::normal::*;
 use rand::prelude::*;
 
 pub trait Distribution {
-    fn sample(&self, thread_rng: &mut ThreadRng) -> Result<f64, String>;
+    fn sample(&self, rng: &mut StdRng) -> Result<f64, String>;
 }
 
 pub trait MultivariateDistribution {
-    fn sample(&self, thread_rng: &mut ThreadRng) -> Result<Vec<f64>, String>;
+    fn sample(&self, rng: &mut StdRng) -> Result<Vec<f64>, String>;
 }
