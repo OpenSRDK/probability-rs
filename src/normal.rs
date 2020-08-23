@@ -4,34 +4,34 @@ use rand_distr::Normal as RandNormal;
 
 pub struct Normal {
     mean: f64,
-    variance: f64,
+    var: f64,
 }
 
 impl Normal {
-    fn new(mean: f64, variance: f64) -> Self {
-        Self { mean, variance }
+    fn new(mean: f64, var: f64) -> Self {
+        Self { mean, var }
     }
 
-    pub fn from(mean: f64, variance: f64) -> Result<Self, String> {
-        if variance <= 0.0 {
+    pub fn from(mean: f64, var: f64) -> Result<Self, String> {
+        if var <= 0.0 {
             Err("variance must be greater than zero".to_owned())
         } else {
-            Ok(Self::new(mean, variance))
+            Ok(Self::new(mean, var))
         }
     }
 
-    pub fn get_mean(&self) -> f64 {
+    pub fn mean(&self) -> f64 {
         self.mean
     }
 
-    pub fn get_variance(&self) -> f64 {
-        self.variance
+    pub fn variance(&self) -> f64 {
+        self.var
     }
 }
 
 impl Distribution for Normal {
     fn sample(&self, thread_rng: &mut ThreadRng) -> Result<f64, String> {
-        let normal = match RandNormal::new(self.mean, self.variance.sqrt()) {
+        let normal = match RandNormal::new(self.mean, self.var.sqrt()) {
             Ok(n) => n,
             Err(_) => {
                 return Err("too small variance".to_owned());
