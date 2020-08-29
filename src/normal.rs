@@ -24,7 +24,7 @@ impl Normal {
         self.mean
     }
 
-    pub fn variance(&self) -> f64 {
+    pub fn var(&self) -> f64 {
         self.var
     }
 }
