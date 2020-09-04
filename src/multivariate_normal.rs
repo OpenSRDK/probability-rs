@@ -2,10 +2,17 @@ use crate::MultivariateDistribution;
 use opensrdk_linear_algebra::Matrix;
 use rand::prelude::*;
 use rand_distr::StandardNormal;
+use std::error::Error;
 
 pub struct MultivariateNormal {
     mean: Vec<f64>,
     l_cov: Matrix,
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum MultivariateNormalError {
+    #[error("dimension mismatch")]
+    DimensionMismatch,
 }
 
 impl MultivariateNormal {
@@ -15,9 +22,9 @@ impl MultivariateNormal {
         Self { mean, l_cov }
     }
 
-    pub fn from(mean: Vec<f64>, cov: Matrix) -> Result<Self, String> {
+    pub fn from(mean: Vec<f64>, cov: Matrix) -> Result<Self, Box<dyn Error>> {
         if mean.len() != cov.rows() {
-            return Err("dimension mismatch".to_owned());
+            return Err(Box::new(MultivariateNormalError::DimensionMismatch));
         }
 
         let decomposed = {
@@ -43,7 +50,7 @@ impl MultivariateNormal {
 }
 
 impl MultivariateDistribution for MultivariateNormal {
-    fn sample(&self, rng: &mut StdRng) -> Result<Vec<f64>, String> {
+    fn sample(&self, rng: &mut StdRng) -> Result<Vec<f64>, Box<dyn Error>> {
         let z = (0..self.l_cov.rows())
             .into_iter()
             .map(|_| rng.sample(StandardNormal))

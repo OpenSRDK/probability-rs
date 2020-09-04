@@ -1,6 +1,7 @@
 use crate::Distribution;
 use rand::prelude::*;
 use rand_distr::Normal as RandNormal;
+use std::error::Error;
 
 #[derive(Debug)]
 pub struct Normal {
@@ -8,14 +9,20 @@ pub struct Normal {
     std_dev: f64,
 }
 
+#[derive(thiserror::Error, Debug)]
+pub enum NormalError {
+    #[error("invalid variance")]
+    InvalidVariance,
+}
+
 impl Normal {
     fn new(mean: f64, std_dev: f64) -> Self {
         Self { mean, std_dev }
     }
 
-    pub fn from(mean: f64, var: f64) -> Result<Self, String> {
+    pub fn from(mean: f64, var: f64) -> Result<Self, Box<dyn Error>> {
         if var <= 0.0 {
-            Err("variance must be greater than zero".to_owned())
+            Err(Box::new(NormalError::InvalidVariance))
         } else {
             Ok(Self::new(mean, var.sqrt()))
         }
@@ -35,12 +42,10 @@ impl Normal {
 }
 
 impl Distribution for Normal {
-    fn sample(&self, rng: &mut StdRng) -> Result<f64, String> {
+    fn sample(&self, rng: &mut StdRng) -> Result<f64, Box<dyn Error>> {
         let normal = match RandNormal::new(self.mean, self.std_dev) {
             Ok(n) => n,
-            Err(_) => {
-                return Err("too small variance".to_owned());
-            }
+            Err(_) => return Err(Box::new(NormalError::InvalidVariance)),
         };
 
         Ok(rng.sample(normal))
