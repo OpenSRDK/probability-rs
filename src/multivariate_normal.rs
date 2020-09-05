@@ -1,5 +1,5 @@
 use crate::MultivariateDistribution;
-use opensrdk_linear_algebra::Matrix;
+use opensrdk_linear_algebra::*;
 use rand::prelude::*;
 use rand_distr::StandardNormal;
 use std::error::Error;
@@ -56,7 +56,11 @@ impl MultivariateDistribution for MultivariateNormal {
             .map(|_| rng.sample(StandardNormal))
             .collect::<Vec<_>>();
 
-        let y = Matrix::col(self.mean.clone()).gemm(&self.l_cov, &Matrix::col(z), 1.0, 1.0)?;
+        let y = self
+            .mean
+            .clone()
+            .col_mat()
+            .gemm(&self.l_cov, &z.col_mat(), 1.0, 1.0)?;
 
         Ok(y.elems())
     }
