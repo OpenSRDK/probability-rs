@@ -24,7 +24,7 @@ impl MultivariateNormal {
 
     pub fn from(mean: Vec<f64>, cov: Matrix) -> Result<Self, Box<dyn Error>> {
         if mean.len() != cov.rows() {
-            return Err(Box::new(MultivariateNormalError::DimensionMismatch));
+            return Err(MultivariateNormalError::DimensionMismatch.into());
         }
 
         let decomposed = {

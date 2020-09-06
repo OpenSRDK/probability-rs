@@ -22,7 +22,7 @@ impl Normal {
 
     pub fn from(mean: f64, var: f64) -> Result<Self, Box<dyn Error>> {
         if var <= 0.0 {
-            Err(Box::new(NormalError::InvalidVariance))
+            Err(NormalError::InvalidVariance.into())
         } else {
             Ok(Self::new(mean, var.sqrt()))
         }
@@ -45,7 +45,7 @@ impl Distribution for Normal {
     fn sample(&self, rng: &mut StdRng) -> Result<f64, Box<dyn Error>> {
         let normal = match RandNormal::new(self.mean, self.std_dev) {
             Ok(n) => n,
-            Err(_) => return Err(Box::new(NormalError::InvalidVariance)),
+            Err(_) => return Err(NormalError::InvalidVariance.into()),
         };
 
         Ok(rng.sample(normal))
