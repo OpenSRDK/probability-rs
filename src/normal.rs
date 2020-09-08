@@ -16,7 +16,7 @@ pub enum NormalError {
 }
 
 impl Normal {
-    fn new(mean: f64, std_dev: f64) -> Self {
+    pub fn new(mean: f64, std_dev: f64) -> Self {
         Self { mean, std_dev }
     }
 
