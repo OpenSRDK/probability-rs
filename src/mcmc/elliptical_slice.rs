@@ -30,7 +30,7 @@ pub struct EllipticalSliceSampler<T>
 where
     T: EllipticalSliceable,
 {
-    likelihood: Box<dyn Fn(T) -> Result<f64, Box<dyn Error>>>,
+    likelihood: Box<dyn Fn(&T) -> Result<f64, Box<dyn Error>>>,
     prior: Box<dyn Distribution<T>>,
 }
 
@@ -39,7 +39,7 @@ where
     T: EllipticalSliceable,
 {
     pub fn new(
-        likelihood: Box<dyn Fn(T) -> Result<f64, Box<dyn Error>>>,
+        likelihood: Box<dyn Fn(&T) -> Result<f64, Box<dyn Error>>>,
         prior: Box<dyn Distribution<T>>,
     ) -> Self {
         Self { likelihood, prior }
@@ -49,7 +49,7 @@ where
         let nu = self.prior.sample(rng)?;
 
         let mut b = self.prior.sample(rng)?;
-        let rho = (self.likelihood)(b.clone())? * rng.gen_range(0.0, 1.0);
+        let rho = (self.likelihood)(&b)? * rng.gen_range(0.0, 1.0);
         let mut theta = rng.gen_range(0.0, 2.0 * PI);
 
         let mut start = theta - 2.0 * PI;
@@ -58,7 +58,7 @@ where
         loop {
             b = b.ellipse(theta, &nu);
 
-            if rho < (self.likelihood)(b.clone())? {
+            if rho < (self.likelihood)(&b)? {
                 break;
             }
 

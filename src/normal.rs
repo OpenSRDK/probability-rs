@@ -42,7 +42,7 @@ impl Normal {
 }
 
 impl Distribution<f64> for Normal {
-    fn p(&self, x: f64) -> Result<f64, Box<dyn Error>> {
+    fn p(&self, x: &f64) -> Result<f64, Box<dyn Error>> {
         Ok(1.0 / (2.0 * PI * self.std_dev.powi(2)).sqrt()
             * (-(x - self.mean).powi(2) / (2.0 * self.std_dev.powi(2))).exp())
     }

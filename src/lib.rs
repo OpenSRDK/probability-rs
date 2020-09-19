@@ -1,5 +1,7 @@
 #[cfg(test)]
-extern crate openblas_src;
+extern crate blas_src;
+#[cfg(test)]
+extern crate lapack_src;
 pub extern crate opensrdk_linear_algebra;
 pub extern crate rand;
 extern crate rand_distr;
@@ -18,6 +20,6 @@ pub mod multivariate_normal;
 pub mod normal;
 
 pub trait Distribution<T> {
-    fn p(&self, x: T) -> Result<f64, Box<dyn Error>>;
+    fn p(&self, x: &T) -> Result<f64, Box<dyn Error>>;
     fn sample(&self, rng: &mut StdRng) -> Result<T, Box<dyn Error>>;
 }

@@ -2,6 +2,7 @@ use crate::Distribution;
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
 use rand_distr::StandardNormal;
+use rayon::prelude::*;
 use std::{error::Error, f64::consts::PI};
 
 pub struct MultivariateNormal {
@@ -46,13 +47,23 @@ impl MultivariateNormal {
 }
 
 impl Distribution<Vec<f64>> for MultivariateNormal {
-    fn p(&self, x: Vec<f64>) -> Result<f64, Box<dyn Error>> {
-        let n = x.len() as f64;
-        let x_mu_t = x.row_mat() - self.mean.clone().row_mat();
+    fn p(&self, x: &Vec<f64>) -> Result<f64, Box<dyn Error>> {
+        let n = x.len();
+
+        if n != self.mean.len() {
+            return Err(MultivariateNormalError::DimensionMismatch.into());
+        }
+        let n = n as f64;
+
+        let x_mu = x
+            .par_iter()
+            .zip(self.mean.par_iter())
+            .map(|(&xi, &mui)| xi - mui)
+            .collect::<Vec<_>>()
+            .col_mat();
 
         Ok(1.0 / ((2.0 * PI).powf(n / 2.0) * self.l_cov.trdet())
-            * (-1.0 / 2.0 * (&x_mu_t * self.l_cov.potrs(x_mu_t.clone())?.elems().col_mat())[0][0])
-                .exp())
+            * (-1.0 / 2.0 * (x_mu.t() * self.l_cov.potrs(x_mu)?)[0][0]).exp())
     }
 
     fn sample(&self, rng: &mut StdRng) -> Result<Vec<f64>, Box<dyn Error>> {
@@ -67,7 +78,7 @@ impl Distribution<Vec<f64>> for MultivariateNormal {
             .col_mat()
             .gemm(&self.l_cov, &z.col_mat(), 1.0, 1.0)?;
 
-        Ok(y.elems())
+        Ok(y.vec())
     }
 }
 
