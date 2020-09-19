@@ -1,7 +1,7 @@
 use crate::Distribution;
 use rand::prelude::*;
 use rand_distr::Normal as RandNormal;
-use std::error::Error;
+use std::{error::Error, f64::consts::PI};
 
 #[derive(Debug)]
 pub struct Normal {
@@ -41,7 +41,12 @@ impl Normal {
     }
 }
 
-impl Distribution for Normal {
+impl Distribution<f64> for Normal {
+    fn p(&self, x: f64) -> Result<f64, Box<dyn Error>> {
+        Ok(1.0 / (2.0 * PI * self.std_dev.powi(2)).sqrt()
+            * (-(x - self.mean).powi(2) / (2.0 * self.std_dev.powi(2))).exp())
+    }
+
     fn sample(&self, rng: &mut StdRng) -> Result<f64, Box<dyn Error>> {
         let normal = match RandNormal::new(self.mean, self.std_dev) {
             Ok(n) => n,

@@ -1,8 +1,8 @@
-use crate::MultivariateDistribution;
+use crate::Distribution;
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
 use rand_distr::StandardNormal;
-use std::error::Error;
+use std::{error::Error, f64::consts::PI};
 
 pub struct MultivariateNormal {
     mean: Vec<f64>,
@@ -27,13 +27,9 @@ impl MultivariateNormal {
             return Err(MultivariateNormalError::DimensionMismatch.into());
         }
 
-        let decomposed = {
-            let (u, sigma, _) = cov.gesvd()?;
+        let l_cov = cov.potrf()?;
 
-            u * sigma.dipowf(0.5)
-        };
-
-        Ok(Self::new(mean, decomposed))
+        Ok(Self::new(mean, l_cov))
     }
 
     pub fn mean(&self) -> &[f64] {
@@ -49,7 +45,16 @@ impl MultivariateNormal {
     }
 }
 
-impl MultivariateDistribution for MultivariateNormal {
+impl Distribution<Vec<f64>> for MultivariateNormal {
+    fn p(&self, x: Vec<f64>) -> Result<f64, Box<dyn Error>> {
+        let n = x.len() as f64;
+        let x_mu_t = x.row_mat() - self.mean.clone().row_mat();
+
+        Ok(1.0 / ((2.0 * PI).powf(n / 2.0) * self.l_cov.trdet())
+            * (-1.0 / 2.0 * (&x_mu_t * self.l_cov.potrs(x_mu_t.clone())?.elems().col_mat())[0][0])
+                .exp())
+    }
+
     fn sample(&self, rng: &mut StdRng) -> Result<Vec<f64>, Box<dyn Error>> {
         let z = (0..self.l_cov.rows())
             .into_iter()
