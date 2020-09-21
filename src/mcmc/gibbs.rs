@@ -4,19 +4,19 @@ use rand::prelude::StdRng;
 
 use crate::{ConditionalDistribution, Distribution};
 
-pub struct GibbsSampler<T>
+pub struct GibbsSampler<'a, T>
 where
     T: Clone,
 {
-    distributions: Vec<ConditionalDistribution<T, Vec<T>>>,
+    distributions: Vec<&'a mut ConditionalDistribution<T, Vec<T>>>,
     iter: usize,
 }
 
-impl<T> GibbsSampler<T>
+impl<'a, T> GibbsSampler<'a, T>
 where
     T: Clone,
 {
-    pub fn new(distributions: Vec<ConditionalDistribution<T, Vec<T>>>) -> Self {
+    pub fn new(distributions: Vec<&'a mut ConditionalDistribution<T, Vec<T>>>) -> Self {
         Self {
             distributions,
             iter: 32,

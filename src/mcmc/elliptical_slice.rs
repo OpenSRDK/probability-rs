@@ -26,21 +26,21 @@ impl EllipticalSliceable for Vec<f64> {
 }
 
 /// Sample from posterior p(b|a) with likelihood p(a|b) and prior p(b)
-pub struct EllipticalSliceSampler<T>
+pub struct EllipticalSliceSampler<'a, T>
 where
     T: EllipticalSliceable,
 {
-    likelihood: Box<dyn Fn(&T) -> Result<f64, Box<dyn Error>>>,
-    prior: Box<dyn Distribution<T>>,
+    likelihood: &'a dyn Fn(&T) -> Result<f64, Box<dyn Error>>,
+    prior: &'a dyn Distribution<T>,
 }
 
-impl<T> EllipticalSliceSampler<T>
+impl<'a, T> EllipticalSliceSampler<'a, T>
 where
     T: EllipticalSliceable,
 {
     pub fn new(
-        likelihood: Box<dyn Fn(&T) -> Result<f64, Box<dyn Error>>>,
-        prior: Box<dyn Distribution<T>>,
+        likelihood: &'a dyn Fn(&T) -> Result<f64, Box<dyn Error>>,
+        prior: &'a dyn Distribution<T>,
     ) -> Self {
         Self { likelihood, prior }
     }

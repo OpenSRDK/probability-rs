@@ -10,11 +10,13 @@ extern crate thiserror;
 
 pub use crate::multivariate_normal::*;
 pub use crate::normal::*;
-pub use conditional_distribution::*;
+pub use conditional::*;
+pub use instant::*;
 use rand::prelude::*;
 use std::error::Error;
 
-pub mod conditional_distribution;
+pub mod conditional;
+pub mod instant;
 pub mod mcmc;
 pub mod multivariate_normal;
 pub mod normal;

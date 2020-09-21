@@ -9,15 +9,15 @@ pub enum ConditionalError {
 }
 
 pub struct ConditionalDistribution<T, U> {
-    p: Box<dyn Fn(&T) -> Result<f64, Box<dyn Error>>>,
-    sample: Box<dyn Fn(&mut StdRng) -> Result<T, Box<dyn Error>>>,
+    p: Box<dyn Fn(&T, &U) -> Result<f64, Box<dyn Error>>>,
+    sample: Box<dyn Fn(&U, &mut StdRng) -> Result<T, Box<dyn Error>>>,
     condition: Option<U>,
 }
 
 impl<T, U> ConditionalDistribution<T, U> {
     pub fn new(
-        p: Box<dyn Fn(&T) -> Result<f64, Box<dyn Error>>>,
-        sample: Box<dyn Fn(&mut StdRng) -> Result<T, Box<dyn Error>>>,
+        p: Box<dyn Fn(&T, &U) -> Result<f64, Box<dyn Error>>>,
+        sample: Box<dyn Fn(&U, &mut StdRng) -> Result<T, Box<dyn Error>>>,
     ) -> Self {
         Self {
             p,
@@ -39,7 +39,7 @@ impl<T, U> Distribution<T> for ConditionalDistribution<T, U> {
             return Err(ConditionalError::NotConditioned.into());
         }
 
-        (self.p)(x)
+        (self.p)(x, self.condition.as_ref().unwrap())
     }
 
     fn sample(&self, rng: &mut StdRng) -> Result<T, Box<dyn Error>> {
@@ -47,6 +47,6 @@ impl<T, U> Distribution<T> for ConditionalDistribution<T, U> {
             return Err(ConditionalError::NotConditioned.into());
         }
 
-        (self.sample)(rng)
+        (self.sample)(self.condition.as_ref().unwrap(), rng)
     }
 }
