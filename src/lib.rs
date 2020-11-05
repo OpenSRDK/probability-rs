@@ -27,5 +27,5 @@ pub trait Distribution<T> {
 }
 
 pub trait ConditionalDistribution<T, U>: Distribution<T> {
-    fn with_condition(&mut self, condition: U) -> &mut Self;
+    fn with_condition(&mut self, condition: U) -> Result<&mut Self, Box<dyn Error>>;
 }

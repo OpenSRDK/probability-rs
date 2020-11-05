@@ -46,9 +46,9 @@ impl<T, U> Distribution<T> for InstantConditionalDistribution<T, U> {
 }
 
 impl<T, U> ConditionalDistribution<T, U> for InstantConditionalDistribution<T, U> {
-    fn with_condition(&mut self, condition: U) -> &mut Self {
+    fn with_condition(&mut self, condition: U) -> Result<&mut Self, Box<dyn Error>> {
         self.condition = Some(condition);
 
-        self
+        Ok(self)
     }
 }

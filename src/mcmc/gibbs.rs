@@ -42,7 +42,7 @@ where
                 };
 
                 params[i] = self.distributions[i]
-                    .with_condition(condition)
+                    .with_condition(condition)?
                     .sample(rng)?;
             }
         }
