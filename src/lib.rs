@@ -10,13 +10,13 @@ extern crate thiserror;
 
 pub use crate::multivariate_normal::*;
 pub use crate::normal::*;
-pub use conditional::*;
 pub use instant::*;
+pub use instant_conditional::*;
 use rand::prelude::*;
 use std::error::Error;
 
-pub mod conditional;
 pub mod instant;
+pub mod instant_conditional;
 pub mod mcmc;
 pub mod multivariate_normal;
 pub mod normal;
@@ -24,4 +24,8 @@ pub mod normal;
 pub trait Distribution<T> {
     fn p(&self, x: &T) -> Result<f64, Box<dyn Error>>;
     fn sample(&self, rng: &mut StdRng) -> Result<T, Box<dyn Error>>;
+}
+
+pub trait ConditionalDistribution<T, U>: Distribution<T> {
+    fn with_condition(&mut self, condition: U) -> &mut Self;
 }

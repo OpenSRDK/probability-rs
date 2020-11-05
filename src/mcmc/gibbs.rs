@@ -1,14 +1,12 @@
-use std::error::Error;
-
+use crate::{ConditionalDistribution, Distribution, InstantConditionalDistribution};
 use rand::prelude::StdRng;
-
-use crate::{ConditionalDistribution, Distribution};
+use std::error::Error;
 
 pub struct GibbsSampler<'a, T>
 where
     T: Clone,
 {
-    distributions: Vec<&'a mut ConditionalDistribution<T, Vec<T>>>,
+    distributions: Vec<&'a mut InstantConditionalDistribution<T, Vec<T>>>,
     iter: usize,
 }
 
@@ -16,7 +14,7 @@ impl<'a, T> GibbsSampler<'a, T>
 where
     T: Clone,
 {
-    pub fn new(distributions: Vec<&'a mut ConditionalDistribution<T, Vec<T>>>) -> Self {
+    pub fn new(distributions: Vec<&'a mut InstantConditionalDistribution<T, Vec<T>>>) -> Self {
         Self {
             distributions,
             iter: 32,
