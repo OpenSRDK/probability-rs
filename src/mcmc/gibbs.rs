@@ -1,22 +1,27 @@
-use crate::{ConditionalDistribution, Distribution, InstantConditionalDistribution};
+use crate::Distribution;
 use rand::prelude::StdRng;
-use std::error::Error;
+use std::{error::Error, fmt::Debug};
 
 pub struct GibbsSampler<'a, T>
 where
-    T: Clone,
+    T: Clone + Debug,
 {
-    distributions: Vec<&'a mut InstantConditionalDistribution<T, Vec<T>>>,
+    distributions: Vec<&'a mut dyn Distribution<'a, T>>,
+    conditioning: Box<dyn Fn(usize, &T) -> Result<(), Box<dyn Error>>>,
     iter: usize,
 }
 
 impl<'a, T> GibbsSampler<'a, T>
 where
-    T: Clone,
+    T: Clone + Debug,
 {
-    pub fn new(distributions: Vec<&'a mut InstantConditionalDistribution<T, Vec<T>>>) -> Self {
+    pub fn new(
+        distributions: Vec<&'a mut dyn Distribution<'a, T>>,
+        conditioning: Box<dyn Fn(usize, &T) -> Result<(), Box<dyn Error>>>,
+    ) -> Self {
         Self {
             distributions,
+            conditioning,
             iter: 32,
         }
     }
@@ -40,10 +45,8 @@ where
                 } else {
                     [&params[..i], &params[i + 1..]].concat()
                 };
-
-                params[i] = self.distributions[i]
-                    .with_condition(condition)?
-                    .sample(rng)?;
+                (self.conditioning)(i, &condition[i])?;
+                params[i] = self.distributions[i].sample(rng)?;
             }
         }
 

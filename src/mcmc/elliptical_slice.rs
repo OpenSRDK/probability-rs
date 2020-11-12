@@ -1,9 +1,9 @@
 use crate::Distribution;
 use rand::prelude::*;
 use rayon::prelude::*;
-use std::{error::Error, f64::consts::PI};
+use std::{error::Error, f64::consts::PI, fmt::Debug, marker::PhantomData};
 
-pub trait EllipticalSliceable: Clone {
+pub trait EllipticalSliceable: Clone + Debug {
     fn ellipse(self, theta: f64, nu: &Self) -> Self;
 }
 
@@ -26,30 +26,36 @@ impl EllipticalSliceable for Vec<f64> {
 }
 
 /// Sample from posterior p(b|a) with likelihood p(a|b) and prior p(b)
-pub struct EllipticalSliceSampler<'a, T>
+pub struct EllipticalSliceSampler<'a, T, DL, DP>
 where
     T: EllipticalSliceable,
+    DL: Distribution<'a, T>,
+    DP: Distribution<'a, T>,
 {
-    likelihood: &'a dyn Fn(&T) -> Result<f64, Box<dyn Error>>,
-    prior: &'a dyn Distribution<T>,
+    likelihood: &'a DL,
+    prior: &'a DP,
+    phantom: PhantomData<T>,
 }
 
-impl<'a, T> EllipticalSliceSampler<'a, T>
+impl<'a, T, DL, DP> EllipticalSliceSampler<'a, T, DL, DP>
 where
     T: EllipticalSliceable,
+    DL: Distribution<'a, T>,
+    DP: Distribution<'a, T>,
 {
-    pub fn new(
-        likelihood: &'a dyn Fn(&T) -> Result<f64, Box<dyn Error>>,
-        prior: &'a dyn Distribution<T>,
-    ) -> Self {
-        Self { likelihood, prior }
+    pub fn new(likelihood: &'a DL, prior: &'a DP) -> Self {
+        Self {
+            likelihood,
+            prior,
+            phantom: PhantomData,
+        }
     }
 
     pub fn sample(&self, rng: &mut StdRng) -> Result<T, Box<dyn Error>> {
         let nu = self.prior.sample(rng)?;
 
         let mut b = self.prior.sample(rng)?;
-        let rho = (self.likelihood)(&b)? * rng.gen_range(0.0, 1.0);
+        let rho = self.likelihood.p(&b)? * rng.gen_range(0.0, 1.0);
         let mut theta = rng.gen_range(0.0, 2.0 * PI);
 
         let mut start = theta - 2.0 * PI;
@@ -58,7 +64,7 @@ where
         loop {
             b = b.ellipse(theta, &nu);
 
-            if rho < (self.likelihood)(&b)? {
+            if rho < self.likelihood.p(&b)? {
                 break;
             }
 

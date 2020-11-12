@@ -8,24 +8,15 @@ extern crate rand_distr;
 extern crate rayon;
 extern crate thiserror;
 
+pub use crate::distribution::*;
 pub use crate::multivariate_normal::*;
 pub use crate::normal::*;
+pub use crate::optimization::*;
 pub use instant::*;
-pub use instant_conditional::*;
-use rand::prelude::*;
-use std::error::Error;
 
+pub mod distribution;
 pub mod instant;
-pub mod instant_conditional;
 pub mod mcmc;
 pub mod multivariate_normal;
 pub mod normal;
-
-pub trait Distribution<T> {
-    fn p(&self, x: &T) -> Result<f64, Box<dyn Error>>;
-    fn sample(&self, rng: &mut StdRng) -> Result<T, Box<dyn Error>>;
-}
-
-pub trait ConditionalDistribution<T, U>: Distribution<T> {
-    fn with_condition(&mut self, condition: U) -> Result<&mut Self, Box<dyn Error>>;
-}
+pub mod optimization;
