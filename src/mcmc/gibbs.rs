@@ -1,22 +1,24 @@
-use crate::Distribution;
+use crate::{Distribution, RandomVariable};
 use rand::prelude::StdRng;
-use std::{error::Error, fmt::Debug};
+use std::error::Error;
 
-pub struct GibbsSampler<'a, T>
+pub struct GibbsSampler<'a, T, U>
 where
-    T: Clone + Debug,
+    T: RandomVariable,
+    U: RandomVariable,
 {
-    distributions: Vec<&'a mut dyn Distribution<'a, T>>,
+    distributions: Vec<&'a mut dyn Distribution<T = T, U = U>>,
     conditioning: Box<dyn Fn(usize, &T) -> Result<(), Box<dyn Error>>>,
     iter: usize,
 }
 
-impl<'a, T> GibbsSampler<'a, T>
+impl<'a, T, U> GibbsSampler<'a, T, U>
 where
-    T: Clone + Debug,
+    T: RandomVariable,
+    U: RandomVariable,
 {
     pub fn new(
-        distributions: Vec<&'a mut dyn Distribution<'a, T>>,
+        distributions: Vec<&'a mut dyn Distribution<T = T, U = U>>,
         conditioning: Box<dyn Fn(usize, &T) -> Result<(), Box<dyn Error>>>,
     ) -> Self {
         Self {
@@ -32,24 +34,15 @@ where
         self
     }
 
-    pub fn sample(&mut self, rng: &mut StdRng, initial: Vec<T>) -> Result<Vec<T>, Box<dyn Error>> {
-        let mut params = initial;
-
+    pub fn sample(&mut self, theta: &U, rng: &mut StdRng) -> Result<U, Box<dyn Error>> {
         for _ in 0..self.iter {
             let n = self.distributions.len();
             for i in 0..n {
-                let condition = if i == 0 {
-                    params[1..].to_vec()
-                } else if i == n - 1 {
-                    params[..n - 1].to_vec()
-                } else {
-                    [&params[..i], &params[i + 1..]].concat()
-                };
-                (self.conditioning)(i, &condition[i])?;
-                params[i] = self.distributions[i].sample(rng)?;
+                let value = self.distributions[i].sample(theta, rng)?;
+                (self.conditioning)(i, &value)?;
             }
         }
 
-        Ok(params)
+        Ok(theta.clone())
     }
 }

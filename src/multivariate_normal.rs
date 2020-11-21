@@ -1,15 +1,12 @@
-use crate::{Distribution, DistributionParam, DistributionParamVal, LogDistribution};
+use crate::Distribution;
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
 use rand_distr::StandardNormal;
 use rayon::prelude::*;
 use std::{error::Error, f64::consts::PI};
 
-#[derive(Debug)]
-pub struct MultivariateNormal {
-    mu: Box<dyn DistributionParam<Vec<f64>>>,
-    l_sigma: Box<dyn DistributionParam<Matrix>>,
-}
+#[derive(Clone, Debug)]
+pub struct MultivariateNormal;
 
 #[derive(thiserror::Error, Debug)]
 pub enum MultivariateNormalError {
@@ -17,35 +14,13 @@ pub enum MultivariateNormalError {
     DimensionMismatch,
 }
 
-impl MultivariateNormal {
-    /// # Multivariate normal
-    /// `L` is needed as second argument under decomposition `Sigma = L * L^T`
-    /// l_sigma = sigma.potrf()?;
-    pub fn new(
-        mu: Box<dyn DistributionParam<Vec<f64>>>,
-        l_sigma: Box<dyn DistributionParam<Matrix>>,
-    ) -> Result<Self, Box<dyn Error>> {
-        let n = mu.value().len();
-        if n != l_sigma.value().rows() || n != l_sigma.value().cols() {
-            return Err(MultivariateNormalError::DimensionMismatch.into());
-        }
+impl Distribution for MultivariateNormal {
+    type T = Vec<f64>;
+    type U = MultivariateNormalParams;
 
-        Ok(Self { mu, l_sigma })
-    }
-
-    pub fn mu(&self) -> &Vec<f64> {
-        self.mu.value()
-    }
-
-    pub fn l_sigma(&self) -> &Matrix {
-        self.l_sigma.value()
-    }
-}
-
-impl<'a> Distribution<'a, Vec<f64>> for MultivariateNormal {
-    fn p(&self, x: &Vec<f64>) -> Result<f64, Box<dyn Error>> {
-        let mu = self.mu();
-        let l_sigma = self.l_sigma();
+    fn p(&self, x: &Vec<f64>, theta: &MultivariateNormalParams) -> Result<f64, Box<dyn Error>> {
+        let mu = theta.mu();
+        let l_sigma = theta.l_sigma();
 
         let n = x.len();
 
@@ -65,9 +40,13 @@ impl<'a> Distribution<'a, Vec<f64>> for MultivariateNormal {
             * (-1.0 / 2.0 * (x_mu.t() * l_sigma.potrs(x_mu)?)[0][0]).exp())
     }
 
-    fn sample(&self, rng: &mut StdRng) -> Result<Vec<f64>, Box<dyn Error>> {
-        let mu = self.mu();
-        let l_sigma = self.l_sigma();
+    fn sample(
+        &self,
+        theta: &MultivariateNormalParams,
+        rng: &mut StdRng,
+    ) -> Result<Vec<f64>, Box<dyn Error>> {
+        let mu = theta.mu();
+        let l_sigma = theta.l_sigma();
 
         let z = (0..l_sigma.rows())
             .into_iter()
@@ -78,22 +57,33 @@ impl<'a> Distribution<'a, Vec<f64>> for MultivariateNormal {
 
         Ok(y.vec())
     }
+}
 
-    fn ln(&'a mut self, x: &'a mut DistributionParamVal<Vec<f64>>) -> LogDistribution<'a> {
-        let mut params = vec![];
-        if let Some(x) = x.mut_for_optimization() {
-            params = x.iter_mut().map(|xi| xi).collect();
+#[derive(Clone, Debug, PartialEq)]
+pub struct MultivariateNormalParams {
+    mu: Vec<f64>,
+    l_sigma: Matrix,
+}
+
+impl MultivariateNormalParams {
+    /// # Multivariate normal
+    /// `L` is needed as second argument under decomposition `Sigma = L * L^T`
+    /// l_sigma = sigma.potrf()?;
+    pub fn new(mu: Vec<f64>, l_sigma: Matrix) -> Result<Self, Box<dyn Error>> {
+        let n = mu.len();
+        if n != l_sigma.rows() || n != l_sigma.cols() {
+            return Err(MultivariateNormalError::DimensionMismatch.into());
         }
-        if let Some(mu) = self.mu.mut_for_optimization() {
-            params = params
-                .into_iter()
-                .chain(mu.iter_mut().map(|mui| mui))
-                .collect();
-        }
 
-        let l = || -> Result<(f64, Vec<(&'a f64, f64)>), Box<dyn Error>> { Ok((0.0, vec![])) };
+        Ok(Self { mu, l_sigma })
+    }
 
-        LogDistribution::<'a>::new(params, Box::new(l))
+    pub fn mu(&self) -> &Vec<f64> {
+        &self.mu
+    }
+
+    pub fn l_sigma(&self) -> &Matrix {
+        &self.l_sigma
     }
 }
 

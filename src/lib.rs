@@ -8,15 +8,21 @@ extern crate rand_distr;
 extern crate rayon;
 extern crate thiserror;
 
-pub use crate::distribution::*;
-pub use crate::multivariate_normal::*;
-pub use crate::normal::*;
-pub use crate::optimization::*;
+pub use constant::*;
+pub use convert::*;
+pub use dependent_joint::*;
+pub use distribution::*;
+pub use independent_joint::*;
 pub use instant::*;
+pub use multivariate_normal::*;
+pub use normal::*;
 
+pub mod constant;
+pub mod convert;
+pub mod dependent_joint;
 pub mod distribution;
+pub mod independent_joint;
 pub mod instant;
 pub mod mcmc;
 pub mod multivariate_normal;
 pub mod normal;
-pub mod optimization;

@@ -1,9 +1,9 @@
-use crate::Distribution;
+use crate::{Distribution, RandomVariable};
 use rand::prelude::*;
 use rayon::prelude::*;
-use std::{error::Error, f64::consts::PI, fmt::Debug, marker::PhantomData};
+use std::{error::Error, f64::consts::PI, marker::PhantomData};
 
-pub trait EllipticalSliceable: Clone + Debug {
+pub trait EllipticalSliceable: RandomVariable {
     fn ellipse(self, theta: f64, nu: &Self) -> Self;
 }
 
@@ -26,36 +26,43 @@ impl EllipticalSliceable for Vec<f64> {
 }
 
 /// Sample from posterior p(b|a) with likelihood p(a|b) and prior p(b)
-pub struct EllipticalSliceSampler<'a, T, DL, DP>
+pub struct EllipticalSliceSampler<'a, L, R, T, UL, UR>
 where
-    T: EllipticalSliceable,
-    DL: Distribution<'a, T>,
-    DP: Distribution<'a, T>,
+    L: Distribution<T = T, U = UL>,
+    R: Distribution<T = UL, U = UR>,
+    T: RandomVariable,
+    UL: EllipticalSliceable,
+    UR: RandomVariable,
 {
-    likelihood: &'a DL,
-    prior: &'a DP,
-    phantom: PhantomData<T>,
+    value: &'a T,
+    likelihood: &'a L,
+    prior: &'a R,
+    phantom: PhantomData<(T, UL)>,
 }
 
-impl<'a, T, DL, DP> EllipticalSliceSampler<'a, T, DL, DP>
+impl<'a, DL, DP, T, UL, UR> EllipticalSliceSampler<'a, DL, DP, T, UL, UR>
 where
-    T: EllipticalSliceable,
-    DL: Distribution<'a, T>,
-    DP: Distribution<'a, T>,
+    DL: Distribution<T = T, U = UL>,
+    DP: Distribution<T = UL, U = UR>,
+    T: RandomVariable,
+    UL: EllipticalSliceable,
+    UR: RandomVariable,
 {
-    pub fn new(likelihood: &'a DL, prior: &'a DP) -> Self {
+    pub fn new(value: &'a T, likelihood: &'a DL, prior: &'a DP) -> Self {
         Self {
+            value,
             likelihood,
             prior,
             phantom: PhantomData,
         }
     }
 
-    pub fn sample(&self, rng: &mut StdRng) -> Result<T, Box<dyn Error>> {
-        let nu = self.prior.sample(rng)?;
+    pub fn sample(&self, theta: &UR, rng: &mut StdRng) -> Result<UL, Box<dyn Error>> {
+        let nu = self.prior.sample(theta, rng)?;
 
-        let mut b = self.prior.sample(rng)?;
-        let rho = self.likelihood.p(&b)? * rng.gen_range(0.0, 1.0);
+        let mut b = self.prior.sample(theta, rng)?;
+
+        let rho = self.likelihood.p(self.value, &b)? * rng.gen_range(0.0, 1.0);
         let mut theta = rng.gen_range(0.0, 2.0 * PI);
 
         let mut start = theta - 2.0 * PI;
@@ -64,7 +71,7 @@ where
         loop {
             b = b.ellipse(theta, &nu);
 
-            if rho < self.likelihood.p(&b)? {
+            if rho < self.likelihood.p(self.value, &b)? {
                 break;
             }
 

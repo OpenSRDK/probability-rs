@@ -1,13 +1,10 @@
-use crate::{Distribution, DistributionParam, DistributionParamVal, LogDistribution};
+use crate::Distribution;
 use rand::prelude::*;
 use rand_distr::Normal as RandNormal;
 use std::{error::Error, f64::consts::PI};
 
-#[derive(Debug)]
-pub struct Normal {
-    mu: Box<dyn DistributionParam<f64>>,
-    sigma: Box<dyn DistributionParam<f64>>,
-}
+#[derive(Clone, Debug)]
+pub struct Normal;
 
 #[derive(thiserror::Error, Debug)]
 pub enum NormalError {
@@ -15,63 +12,52 @@ pub enum NormalError {
     InvalidVariance,
 }
 
-impl Normal {
-    pub fn new(
-        mu: Box<dyn DistributionParam<f64>>,
-        sigma: Box<dyn DistributionParam<f64>>,
-    ) -> Result<Self, Box<dyn Error>> {
-        if *sigma.value() <= 0.0 {
-            return Err(NormalError::InvalidVariance.into());
-        }
+impl Distribution for Normal {
+    type T = f64;
+    type U = NormalParams;
 
-        Ok(Self { mu, sigma })
-    }
-
-    pub fn mu(&self) -> &f64 {
-        self.mu.value()
-    }
-
-    pub fn sigma(&self) -> &f64 {
-        self.sigma.value()
-    }
-}
-
-impl<'a> Distribution<'a, f64> for Normal {
-    fn p(&self, x: &f64) -> Result<f64, Box<dyn Error>> {
-        let mu = self.mu();
-        let sigma = self.sigma();
+    fn p(&self, x: &f64, theta: &NormalParams) -> Result<f64, Box<dyn Error>> {
+        let mu = theta.mu();
+        let sigma = theta.sigma();
 
         Ok(1.0 / (2.0 * PI * sigma.powi(2)).sqrt()
             * (-(x - mu).powi(2) / (2.0 * sigma.powi(2))).exp())
     }
 
-    fn sample(&self, rng: &mut StdRng) -> Result<f64, Box<dyn Error>> {
-        let mu = self.mu();
-        let sigma = self.sigma();
+    fn sample(&self, theta: &NormalParams, rng: &mut StdRng) -> Result<f64, Box<dyn Error>> {
+        let mu = theta.mu();
+        let sigma = theta.sigma();
 
-        let normal = match RandNormal::new(*mu, *sigma) {
+        let normal = match RandNormal::new(mu, sigma) {
             Ok(n) => n,
             Err(_) => return Err(NormalError::InvalidVariance.into()),
         };
 
         Ok(rng.sample(normal))
     }
+}
 
-    fn ln(&'a mut self, x: &'a mut DistributionParamVal<f64>) -> LogDistribution<'a> {
-        let mut params = vec![];
-        if let Some(x) = x.mut_for_optimization() {
-            params = vec![x];
-        }
-        if let Some(mu) = self.mu.mut_for_optimization() {
-            params.push(mu);
-        }
-        if let Some(sigma) = self.sigma.mut_for_optimization() {
-            params.push(sigma);
+#[derive(Clone, Debug, PartialEq)]
+pub struct NormalParams {
+    mu: f64,
+    sigma: f64,
+}
+
+impl NormalParams {
+    pub fn new(mu: f64, sigma: f64) -> Result<Self, Box<dyn Error>> {
+        if sigma <= 0.0 {
+            return Err(NormalError::InvalidVariance.into());
         }
 
-        let l = || -> Result<(f64, Vec<(&'a f64, f64)>), Box<dyn Error>> { Ok((0.0, vec![])) };
+        Ok(Self { mu, sigma })
+    }
 
-        LogDistribution::<'a>::new(params, Box::new(l))
+    pub fn mu(&self) -> f64 {
+        self.mu
+    }
+
+    pub fn sigma(&self) -> f64 {
+        self.sigma
     }
 }
 
