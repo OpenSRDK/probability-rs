@@ -1,8 +1,11 @@
-use std::error::Error;
+use std::{
+    error::Error,
+    ops::{BitAnd, Mul},
+};
 
 use rand::prelude::StdRng;
 
-use crate::{Distribution, RandomVariable};
+use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 
 pub struct ConvertedDistribution<D, T1, T2, U>
 where
@@ -78,5 +81,37 @@ where
         T2: RandomVariable,
     {
         ConvertedDistribution::<Self, Self::T, T2, Self::U>::new(self, map, inv)
+    }
+}
+
+impl<D, T1, T2, U, Rhs, URhs> Mul<Rhs> for ConvertedDistribution<D, T1, T2, U>
+where
+    D: Distribution<T = T1, U = U>,
+    T1: RandomVariable,
+    T2: RandomVariable,
+    U: RandomVariable,
+    Rhs: Distribution<T = U, U = URhs>,
+    URhs: RandomVariable,
+{
+    type Output = DependentJoint<Self, Rhs, T2, U, URhs>;
+
+    fn mul(self, rhs: Rhs) -> Self::Output {
+        DependentJoint::new(self, rhs)
+    }
+}
+
+impl<D, T1, T2, U, Rhs, TRhs> BitAnd<Rhs> for ConvertedDistribution<D, T1, T2, U>
+where
+    D: Distribution<T = T1, U = U>,
+    T1: RandomVariable,
+    T2: RandomVariable,
+    U: RandomVariable,
+    Rhs: Distribution<T = TRhs, U = U>,
+    TRhs: RandomVariable,
+{
+    type Output = IndependentJoint<Self, Rhs, T2, TRhs, U>;
+
+    fn bitand(self, rhs: Rhs) -> Self::Output {
+        IndependentJoint::new(self, rhs)
     }
 }

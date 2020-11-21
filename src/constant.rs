@@ -1,6 +1,6 @@
 use crate::{Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::StdRng;
-use std::{error::Error, ops::Mul};
+use std::{error::Error, ops::BitAnd};
 
 pub struct Constant<T>
 where
@@ -38,15 +38,15 @@ where
     }
 }
 
-impl<R, T, TR> Mul<R> for Constant<T>
+impl<T, Rhs, TRhs> BitAnd<Rhs> for Constant<T>
 where
-    R: Distribution<T = TR, U = ()>,
+    Rhs: Distribution<T = TRhs, U = ()>,
     T: RandomVariable,
-    TR: RandomVariable,
+    TRhs: RandomVariable,
 {
-    type Output = IndependentJoint<Self, R, T, TR, ()>;
+    type Output = IndependentJoint<Self, Rhs, T, TRhs, ()>;
 
-    fn mul(self, rhs: R) -> Self::Output {
+    fn bitand(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
     }
 }

@@ -1,7 +1,7 @@
 use rand::prelude::StdRng;
 
-use crate::{Distribution, RandomVariable};
-use std::{error::Error, marker::PhantomData};
+use crate::{Distribution, IndependentJoint, RandomVariable};
+use std::{error::Error, marker::PhantomData, ops::BitAnd, ops::Mul};
 
 /// # DependentJoint
 /// ![tex](https://latex.codecogs.com/svg.latex?P%28a,b%7Cc%29%3DP%28a%7Cb%29P%28b%7Cc%29)
@@ -53,5 +53,39 @@ where
     fn sample(&self, theta: &UR, rng: &mut StdRng) -> Result<(T, UL), Box<dyn Error>> {
         let rhs = self.rhs.sample(theta, rng)?;
         Ok((self.lhs.sample(&rhs, rng)?, rhs))
+    }
+}
+
+impl<L, R, T, UL, UR, Rhs, URhs> Mul<Rhs> for DependentJoint<L, R, T, UL, UR>
+where
+    L: Distribution<T = T, U = UL>,
+    R: Distribution<T = UL, U = UR>,
+    T: RandomVariable,
+    UL: RandomVariable,
+    UR: RandomVariable,
+    Rhs: Distribution<T = UR, U = URhs>,
+    URhs: RandomVariable,
+{
+    type Output = DependentJoint<Self, Rhs, (T, UL), UR, URhs>;
+
+    fn mul(self, rhs: Rhs) -> Self::Output {
+        DependentJoint::new(self, rhs)
+    }
+}
+
+impl<L, R, T, UL, UR, Rhs, TRhs> BitAnd<Rhs> for DependentJoint<L, R, T, UL, UR>
+where
+    L: Distribution<T = T, U = UL>,
+    R: Distribution<T = UL, U = UR>,
+    T: RandomVariable,
+    UL: RandomVariable,
+    UR: RandomVariable,
+    Rhs: Distribution<T = TRhs, U = UR>,
+    TRhs: RandomVariable,
+{
+    type Output = IndependentJoint<Self, Rhs, (T, UL), TRhs, UR>;
+
+    fn bitand(self, rhs: Rhs) -> Self::Output {
+        IndependentJoint::new(self, rhs)
     }
 }
