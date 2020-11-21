@@ -1,9 +1,9 @@
-use crate::Distribution;
+use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
 use rand_distr::StandardNormal;
 use rayon::prelude::*;
-use std::{error::Error, f64::consts::PI};
+use std::{error::Error, f64::consts::PI, ops::BitAnd, ops::Mul};
 
 #[derive(Clone, Debug)]
 pub struct MultivariateNormal;
@@ -84,6 +84,30 @@ impl MultivariateNormalParams {
 
     pub fn l_sigma(&self) -> &Matrix {
         &self.l_sigma
+    }
+}
+
+impl<Rhs, URhs> Mul<Rhs> for MultivariateNormal
+where
+    Rhs: Distribution<T = MultivariateNormalParams, U = URhs>,
+    URhs: RandomVariable,
+{
+    type Output = DependentJoint<Self, Rhs, Vec<f64>, MultivariateNormalParams, URhs>;
+
+    fn mul(self, rhs: Rhs) -> Self::Output {
+        DependentJoint::new(self, rhs)
+    }
+}
+
+impl<Rhs, TRhs> BitAnd<Rhs> for MultivariateNormal
+where
+    Rhs: Distribution<T = TRhs, U = MultivariateNormalParams>,
+    TRhs: RandomVariable,
+{
+    type Output = IndependentJoint<Self, Rhs, Vec<f64>, TRhs, MultivariateNormalParams>;
+
+    fn bitand(self, rhs: Rhs) -> Self::Output {
+        IndependentJoint::new(self, rhs)
     }
 }
 
