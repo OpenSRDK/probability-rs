@@ -61,27 +61,27 @@ impl NormalParams {
     }
 }
 
-impl<Rhs, URhs> Mul<Rhs> for Normal
-where
-    Rhs: Distribution<T = NormalParams, U = URhs>,
-    URhs: RandomVariable,
-{
-    type Output = DependentJoint<Self, Rhs, f64, NormalParams, URhs>;
-
-    fn mul(self, rhs: Rhs) -> Self::Output {
-        DependentJoint::new(self, rhs)
-    }
-}
-
-impl<Rhs, TRhs> BitAnd<Rhs> for Normal
+impl<Rhs, TRhs> Mul<Rhs> for Normal
 where
     Rhs: Distribution<T = TRhs, U = NormalParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, f64, TRhs, NormalParams>;
 
-    fn bitand(self, rhs: Rhs) -> Self::Output {
+    fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
+    }
+}
+
+impl<Rhs, URhs> BitAnd<Rhs> for Normal
+where
+    Rhs: Distribution<T = NormalParams, U = URhs>,
+    URhs: RandomVariable,
+{
+    type Output = DependentJoint<Self, Rhs, f64, NormalParams, URhs>;
+
+    fn bitand(self, rhs: Rhs) -> Self::Output {
+        DependentJoint::new(self, rhs)
     }
 }
 

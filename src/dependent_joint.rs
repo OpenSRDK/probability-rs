@@ -56,24 +56,7 @@ where
     }
 }
 
-impl<L, R, T, UL, UR, Rhs, URhs> Mul<Rhs> for DependentJoint<L, R, T, UL, UR>
-where
-    L: Distribution<T = T, U = UL>,
-    R: Distribution<T = UL, U = UR>,
-    T: RandomVariable,
-    UL: RandomVariable,
-    UR: RandomVariable,
-    Rhs: Distribution<T = UR, U = URhs>,
-    URhs: RandomVariable,
-{
-    type Output = DependentJoint<Self, Rhs, (T, UL), UR, URhs>;
-
-    fn mul(self, rhs: Rhs) -> Self::Output {
-        DependentJoint::new(self, rhs)
-    }
-}
-
-impl<L, R, T, UL, UR, Rhs, TRhs> BitAnd<Rhs> for DependentJoint<L, R, T, UL, UR>
+impl<L, R, T, UL, UR, Rhs, TRhs> Mul<Rhs> for DependentJoint<L, R, T, UL, UR>
 where
     L: Distribution<T = T, U = UL>,
     R: Distribution<T = UL, U = UR>,
@@ -85,7 +68,24 @@ where
 {
     type Output = IndependentJoint<Self, Rhs, (T, UL), TRhs, UR>;
 
-    fn bitand(self, rhs: Rhs) -> Self::Output {
+    fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
+    }
+}
+
+impl<L, R, T, UL, UR, Rhs, URhs> BitAnd<Rhs> for DependentJoint<L, R, T, UL, UR>
+where
+    L: Distribution<T = T, U = UL>,
+    R: Distribution<T = UL, U = UR>,
+    T: RandomVariable,
+    UL: RandomVariable,
+    UR: RandomVariable,
+    Rhs: Distribution<T = UR, U = URhs>,
+    URhs: RandomVariable,
+{
+    type Output = DependentJoint<Self, Rhs, (T, UL), UR, URhs>;
+
+    fn bitand(self, rhs: Rhs) -> Self::Output {
+        DependentJoint::new(self, rhs)
     }
 }

@@ -87,27 +87,27 @@ impl MultivariateNormalParams {
     }
 }
 
-impl<Rhs, URhs> Mul<Rhs> for MultivariateNormal
-where
-    Rhs: Distribution<T = MultivariateNormalParams, U = URhs>,
-    URhs: RandomVariable,
-{
-    type Output = DependentJoint<Self, Rhs, Vec<f64>, MultivariateNormalParams, URhs>;
-
-    fn mul(self, rhs: Rhs) -> Self::Output {
-        DependentJoint::new(self, rhs)
-    }
-}
-
-impl<Rhs, TRhs> BitAnd<Rhs> for MultivariateNormal
+impl<Rhs, TRhs> Mul<Rhs> for MultivariateNormal
 where
     Rhs: Distribution<T = TRhs, U = MultivariateNormalParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, Vec<f64>, TRhs, MultivariateNormalParams>;
 
-    fn bitand(self, rhs: Rhs) -> Self::Output {
+    fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
+    }
+}
+
+impl<Rhs, URhs> BitAnd<Rhs> for MultivariateNormal
+where
+    Rhs: Distribution<T = MultivariateNormalParams, U = URhs>,
+    URhs: RandomVariable,
+{
+    type Output = DependentJoint<Self, Rhs, Vec<f64>, MultivariateNormalParams, URhs>;
+
+    fn bitand(self, rhs: Rhs) -> Self::Output {
+        DependentJoint::new(self, rhs)
     }
 }
 

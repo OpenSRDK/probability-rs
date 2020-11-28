@@ -84,23 +84,7 @@ where
     }
 }
 
-impl<D, T1, T2, U, Rhs, URhs> Mul<Rhs> for ConvertedDistribution<D, T1, T2, U>
-where
-    D: Distribution<T = T1, U = U>,
-    T1: RandomVariable,
-    T2: RandomVariable,
-    U: RandomVariable,
-    Rhs: Distribution<T = U, U = URhs>,
-    URhs: RandomVariable,
-{
-    type Output = DependentJoint<Self, Rhs, T2, U, URhs>;
-
-    fn mul(self, rhs: Rhs) -> Self::Output {
-        DependentJoint::new(self, rhs)
-    }
-}
-
-impl<D, T1, T2, U, Rhs, TRhs> BitAnd<Rhs> for ConvertedDistribution<D, T1, T2, U>
+impl<D, T1, T2, U, Rhs, TRhs> Mul<Rhs> for ConvertedDistribution<D, T1, T2, U>
 where
     D: Distribution<T = T1, U = U>,
     T1: RandomVariable,
@@ -111,7 +95,23 @@ where
 {
     type Output = IndependentJoint<Self, Rhs, T2, TRhs, U>;
 
-    fn bitand(self, rhs: Rhs) -> Self::Output {
+    fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
+    }
+}
+
+impl<D, T1, T2, U, Rhs, URhs> BitAnd<Rhs> for ConvertedDistribution<D, T1, T2, U>
+where
+    D: Distribution<T = T1, U = U>,
+    T1: RandomVariable,
+    T2: RandomVariable,
+    U: RandomVariable,
+    Rhs: Distribution<T = U, U = URhs>,
+    URhs: RandomVariable,
+{
+    type Output = DependentJoint<Self, Rhs, T2, U, URhs>;
+
+    fn bitand(self, rhs: Rhs) -> Self::Output {
+        DependentJoint::new(self, rhs)
     }
 }

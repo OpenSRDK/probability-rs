@@ -44,21 +44,7 @@ where
     }
 }
 
-impl<'a, T, U, Rhs, URhs> Mul<Rhs> for InstantDistribution<'a, T, U>
-where
-    T: RandomVariable,
-    U: RandomVariable,
-    Rhs: Distribution<T = U, U = URhs>,
-    URhs: RandomVariable,
-{
-    type Output = DependentJoint<Self, Rhs, T, U, URhs>;
-
-    fn mul(self, rhs: Rhs) -> Self::Output {
-        DependentJoint::new(self, rhs)
-    }
-}
-
-impl<'a, T, U, Rhs, TRhs> BitAnd<Rhs> for InstantDistribution<'a, T, U>
+impl<'a, T, U, Rhs, TRhs> Mul<Rhs> for InstantDistribution<'a, T, U>
 where
     T: RandomVariable,
     U: RandomVariable,
@@ -67,7 +53,21 @@ where
 {
     type Output = IndependentJoint<Self, Rhs, T, TRhs, U>;
 
-    fn bitand(self, rhs: Rhs) -> Self::Output {
+    fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
+    }
+}
+
+impl<'a, T, U, Rhs, URhs> BitAnd<Rhs> for InstantDistribution<'a, T, U>
+where
+    T: RandomVariable,
+    U: RandomVariable,
+    Rhs: Distribution<T = U, U = URhs>,
+    URhs: RandomVariable,
+{
+    type Output = DependentJoint<Self, Rhs, T, U, URhs>;
+
+    fn bitand(self, rhs: Rhs) -> Self::Output {
+        DependentJoint::new(self, rhs)
     }
 }

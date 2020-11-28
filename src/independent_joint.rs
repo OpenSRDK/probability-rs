@@ -1,6 +1,6 @@
+use crate::{DependentJoint, Distribution, InstantDistribution, RandomVariable};
 use rand::prelude::StdRng;
-
-use crate::{DependentJoint, Distribution, RandomVariable};
+use std::iter::Iterator;
 use std::{error::Error, marker::PhantomData, ops::BitAnd, ops::Mul};
 
 /// # IndependentJoint
@@ -55,24 +55,7 @@ where
     }
 }
 
-impl<L, R, TL, TR, U, Rhs, URhs> Mul<Rhs> for IndependentJoint<L, R, TL, TR, U>
-where
-    L: Distribution<T = TL, U = U>,
-    R: Distribution<T = TR, U = U>,
-    TL: RandomVariable,
-    TR: RandomVariable,
-    U: RandomVariable,
-    Rhs: Distribution<T = U, U = URhs>,
-    URhs: RandomVariable,
-{
-    type Output = DependentJoint<Self, Rhs, (TL, TR), U, URhs>;
-
-    fn mul(self, rhs: Rhs) -> Self::Output {
-        DependentJoint::new(self, rhs)
-    }
-}
-
-impl<L, R, TL, TR, U, Rhs, TRhs> BitAnd<Rhs> for IndependentJoint<L, R, TL, TR, U>
+impl<L, R, TL, TR, U, Rhs, TRhs> Mul<Rhs> for IndependentJoint<L, R, TL, TR, U>
 where
     L: Distribution<T = TL, U = U>,
     R: Distribution<T = TR, U = U>,
@@ -84,7 +67,56 @@ where
 {
     type Output = IndependentJoint<Self, Rhs, (TL, TR), TRhs, U>;
 
-    fn bitand(self, rhs: Rhs) -> Self::Output {
+    fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
+    }
+}
+
+impl<L, R, TL, TR, U, Rhs, URhs> BitAnd<Rhs> for IndependentJoint<L, R, TL, TR, U>
+where
+    L: Distribution<T = TL, U = U>,
+    R: Distribution<T = TR, U = U>,
+    TL: RandomVariable,
+    TR: RandomVariable,
+    U: RandomVariable,
+    Rhs: Distribution<T = U, U = URhs>,
+    URhs: RandomVariable,
+{
+    type Output = DependentJoint<Self, Rhs, (TL, TR), U, URhs>;
+
+    fn bitand(self, rhs: Rhs) -> Self::Output {
+        DependentJoint::new(self, rhs)
+    }
+}
+
+pub struct IndependentArrayJoint<D, T, U>
+where
+    D: Distribution<T = T, U = U>,
+    T: RandomVariable,
+    U: RandomVariable,
+{
+    distributions: Vec<D>,
+}
+
+pub trait DistributionProduct<D, T, U>
+where
+    D: Distribution<T = T, U = U>,
+    T: RandomVariable,
+    U: RandomVariable,
+{
+    fn product(self) -> IndependentArrayJoint<D, T, U>;
+}
+
+impl<I, D, T, U> DistributionProduct<D, T, U> for I
+where
+    I: Iterator<Item = D>,
+    D: Distribution<T = T, U = U>,
+    T: RandomVariable,
+    U: RandomVariable,
+{
+    fn product(self) -> IndependentArrayJoint<D, T, U> {
+        let distributions = self.collect::<Vec<_>>();
+
+        IndependentArrayJoint::<D, T, U> { distributions }
     }
 }
