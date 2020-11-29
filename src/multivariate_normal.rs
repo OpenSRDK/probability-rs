@@ -5,6 +5,8 @@ use rand_distr::StandardNormal;
 use rayon::prelude::*;
 use std::{error::Error, f64::consts::PI, ops::BitAnd, ops::Mul};
 
+/// # MultivariateNormal
+/// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\Sigma%29)
 #[derive(Clone, Debug)]
 pub struct MultivariateNormal;
 

@@ -4,7 +4,7 @@ use crate::{Distribution, IndependentJoint, RandomVariable};
 use std::{error::Error, marker::PhantomData, ops::BitAnd, ops::Mul};
 
 /// # DependentJoint
-/// ![tex](https://latex.codecogs.com/svg.latex?P%28a,b%7Cc%29%3DP%28a%7Cb%29P%28b%7Cc%29)
+/// ![tex](https://latex.codecogs.com/svg.latex?p%28a,b%7Cc%29%3Dp%28a%7Cb%29p%28b%7Cc%29)
 pub struct DependentJoint<L, R, T, UL, UR>
 where
     L: Distribution<T = T, U = UL>,

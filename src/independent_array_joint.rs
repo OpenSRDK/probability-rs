@@ -3,6 +3,8 @@ use rand::prelude::StdRng;
 use std::iter::Iterator;
 use std::{error::Error, ops::BitAnd, ops::Mul};
 
+/// # IndependentArrayJoint
+/// ![tex](https://latex.codecogs.com/svg.latex?p%28\mathbf%7Ba%7D%7Cb%29%3D\prod_%7Bi\in%20I%7Dp%28a_i%7Cb%29)
 pub struct IndependentArrayJoint<D, T, U>
 where
     D: Distribution<T = T, U = U>,

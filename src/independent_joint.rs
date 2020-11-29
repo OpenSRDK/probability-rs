@@ -3,7 +3,7 @@ use rand::prelude::StdRng;
 use std::{error::Error, marker::PhantomData, ops::BitAnd, ops::Mul};
 
 /// # IndependentJoint
-/// ![tex](https://latex.codecogs.com/svg.latex?P%28a,b%7Cc%29%3DP%28a%7Cc%29P%28b%7Cc%29)
+/// ![tex](https://latex.codecogs.com/svg.latex?p%28a,b%7Cc%29%3Dp%28a%7Cc%29p%28b%7Cc%29)
 pub struct IndependentJoint<L, R, TL, TR, U>
 where
     L: Distribution<T = TL, U = U>,

@@ -11,7 +11,7 @@ pub enum DistributionError {
 }
 
 /// # Distribution
-/// ![tex](https://latex.codecogs.com/svg.latex?P%28x%7C\mathbf{\theta}%29)
+/// ![tex](https://latex.codecogs.com/svg.latex?p%28x%7C\mathbf{\theta}%29)
 pub trait Distribution {
     type T: RandomVariable;
     type U: RandomVariable;

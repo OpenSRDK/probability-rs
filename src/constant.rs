@@ -2,6 +2,8 @@ use crate::{Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::StdRng;
 use std::{error::Error, ops::Mul};
 
+/// # Constant
+/// ![tex](https://latex.codecogs.com/svg.latex?p%28x%29%3D\delta%28x-x%5E*%29)
 pub struct Constant<T>
 where
     T: RandomVariable,
