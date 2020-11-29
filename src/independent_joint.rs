@@ -1,6 +1,5 @@
-use crate::{DependentJoint, Distribution, InstantDistribution, RandomVariable};
+use crate::{DependentJoint, Distribution, RandomVariable};
 use rand::prelude::StdRng;
-use std::iter::Iterator;
 use std::{error::Error, marker::PhantomData, ops::BitAnd, ops::Mul};
 
 /// # IndependentJoint
@@ -86,37 +85,5 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
-    }
-}
-
-pub struct IndependentArrayJoint<D, T, U>
-where
-    D: Distribution<T = T, U = U>,
-    T: RandomVariable,
-    U: RandomVariable,
-{
-    distributions: Vec<D>,
-}
-
-pub trait DistributionProduct<D, T, U>
-where
-    D: Distribution<T = T, U = U>,
-    T: RandomVariable,
-    U: RandomVariable,
-{
-    fn product(self) -> IndependentArrayJoint<D, T, U>;
-}
-
-impl<I, D, T, U> DistributionProduct<D, T, U> for I
-where
-    I: Iterator<Item = D>,
-    D: Distribution<T = T, U = U>,
-    T: RandomVariable,
-    U: RandomVariable,
-{
-    fn product(self) -> IndependentArrayJoint<D, T, U> {
-        let distributions = self.collect::<Vec<_>>();
-
-        IndependentArrayJoint::<D, T, U> { distributions }
     }
 }
