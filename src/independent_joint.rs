@@ -1,6 +1,6 @@
 use crate::{DependentJoint, Distribution, RandomVariable};
 use rand::prelude::StdRng;
-use std::{error::Error, marker::PhantomData, ops::BitAnd, ops::Mul};
+use std::{error::Error, ops::BitAnd, ops::Mul};
 
 /// # IndependentJoint
 /// ![tex](https://latex.codecogs.com/svg.latex?p%28a,b%7Cc%29%3Dp%28a%7Cc%29p%28b%7Cc%29)
@@ -14,7 +14,6 @@ where
 {
     lhs: L,
     rhs: R,
-    phantom: PhantomData<(TL, TR, U)>,
 }
 
 impl<L, R, TL, TR, U> IndependentJoint<L, R, TL, TR, U>
@@ -26,11 +25,7 @@ where
     U: RandomVariable,
 {
     pub fn new(lhs: L, rhs: R) -> Self {
-        Self {
-            lhs,
-            rhs,
-            phantom: PhantomData,
-        }
+        Self { lhs, rhs }
     }
 }
 
