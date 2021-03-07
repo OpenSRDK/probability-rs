@@ -58,8 +58,8 @@ where
 
         let mut b = self.prior.sample(&(), rng)?;
 
-        let rho = self.likelihood.p(self.value, &b)? * rng.gen_range(0.0, 1.0);
-        let mut theta = rng.gen_range(0.0, 2.0 * PI);
+        let rho = self.likelihood.p(self.value, &b)? * rng.gen_range(0.0..1.0);
+        let mut theta = rng.gen_range(0.0..2.0 * PI);
 
         let mut start = theta - 2.0 * PI;
         let mut end = theta;
@@ -76,7 +76,7 @@ where
             } else {
                 start = 0.0;
             }
-            theta = rng.gen_range(start, end);
+            theta = rng.gen_range(start..end);
         }
 
         Ok(b)

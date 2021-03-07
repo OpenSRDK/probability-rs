@@ -20,7 +20,7 @@ impl Distribution for MultivariateNormal {
     type T = Vec<f64>;
     type U = MultivariateNormalParams;
 
-    fn p(&self, x: &Vec<f64>, theta: &MultivariateNormalParams) -> Result<f64, Box<dyn Error>> {
+    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
         let mu = theta.mu();
         let l_sigma = theta.l_sigma();
 
@@ -42,11 +42,7 @@ impl Distribution for MultivariateNormal {
             * (-1.0 / 2.0 * (x_mu.t() * l_sigma.potrs(x_mu)?)[0][0]).exp())
     }
 
-    fn sample(
-        &self,
-        theta: &MultivariateNormalParams,
-        rng: &mut StdRng,
-    ) -> Result<Vec<f64>, Box<dyn Error>> {
+    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
         let mu = theta.mu();
         let l_sigma = theta.l_sigma();
 
