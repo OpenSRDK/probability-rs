@@ -18,6 +18,7 @@ pub mod independent_array_joint;
 pub mod independent_joint;
 pub mod instant;
 pub mod mcmc;
+pub mod nonparametric;
 
 pub use constant::*;
 pub use continuous::*;
@@ -28,3 +29,4 @@ pub use distribution::*;
 pub use independent_array_joint::*;
 pub use independent_joint::*;
 pub use instant::*;
+pub use nonparametric::*;

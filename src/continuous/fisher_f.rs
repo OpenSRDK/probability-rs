@@ -29,12 +29,12 @@ impl Distribution for FisherF {
         let m = theta.m();
         let n = theta.n();
 
-        let fisherf = match RandFisherF::new(m as f64, n as f64) {
+        let fisher_f = match RandFisherF::new(m as f64, n as f64) {
             Ok(n) => n,
             Err(_) => return Err(FisherFError::Unknown.into()),
         };
 
-        Ok(rng.sample(fisherf))
+        Ok(rng.sample(fisher_f))
     }
 }
 

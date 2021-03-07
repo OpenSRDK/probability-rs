@@ -19,35 +19,35 @@ impl Distribution for StudentT {
     type U = StudentTParams;
 
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
-        let n = theta.n();
+        let n = theta.nu();
 
         Ok(todo!())
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
-        let n = theta.n();
+        let nu = theta.nu();
 
-        let studentt = match RandStudentT::new(n as f64) {
+        let student_t = match RandStudentT::new(nu as f64) {
             Ok(n) => n,
             Err(_) => return Err(StudentTError::Unknown.into()),
         };
 
-        Ok(rng.sample(studentt))
+        Ok(rng.sample(student_t))
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct StudentTParams {
-    n: u64,
+    nu: u64,
 }
 
 impl StudentTParams {
     pub fn new(n: u64) -> Result<Self, Box<dyn Error>> {
-        Ok(Self { n })
+        Ok(Self { nu: n })
     }
 
-    pub fn n(&self) -> u64 {
-        self.n
+    pub fn nu(&self) -> u64 {
+        self.nu
     }
 }
 

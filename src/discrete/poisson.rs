@@ -10,7 +10,7 @@ pub struct Poisson;
 
 #[derive(thiserror::Error, Debug)]
 pub enum PoissonError {
-    #[error("Lambda must be positive")]
+    #[error("'λ' must be positive")]
     LambdaMustBePositive,
     #[error("Unknown error")]
     Unknown,

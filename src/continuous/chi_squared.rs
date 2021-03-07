@@ -27,12 +27,12 @@ impl Distribution for ChiSquared {
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
         let k = theta.k();
 
-        let chisquared = match RandChiSquared::new(k as f64) {
+        let chi_squared = match RandChiSquared::new(k as f64) {
             Ok(n) => n,
             Err(_) => return Err(ChiSquaredError::Unknown.into()),
         };
 
-        Ok(rng.sample(chisquared))
+        Ok(rng.sample(chi_squared))
     }
 }
 

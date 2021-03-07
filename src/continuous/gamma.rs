@@ -1,7 +1,7 @@
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::Gamma as RandGamma;
-use std::{error::Error, f64::consts::PI, ops::BitAnd, ops::Mul};
+use std::{error::Error, ops::BitAnd, ops::Mul};
 
 /// # Gamma
 /// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
@@ -10,6 +10,10 @@ pub struct Gamma;
 
 #[derive(thiserror::Error, Debug)]
 pub enum GammaError {
+    #[error("'shape' must be positive")]
+    ShapeMustBePositive,
+    #[error("'scale' must be positive")]
+    ScaleMustBePositive,
     #[error("Unknown error")]
     Unknown,
 }
@@ -19,18 +23,17 @@ impl Distribution for Gamma {
     type U = GammaParams;
 
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
-        let mu = theta.mu();
-        let sigma = theta.sigma();
+        let shape = theta.shape();
+        let scale = theta.scale();
 
-        Ok(1.0 / (2.0 * PI * sigma.powi(2)).sqrt()
-            * (-(x - mu).powi(2) / (2.0 * sigma.powi(2))).exp())
+        Ok(todo!())
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
-        let mu = theta.mu();
-        let sigma = theta.sigma();
+        let shape = theta.shape();
+        let scale = theta.scale();
 
-        let gamma = match RandGamma::new(mu, sigma) {
+        let gamma = match RandGamma::new(shape, scale) {
             Ok(n) => n,
             Err(_) => return Err(GammaError::Unknown.into()),
         };
@@ -41,25 +44,28 @@ impl Distribution for Gamma {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct GammaParams {
-    mu: f64,
-    sigma: f64,
+    shape: f64,
+    scale: f64,
 }
 
 impl GammaParams {
-    pub fn new(mu: f64, sigma: f64) -> Result<Self, Box<dyn Error>> {
-        if sigma <= 0.0 {
-            return Err(GammaError::Unknown.into());
+    pub fn new(shape: f64, scale: f64) -> Result<Self, Box<dyn Error>> {
+        if shape <= 0.0 {
+            return Err(GammaError::ShapeMustBePositive.into());
+        }
+        if scale <= 0.0 {
+            return Err(GammaError::ScaleMustBePositive.into());
         }
 
-        Ok(Self { mu, sigma })
+        Ok(Self { shape, scale })
     }
 
-    pub fn mu(&self) -> f64 {
-        self.mu
+    pub fn shape(&self) -> f64 {
+        self.shape
     }
 
-    pub fn sigma(&self) -> f64 {
-        self.sigma
+    pub fn scale(&self) -> f64 {
+        self.scale
     }
 }
 
