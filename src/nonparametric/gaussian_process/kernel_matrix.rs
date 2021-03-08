@@ -1,6 +1,5 @@
 use crate::opensrdk_linear_algebra::*;
 use opensrdk_kernel_method::*;
-use rayon::prelude::*;
 use std::{error::Error, fmt::Debug};
 
 pub fn kernel_matrix<T>(

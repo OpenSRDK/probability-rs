@@ -1,14 +1,15 @@
 pub mod grid;
+pub mod internal;
 
-use super::{
-    ey::ey, ey::y_ey, kernel_matrix::kernel_matrix, GaussianProcess, GaussianProcessError,
-    GaussianProcessParams,
-};
+use super::{ey::ey, ey::y_ey, GaussianProcess, GaussianProcessError, GaussianProcessParams};
 use crate::MultivariateNormalParams;
 use crate::{opensrdk_linear_algebra::*, Distribution};
 use grid::Grid;
 use opensrdk_kernel_method::{Convolutable, Convolutional, Kernel};
-use std::{error::Error, marker::PhantomData};
+use rand::Rng;
+use rand_distr::StandardNormal;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use std::{error::Error, f64::consts::PI, marker::PhantomData};
 
 /// # Lanczos Variance Estimate Kernel Interpolation for Scalable Structured Gaussian Process
 /// |                 | time                                                                  |
@@ -20,7 +21,7 @@ use std::{error::Error, marker::PhantomData};
 pub struct KissLoveGP<K, T>
 where
     K: Kernel<Vec<f64>>,
-    T: Convolutable,
+    T: Convolutable + PartialEq,
 {
     kernel: Convolutional<K>,
     kernel_params_len: usize,
@@ -30,40 +31,24 @@ where
     wx: Vec<SparseMatrix>,
     u: Grid,
     a: Vec<Matrix>,
-    rt: Vec<Matrix>,
-    lt: (BidiagonalMatrix, Vec<f64>),
+    s: Vec<Matrix>,
     phantom: PhantomData<T>,
 }
 
 impl<K, T> KissLoveGP<K, T>
 where
     K: Kernel<Vec<f64>>,
-    T: Convolutable,
+    T: Convolutable + PartialEq,
 {
     pub fn from(kernel: K) -> Self {
         Self::new(Convolutional::new(kernel))
-    }
-
-    pub fn with_u(mut self, u: Grid) -> Self {
-        self.u = u;
-
-        self
-    }
-
-    fn reset_prepare(&mut self) -> Result<&mut Self, Box<dyn Error>> {
-        self.ready_to_predict = false;
-        self.a = vec![];
-        self.rt = vec![];
-        self.lt = (BidiagonalMatrix::default(), vec![]);
-
-        Ok(self)
     }
 }
 
 impl<K, T> GaussianProcess<Convolutional<K>, T> for KissLoveGP<K, T>
 where
     K: Kernel<Vec<f64>>,
-    T: Convolutable,
+    T: Convolutable + PartialEq,
 {
     /// Create an LOVE KISS gp struct.
     ///
@@ -91,29 +76,19 @@ where
             wx: vec![],
             u: Grid::new(vec![]),
             a: vec![],
-            rt: vec![],
-            lt: (BidiagonalMatrix::default(), vec![]),
+            s: vec![],
             phantom: PhantomData::<T>,
         }
     }
 
     fn set_x(&mut self, x: Vec<T>) -> Result<&Self, Box<dyn Error>> {
-        let n = x.len();
-        if n == 0 {
-            return Err(GaussianProcessError::Empty.into());
+        let (wx, u) = self.wx(&x, false)?;
+
+        self.wx = wx;
+        if let Some(u) = u {
+            self.u = u;
         }
 
-        let parts_len = x[0].parts_len();
-        let data_len = x[0].data_len();
-        if parts_len == 0 || data_len == 0 {
-            return Err(GaussianProcessError::Empty.into());
-        }
-
-        if self.u.axes().len() == 0 {
-            let points = vec![(n / 2usize.pow(data_len as u32)).max(2); data_len];
-            self.u = Grid::from(&x, &points)?;
-            self.wx = self.u.interpolation_weight(&x)?;
-        }
         Ok(self)
     }
 
@@ -149,27 +124,14 @@ where
         let kuu = &self.u.kuu(&self.kernel, &self.theta)?;
 
         let wx = &self.wx;
-        let wxt = &(0..p)
-            .into_iter()
-            .map(|pi| {
-                let wxpi = &wx[pi];
-                let wxpit = wxpi.t();
 
-                wxpit
-            })
-            .collect::<Vec<_>>();
-
-        let wxt_kuu_wx_sigma2_vec_mul = move |v: Vec<f64>| {
-            (0..p)
-                .into_iter()
-                .map(|pi| {
-                    let wxpi = &wx[pi];
-                    let wxpit = &wxt[pi];
-
+        let wxt_kuu_wx_vec_mul = move |v: Vec<f64>| {
+            wx.iter()
+                .map(|wxpi| {
                     let v = v.clone().col_mat();
                     let wx_v = wxpi * &v;
                     let kzz_wx_v = kuu.vec_mul(wx_v.vec())?.col_mat();
-                    let wxt_kzz_wx_v = wxpit * kzz_wx_v;
+                    let wxt_kzz_wx_v = wxpi.t() * kzz_wx_v;
                     Ok(wxt_kzz_wx_v.vec())
                 })
                 .try_fold(vec![0.0; v.len()], |a, b: Result<_, Box<dyn Error>>| {
@@ -177,29 +139,28 @@ where
                 })
         };
 
-        let wxt_kuu_wx_sigma2_inv_y =
-            Matrix::posv_cgm(&wxt_kuu_wx_sigma2_vec_mul, y_ey.to_vec(), k)?.col_mat();
-
-        // (wxt * kuu * wx + σ^2 I)^{-1} = q * t^{=1} * qt
-        // q: n,k
-        // t: k,k
-        let (q, t) = Matrix::sytrd_k(n, k, &wxt_kuu_wx_sigma2_vec_mul, None)?;
-        self.lt = t.pttrf()?;
+        let wxt_kuu_wx_inv_y = Matrix::posv_cgm(&wxt_kuu_wx_vec_mul, y_ey.to_vec(), k)?.col_mat();
 
         self.a = (0..p)
             .into_iter()
             .map(|pi| {
                 let wxpi = &wx[pi];
 
-                // a = kuu * wx * (wxt * kuu *wx + σ^2 I)^{-1} * y
-                let a = kuu
-                    .vec_mul((wxpi * &wxt_kuu_wx_sigma2_inv_y).vec())?
-                    .col_mat();
+                // a = kuu * wx * (wxt * kuu *wx)^{-1} * y
+                let a = kuu.vec_mul((wxpi * &wxt_kuu_wx_inv_y).vec())?.col_mat();
                 Ok(a)
             })
             .collect::<Result<Vec<_>, Box<dyn Error>>>()?;
 
-        self.rt = (0..p)
+        // (wxt * kuu * wx)^{-1} = q * t^{-1} * qt
+        // q: n×k
+        // t: k×k
+        let (q, t) = Matrix::sytrd_k(n, k, &wxt_kuu_wx_vec_mul, None)?;
+
+        // t = l * d * lt
+        let (l, d) = t.pttrf()?;
+
+        self.s = (0..p)
             .into_iter()
             .map(|pi| {
                 let wxpi = &wx[pi];
@@ -214,28 +175,32 @@ where
                     .map(|ki| &wx_q[ki])
                     .map(|wx_q_col| Ok(kuu.vec_mul(wx_q_col.to_owned())?))
                     .collect::<Result<Vec<_>, Box<dyn Error>>>()?;
+                // r = qt * wxt * kuu
                 let r = Matrix::from(m, kuu_wx_r_cols.concat());
 
-                /*
-                // kzz - c = q * t * qt
-                let (q, t) = Matrix::sytrd_k(
+                // kuu - rt * (l * d * lt)^{-1} * r = q2 * t2 * q2t
+                let (q2, t2) = Matrix::sytrd_k(
                     m,
                     100,
                     &|v| {
-                        Ok((kzz.vec_mul(v)?.col_mat()
-                            - &rt * l.pttrs(&d, v.to_vec().row_mat() * &rt)?.vec().col_mat())
+                        Ok((kuu.vec_mul(v.clone())?.col_mat()
+                            - r.t() * l.pttrs(&d, &r * v.col_mat())?.vec().col_mat())
                         .vec())
                     },
                     None,
                 )?;
 
-                // t = l * d * lt
-                let (l, d) = t.pttrf()?;
-                let lt = l.mat(true);
-                let d_sqrt = Matrix::diag(&d).dipowf(0.5);
-                */
+                // t2 = l2 * d2 * l2t
+                let (l2, d2) = t2.pttrf()?;
+                let d2_sqrt = Matrix::diag(&d2).dipowf(0.5);
+                // l2' = l2 * \sqrt{d2}
+                // kuu - rt * l * d * lt * r = q2 * l2' * l2't * q2t
+                let l2_prime = l2.mat(false) * d2_sqrt;
 
-                Ok(r.t())
+                // s = q2 * l2'
+                let s = q2 * l2_prime;
+
+                Ok(s)
             })
             .collect::<Result<Vec<_>, Box<dyn Error>>>()?;
 
@@ -246,6 +211,10 @@ where
         if !self.ready_to_predict {
             return Err(GaussianProcessError::NotPrepared.into());
         }
+        let len = xs.len();
+        if len == 0 {
+            return Err(GaussianProcessError::Empty.into());
+        }
 
         let wxs = &self.u.interpolation_weight(xs)?;
         let p = self.a.len();
@@ -254,36 +223,29 @@ where
             return Err(GaussianProcessError::DimensionMismatch.into());
         }
 
-        let (mean, wxst_rt) = (0..p)
+        let (mu, l_sigma) = (0..p)
             .into_iter()
             .map(|pi| {
                 let wxspi = &wxs[pi];
                 let wxspit = &wxspi.t();
 
-                let a = &self.a[pi];
-                let rt = &self.rt[pi];
+                let api = &self.a[pi];
+                let spi = &self.s[pi];
 
-                let mean = (self.ey + wxspit * a).vec();
-                let wxst_rt = wxspit * rt;
+                let mupi = (wxspit * api).vec();
+                let l_sigma_pi = wxspit * spi;
 
-                Ok((mean, wxst_rt))
+                Ok((mupi, l_sigma_pi))
             })
             .try_fold::<(Vec<f64>, Matrix), _, Result<(Vec<f64>, Matrix), Box<dyn Error>>>(
-                (vec![], mat!()),
+                (vec![self.ey; len], Matrix::new(len, len)),
                 |a, b: Result<(Vec<f64>, Matrix), Box<dyn Error>>| {
                     let b = b?;
                     Ok(((a.0.col_mat() + b.0.col_mat()).vec(), a.1 + b.1))
                 },
             )?;
 
-        let lt = &self.lt;
-
-        let rprime_wx = lt.0.pttrs(&lt.1, wxst_rt.clone())?.t();
-        let kxsxs = kernel_matrix(&self.kernel, &self.theta, xs, xs)?;
-
-        let cov = kxsxs - wxst_rt * rprime_wx;
-
-        MultivariateNormalParams::new(mean, cov.potrf()?)
+        MultivariateNormalParams::new(mu, l_sigma)
     }
 }
 
@@ -296,7 +258,37 @@ where
     type U = GaussianProcessParams<T>;
 
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
-        todo!()
+        let y = x;
+        let (kuu, wx) = self.for_multivariate_normal(theta)?;
+        let n = wx[0].cols;
+        let k = n.min(100);
+
+        if y.len() != n {
+            return Err(GaussianProcessError::DimensionMismatch.into());
+        }
+
+        let det = Self::det_kxx(&kuu, &wx)?;
+        let y_ey = y_ey(y, self.ey).col_mat();
+
+        let wxt_kuu_wx_vec_mul = move |v: Vec<f64>| {
+            wx.iter()
+                .map(|wxpi| {
+                    let v = v.clone().col_mat();
+                    let wx_v = wxpi * &v;
+                    let kzz_wx_v = kuu.vec_mul(wx_v.vec())?.col_mat();
+                    let wxt_kzz_wx_v = wxpi.t() * kzz_wx_v;
+                    Ok(wxt_kzz_wx_v.vec())
+                })
+                .try_fold(vec![0.0; v.len()], |a, b: Result<_, Box<dyn Error>>| {
+                    Ok((a.col_mat() + b?.col_mat()).vec())
+                })
+        };
+
+        Ok(1.0 / ((2.0 * PI).powf(n as f64 / 2.0) * det)
+            * (-1.0 / 2.0
+                * (y_ey.t() * Matrix::posv_cgm(&wxt_kuu_wx_vec_mul, y_ey.vec(), k)?.col_mat())[0]
+                    [0])
+            .exp())
     }
 
     fn sample(
@@ -304,6 +296,27 @@ where
         theta: &Self::U,
         rng: &mut rand::prelude::StdRng,
     ) -> Result<Self::T, Box<dyn Error>> {
-        todo!()
+        let (kuu, wx) = self.for_multivariate_normal(theta)?;
+        let n = wx[0].cols;
+        let luu = Self::luu(kuu)?;
+
+        let z = (0..n)
+            .into_iter()
+            .map(|_| rng.sample(StandardNormal))
+            .collect::<Vec<_>>();
+        let luu_z = luu.vec_mul(z)?.col_mat();
+
+        let wxt_luu_z = wx
+            .par_iter()
+            .map(|wxpi| {
+                let wxpit = wxpi.t();
+                wxpit * &luu_z
+            })
+            .reduce(|| Matrix::new(n, 1), |a, b| a + b);
+
+        let mu = vec![self.ey; n].col_mat();
+        let y = mu + wxt_luu_z;
+
+        Ok(y.vec())
     }
 }
