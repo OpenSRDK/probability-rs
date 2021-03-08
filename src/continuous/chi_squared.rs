@@ -10,6 +10,8 @@ pub struct ChiSquared;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ChiSquaredError {
+    #[error("'k' must be positibe")]
+    KMustBePositive,
     #[error("Unknown error")]
     Unknown,
 }
@@ -27,7 +29,7 @@ impl Distribution for ChiSquared {
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
         let k = theta.k();
 
-        let chi_squared = match RandChiSquared::new(k as f64) {
+        let chi_squared = match RandChiSquared::new(k) {
             Ok(n) => n,
             Err(_) => return Err(ChiSquaredError::Unknown.into()),
         };
@@ -38,15 +40,19 @@ impl Distribution for ChiSquared {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ChiSquaredParams {
-    k: u64,
+    k: f64,
 }
 
 impl ChiSquaredParams {
-    pub fn new(k: u64) -> Result<Self, Box<dyn Error>> {
+    pub fn new(k: f64) -> Result<Self, Box<dyn Error>> {
+        if k <= 0.0 {
+            return Err(ChiSquaredError::KMustBePositive.into());
+        }
+
         Ok(Self { k })
     }
 
-    pub fn k(&self) -> u64 {
+    pub fn k(&self) -> f64 {
         self.k
     }
 }

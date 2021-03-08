@@ -10,6 +10,10 @@ pub struct FisherF;
 
 #[derive(thiserror::Error, Debug)]
 pub enum FisherFError {
+    #[error("'m' must be positibe")]
+    MMustBePositive,
+    #[error("'n' must be positibe")]
+    NMustBePositive,
     #[error("Unknown error")]
     Unknown,
 }
@@ -29,7 +33,7 @@ impl Distribution for FisherF {
         let m = theta.m();
         let n = theta.n();
 
-        let fisher_f = match RandFisherF::new(m as f64, n as f64) {
+        let fisher_f = match RandFisherF::new(m, n) {
             Ok(n) => n,
             Err(_) => return Err(FisherFError::Unknown.into()),
         };
@@ -40,20 +44,27 @@ impl Distribution for FisherF {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct FisherFParams {
-    m: u64,
-    n: u64,
+    m: f64,
+    n: f64,
 }
 
 impl FisherFParams {
-    pub fn new(m: u64, n: u64) -> Result<Self, Box<dyn Error>> {
+    pub fn new(m: f64, n: f64) -> Result<Self, Box<dyn Error>> {
+        if m <= 0.0 {
+            return Err(FisherFError::MMustBePositive.into());
+        }
+        if n <= 0.0 {
+            return Err(FisherFError::NMustBePositive.into());
+        }
+
         Ok(Self { m, n })
     }
 
-    pub fn m(&self) -> u64 {
+    pub fn m(&self) -> f64 {
         self.m
     }
 
-    pub fn n(&self) -> u64 {
+    pub fn n(&self) -> f64 {
         self.n
     }
 }
