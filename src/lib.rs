@@ -29,4 +29,3 @@ pub use distribution::*;
 pub use independent_array_joint::*;
 pub use independent_joint::*;
 pub use instant::*;
-pub use nonparametric::*;

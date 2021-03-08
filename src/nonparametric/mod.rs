@@ -1,3 +1,5 @@
-pub mod dirichlet_crp;
+pub mod dirichlet_process;
+pub mod gaussian_process;
 
-pub use dirichlet_crp::*;
+pub use dirichlet_process::*;
+pub use gaussian_process::*;

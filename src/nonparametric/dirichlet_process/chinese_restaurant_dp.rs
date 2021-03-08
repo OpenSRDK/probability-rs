@@ -2,22 +2,22 @@ use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use std::{error::Error, ops::BitAnd, ops::Mul};
 
-/// # DirichletCRP
+/// # ChineseRestaurantDP
 /// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
 #[derive(Clone, Debug)]
-pub struct DirichletCRP;
+pub struct ChineseRestaurantDP;
 
 #[derive(thiserror::Error, Debug)]
-pub enum DirichletCRPError {
+pub enum ChineseRestaurantDPError {
     #[error("'α' must be positibe")]
     AlphaMustBePositive,
     #[error("Unknown error")]
     Unknown,
 }
 
-impl Distribution for DirichletCRP {
+impl Distribution for ChineseRestaurantDP {
     type T = u64;
-    type U = DirichletCRPParams;
+    type U = ChineseRestaurantDPParams;
 
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
         let i = theta.i();
@@ -64,16 +64,16 @@ impl Distribution for DirichletCRP {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct DirichletCRPParams {
+pub struct ChineseRestaurantDPParams {
     i: usize,
     alpha: f64,
     z: Vec<u64>,
 }
 
-impl DirichletCRPParams {
+impl ChineseRestaurantDPParams {
     pub fn new(i: usize, alpha: f64, z: Vec<u64>) -> Result<Self, Box<dyn Error>> {
         if alpha <= 0.0 {
-            return Err(DirichletCRPError::AlphaMustBePositive.into());
+            return Err(ChineseRestaurantDPError::AlphaMustBePositive.into());
         }
 
         Ok(Self { i, alpha, z })
@@ -92,24 +92,24 @@ impl DirichletCRPParams {
     }
 }
 
-impl<Rhs, TRhs> Mul<Rhs> for DirichletCRP
+impl<Rhs, TRhs> Mul<Rhs> for ChineseRestaurantDP
 where
-    Rhs: Distribution<T = TRhs, U = DirichletCRPParams>,
+    Rhs: Distribution<T = TRhs, U = ChineseRestaurantDPParams>,
     TRhs: RandomVariable,
 {
-    type Output = IndependentJoint<Self, Rhs, u64, TRhs, DirichletCRPParams>;
+    type Output = IndependentJoint<Self, Rhs, u64, TRhs, ChineseRestaurantDPParams>;
 
     fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
     }
 }
 
-impl<Rhs, URhs> BitAnd<Rhs> for DirichletCRP
+impl<Rhs, URhs> BitAnd<Rhs> for ChineseRestaurantDP
 where
-    Rhs: Distribution<T = DirichletCRPParams, U = URhs>,
+    Rhs: Distribution<T = ChineseRestaurantDPParams, U = URhs>,
     URhs: RandomVariable,
 {
-    type Output = DependentJoint<Self, Rhs, u64, DirichletCRPParams, URhs>;
+    type Output = DependentJoint<Self, Rhs, u64, ChineseRestaurantDPParams, URhs>;
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
