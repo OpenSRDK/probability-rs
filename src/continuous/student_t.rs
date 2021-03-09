@@ -1,6 +1,8 @@
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::StudentT as RandStudentT;
+use special::Gamma;
+use std::f64::consts::PI;
 use std::{error::Error, ops::BitAnd, ops::Mul};
 
 /// # StudentT
@@ -19,9 +21,12 @@ impl Distribution for StudentT {
     type U = StudentTParams;
 
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
-        let n = theta.nu();
+        let nu = theta.nu();
 
-        Ok(todo!())
+        Ok(
+            (Gamma::gamma((nu + 1.0) / 2.0) / ((nu * PI).sqrt() * Gamma::gamma(nu / 2.0)))
+                * (1.0 + x.powi(2) / nu).powf(-((nu + 1.0) / 2.0)),
+        )
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {

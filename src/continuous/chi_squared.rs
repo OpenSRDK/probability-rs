@@ -1,6 +1,7 @@
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::ChiSquared as RandChiSquared;
+use special::Gamma;
 use std::{error::Error, ops::BitAnd, ops::Mul};
 
 /// # ChiSquared
@@ -23,7 +24,8 @@ impl Distribution for ChiSquared {
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
         let k = theta.k();
 
-        Ok(todo!())
+        Ok((1.0 / (2f64.powf(k / 2.0) * Gamma::gamma(k / 2.0)))
+            * (x.powf(k / 2.0 - 1.0) * (-x / 2.0).exp()))
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {

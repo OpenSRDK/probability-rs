@@ -3,6 +3,8 @@ use opensrdk_linear_algebra::*;
 use rand::prelude::*;
 use rand_distr::StudentT as RandStudentT;
 use rayon::prelude::*;
+use special::Gamma;
+use std::f64::consts::PI;
 use std::{error::Error, ops::BitAnd, ops::Mul};
 
 /// # MultivariateStudentT
@@ -30,6 +32,7 @@ impl Distribution for MultivariateStudentT {
         if n != mu.len() {
             return Err(MultivariateStudentTError::DimensionMismatch.into());
         }
+        let n = n as f64;
         let nu = nu;
 
         let x_mu = x
@@ -39,7 +42,9 @@ impl Distribution for MultivariateStudentT {
             .collect::<Vec<_>>()
             .col_mat();
 
-        Ok(todo!())
+        Ok((Gamma::gamma((nu + n) / 2.0)
+            / (Gamma::gamma(nu / 2.0) * nu.powf(n / 2.0) * PI.powf(n / 2.0) * l_sigma.trdet()))
+            * (1.0 + (x_mu.t() * l_sigma.potrs(x_mu)?)[0][0] / nu).powf(-(nu + n) / 2.0))
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {

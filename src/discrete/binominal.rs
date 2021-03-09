@@ -1,4 +1,5 @@
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use num_integer::binomial;
 use rand::prelude::*;
 use rand_distr::Binomial as RandBinominal;
 use std::{error::Error, ops::BitAnd, ops::Mul};
@@ -17,14 +18,14 @@ pub enum BinominalError {
 }
 
 impl Distribution for Binominal {
-    type T = f64;
+    type T = u64;
     type U = BinominalParams;
 
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
         let n = theta.n();
         let p = theta.p();
 
-        Ok(todo!())
+        Ok(binomial(n, *x) as f64 * p.powi(*x as i32) * (1.0 - p).powi((n - x) as i32))
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
@@ -36,7 +37,7 @@ impl Distribution for Binominal {
             Err(_) => return Err(BinominalError::Unknown.into()),
         };
 
-        Ok(rng.sample(binominal) as f64)
+        Ok(rng.sample(binominal))
     }
 }
 
@@ -69,7 +70,7 @@ where
     Rhs: Distribution<T = TRhs, U = BinominalParams>,
     TRhs: RandomVariable,
 {
-    type Output = IndependentJoint<Self, Rhs, f64, TRhs, BinominalParams>;
+    type Output = IndependentJoint<Self, Rhs, u64, TRhs, BinominalParams>;
 
     fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
@@ -81,7 +82,7 @@ where
     Rhs: Distribution<T = BinominalParams, U = URhs>,
     URhs: RandomVariable,
 {
-    type Output = DependentJoint<Self, Rhs, f64, BinominalParams, URhs>;
+    type Output = DependentJoint<Self, Rhs, u64, BinominalParams, URhs>;
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)

@@ -1,6 +1,7 @@
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::FisherF as RandFisherF;
+use special::Beta;
 use std::{error::Error, ops::BitAnd, ops::Mul};
 
 /// # FisherF
@@ -26,7 +27,10 @@ impl Distribution for FisherF {
         let m = theta.m();
         let n = theta.n();
 
-        Ok(todo!())
+        Ok(
+            (((m * x).powf(m) * n.powf(n)) / ((m * x + n).powf(m + n))).sqrt()
+                / (x * Beta::ln_beta(m / 2.0, n / 2.0).exp()),
+        )
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {

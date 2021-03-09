@@ -1,6 +1,7 @@
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::Gamma as RandGamma;
+use special::Gamma as GammaFunc;
 use std::{error::Error, ops::BitAnd, ops::Mul};
 
 /// # Gamma
@@ -26,7 +27,9 @@ impl Distribution for Gamma {
         let shape = theta.shape();
         let scale = theta.scale();
 
-        Ok(todo!())
+        Ok((1.0 / GammaFunc::gamma(shape) * scale.powf(shape))
+            * x.powf(shape - 1.0)
+            * (-x / scale).exp())
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {

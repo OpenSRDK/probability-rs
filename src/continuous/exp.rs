@@ -23,7 +23,7 @@ impl Distribution for Exp {
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
         let lambda = theta.lambda();
 
-        Ok(todo!())
+        Ok(lambda * (-lambda * x).exp())
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {

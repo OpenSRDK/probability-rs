@@ -16,14 +16,21 @@ pub enum PoissonError {
     Unknown,
 }
 
+fn factorial(num: u64) -> u64 {
+    match num {
+        0 | 1 => 1,
+        _ => factorial(num - 1) * num,
+    }
+}
+
 impl Distribution for Poisson {
-    type T = f64;
+    type T = u64;
     type U = PoissonParams;
 
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
         let lambda = theta.lambda();
 
-        Ok(todo!())
+        Ok(lambda.powi(*x as i32) / factorial(*x) as f64 * (-lambda).exp())
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
@@ -34,7 +41,7 @@ impl Distribution for Poisson {
             Err(_) => return Err(PoissonError::Unknown.into()),
         };
 
-        Ok(rng.sample(poisson))
+        Ok(rng.sample(poisson) as u64)
     }
 }
 
@@ -62,7 +69,7 @@ where
     Rhs: Distribution<T = TRhs, U = PoissonParams>,
     TRhs: RandomVariable,
 {
-    type Output = IndependentJoint<Self, Rhs, f64, TRhs, PoissonParams>;
+    type Output = IndependentJoint<Self, Rhs, u64, TRhs, PoissonParams>;
 
     fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
@@ -74,7 +81,7 @@ where
     Rhs: Distribution<T = PoissonParams, U = URhs>,
     URhs: RandomVariable,
 {
-    type Output = DependentJoint<Self, Rhs, f64, PoissonParams, URhs>;
+    type Output = DependentJoint<Self, Rhs, u64, PoissonParams, URhs>;
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
