@@ -16,12 +16,10 @@ where
         0
     }
 
-    pub(crate) fn reset_prepare(&mut self) -> Result<&mut Self, Box<dyn Error>> {
+    pub(crate) fn reset_prepare(&mut self) {
         self.ready_to_predict = false;
         self.a = vec![];
         self.s = vec![];
-
-        Ok(self)
     }
 
     pub(crate) fn wx(

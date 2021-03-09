@@ -40,13 +40,14 @@ where
 {
     fn new(kernel: K) -> Self;
 
-    fn set_x(&mut self, x: Vec<T>) -> Result<&Self, Box<dyn Error>>;
-    fn set_theta(&mut self, theta: Vec<f64>) -> Result<&Self, Box<dyn Error>>;
+    fn set_x(&mut self, x: Vec<T>) -> Result<&mut Self, Box<dyn Error>>;
+    fn set_theta(&mut self, theta: Vec<f64>) -> Result<&mut Self, Box<dyn Error>>;
 
     fn kernel(&self) -> &K;
     fn theta(&self) -> &[f64];
 
     fn n(&self) -> usize;
+    fn ey(&self) -> f64;
     fn prepare_predict(&mut self, y: &[f64]) -> Result<(), Box<dyn Error>>;
 
     fn predict(&self, xs: T) -> Result<NormalParams, Box<dyn Error>> {
@@ -60,7 +61,14 @@ where
     fn kxx_inv_vec(
         &self,
         vec: Vec<f64>,
-        params: GaussianProcessParams<T>,
+        params: &GaussianProcessParams<T>,
+        with_detkxx: bool,
+    ) -> Result<(Vec<f64>, Option<f64>), Box<dyn Error>>;
+
+    fn l_kxx_vec(
+        &self,
+        vec: Vec<f64>,
+        params: &GaussianProcessParams<T>,
     ) -> Result<Vec<f64>, Box<dyn Error>>;
 }
 

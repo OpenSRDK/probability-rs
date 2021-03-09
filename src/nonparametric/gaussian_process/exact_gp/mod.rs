@@ -56,21 +56,21 @@ where
         }
     }
 
-    fn set_x(&mut self, x: Vec<T>) -> Result<&Self, Box<dyn Error>> {
+    fn set_x(&mut self, x: Vec<T>) -> Result<&mut Self, Box<dyn Error>> {
         self.x = x;
-        self.reset_prepare()?;
+        self.reset_prepare();
 
         Ok(self)
     }
 
-    fn set_theta(&mut self, theta: Vec<f64>) -> Result<&Self, Box<dyn Error>> {
+    fn set_theta(&mut self, theta: Vec<f64>) -> Result<&mut Self, Box<dyn Error>> {
         let params_len = self.kernel.params_len();
         if theta.len() != params_len {
             return Err(GaussianProcessError::DimensionMismatch.into());
         }
 
         self.theta = theta;
-        self.reset_prepare()?;
+        self.reset_prepare();
 
         Ok(self)
     }
@@ -85,6 +85,10 @@ where
 
     fn n(&self) -> usize {
         self.x.len()
+    }
+
+    fn ey(&self) -> f64 {
+        self.ey
     }
 
     fn prepare_predict(&mut self, y: &[f64]) -> Result<(), Box<dyn Error>> {
@@ -127,11 +131,30 @@ where
     fn kxx_inv_vec(
         &self,
         vec: Vec<f64>,
-        params: GaussianProcessParams<T>,
-    ) -> Result<Vec<f64>, Box<dyn Error>> {
-        let params = self.handle_temporal_params(&params)?;
+        params: &GaussianProcessParams<T>,
+        with_detkxx: bool,
+    ) -> Result<(Vec<f64>, Option<f64>), Box<dyn Error>> {
+        let params = self.handle_temporal_params(params)?;
         let (_, l_sigma) = params.eject();
 
-        Ok(l_sigma.potrs(vec.col_mat())?.vec())
+        let det = if with_detkxx {
+            Some(l_sigma.trdet())
+        } else {
+            None
+        };
+        let kxx_inv_vec = l_sigma.potrs(vec.col_mat())?.vec();
+
+        Ok((kxx_inv_vec, det))
+    }
+
+    fn l_kxx_vec(
+        &self,
+        vec: Vec<f64>,
+        params: &GaussianProcessParams<T>,
+    ) -> Result<Vec<f64>, Box<dyn Error>> {
+        let params = self.handle_temporal_params(params)?;
+        let (_, l_sigma) = params.eject();
+
+        Ok((l_sigma * vec.col_mat()).vec())
     }
 }

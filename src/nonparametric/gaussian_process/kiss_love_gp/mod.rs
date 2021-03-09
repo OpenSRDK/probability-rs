@@ -7,6 +7,7 @@ use crate::opensrdk_linear_algebra::*;
 use crate::MultivariateNormalParams;
 use grid::Grid;
 use opensrdk_kernel_method::{Convolutable, Convolutional, Kernel};
+use rayon::prelude::*;
 use std::{error::Error, marker::PhantomData};
 
 /// # Lanczos Variance Estimate Kernel Interpolation for Scalable Structured Gaussian Process
@@ -79,7 +80,7 @@ where
         }
     }
 
-    fn set_x(&mut self, x: Vec<T>) -> Result<&Self, Box<dyn Error>> {
+    fn set_x(&mut self, x: Vec<T>) -> Result<&mut Self, Box<dyn Error>> {
         let (wx, u) = self.wx(&x, false)?;
 
         self.wx = wx;
@@ -91,14 +92,14 @@ where
         Ok(self)
     }
 
-    fn set_theta(&mut self, theta: Vec<f64>) -> Result<&Self, Box<dyn Error>> {
+    fn set_theta(&mut self, theta: Vec<f64>) -> Result<&mut Self, Box<dyn Error>> {
         let params_len = self.kernel_params_len;
         if theta.len() != params_len {
             return Err(GaussianProcessError::DimensionMismatch.into());
         }
 
         self.theta = theta;
-        self.reset_prepare()?;
+        self.reset_prepare();
 
         Ok(self)
     }
@@ -116,6 +117,10 @@ where
             return self.wx[0].cols;
         }
         0
+    }
+
+    fn ey(&self) -> f64 {
+        self.ey
     }
 
     fn prepare_predict(&mut self, y: &[f64]) -> Result<(), Box<dyn Error>> {
@@ -206,6 +211,8 @@ where
             })
             .collect::<Result<Vec<_>, Box<dyn Error>>>()?;
 
+        self.ready_to_predict = true;
+
         Ok(())
     }
 
@@ -253,14 +260,43 @@ where
     fn kxx_inv_vec(
         &self,
         vec: Vec<f64>,
-        params: GaussianProcessParams<T>,
-    ) -> Result<Vec<f64>, Box<dyn Error>> {
+        params: &GaussianProcessParams<T>,
+        with_detkxx: bool,
+    ) -> Result<(Vec<f64>, Option<f64>), Box<dyn Error>> {
         const K: usize = 100;
-        let (wx, kuu) = self.handle_temporal_params(&params)?;
+        let (wx, kuu) = self.handle_temporal_params(params)?;
+
+        let det = if with_detkxx {
+            Some(Self::det_kxx(&kuu, &wx)?)
+        } else {
+            None
+        };
         let wxt_kuu_wx_vec_mul = move |v: Vec<f64>| Self::wxt_kuu_wx_vec_mul(&v, &wx, &kuu);
 
         let wxt_kuu_wx_inv_vec = Matrix::posv_cgm(&wxt_kuu_wx_vec_mul, vec, K)?;
 
-        Ok(wxt_kuu_wx_inv_vec)
+        Ok((wxt_kuu_wx_inv_vec, det))
+    }
+
+    fn l_kxx_vec(
+        &self,
+        vec: Vec<f64>,
+        params: &GaussianProcessParams<T>,
+    ) -> Result<Vec<f64>, Box<dyn Error>> {
+        let (wx, kuu) = self.handle_temporal_params(params)?;
+        let n = self.n();
+        let luu = Self::luu(kuu)?;
+
+        let luu_vec = luu.vec_mul(vec)?.col_mat();
+
+        let wxt_luu_vec = wx
+            .par_iter()
+            .map(|wxpi| {
+                let wxpit = wxpi.t();
+                wxpit * &luu_vec
+            })
+            .reduce(|| Matrix::new(n, 1), |a, b| a + b);
+
+        Ok(wxt_luu_vec.vec())
     }
 }

@@ -10,12 +10,10 @@ where
     K: Kernel<T>,
     T: Clone + Debug,
 {
-    pub(crate) fn reset_prepare(&mut self) -> Result<&mut Self, Box<dyn Error>> {
+    pub(crate) fn reset_prepare(&mut self) {
         self.ready_to_predict = false;
         self.l_kxx = mat!();
         self.kxx_inv_y = mat!();
-
-        Ok(self)
     }
 
     pub(crate) fn handle_temporal_params(
