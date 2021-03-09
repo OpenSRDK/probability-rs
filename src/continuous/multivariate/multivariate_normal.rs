@@ -83,6 +83,10 @@ impl MultivariateNormalParams {
     pub fn l_sigma(&self) -> &Matrix {
         &self.l_sigma
     }
+
+    pub fn eject(self) -> (Vec<f64>, Matrix) {
+        (self.mu, self.l_sigma)
+    }
 }
 
 impl<Rhs, TRhs> Mul<Rhs> for MultivariateNormal

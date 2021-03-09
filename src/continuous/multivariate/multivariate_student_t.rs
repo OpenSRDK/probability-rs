@@ -30,7 +30,7 @@ impl Distribution for MultivariateStudentT {
         if n != mu.len() {
             return Err(MultivariateStudentTError::DimensionMismatch.into());
         }
-        let n = n as f64;
+        let nu = nu;
 
         let x_mu = x
             .par_iter()
@@ -64,14 +64,14 @@ impl Distribution for MultivariateStudentT {
 pub struct MultivariateStudentTParams {
     mu: Vec<f64>,
     l_sigma: Matrix,
-    nu: u64,
+    nu: f64,
 }
 
 impl MultivariateStudentTParams {
     /// # Multivariate student t
     /// `L` is needed as second argument under decomposition `Sigma = L * L^T`
     /// l_sigma = sigma.potrf()?;
-    pub fn new(mu: Vec<f64>, l_sigma: Matrix, nu: u64) -> Result<Self, Box<dyn Error>> {
+    pub fn new(mu: Vec<f64>, l_sigma: Matrix, nu: f64) -> Result<Self, Box<dyn Error>> {
         let n = mu.len();
         if n != l_sigma.rows() || n != l_sigma.cols() {
             return Err(MultivariateStudentTError::DimensionMismatch.into());
@@ -88,7 +88,7 @@ impl MultivariateStudentTParams {
         &self.l_sigma
     }
 
-    pub fn nu(&self) -> u64 {
+    pub fn nu(&self) -> f64 {
         self.nu
     }
 }

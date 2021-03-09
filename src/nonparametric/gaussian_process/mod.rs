@@ -2,6 +2,7 @@ pub mod exact_gp;
 pub mod ey;
 pub mod kernel_matrix;
 pub mod kiss_love_gp;
+pub mod student_tp;
 
 use crate::{MultivariateNormalParams, NormalParams};
 pub use exact_gp::*;
@@ -10,6 +11,7 @@ pub use kernel_matrix::*;
 pub use kiss_love_gp::*;
 use opensrdk_kernel_method::Kernel;
 use std::{error::Error, fmt::Debug};
+pub use student_tp::*;
 
 #[derive(thiserror::Error, Debug)]
 pub enum GaussianProcessError {
@@ -17,8 +19,6 @@ pub enum GaussianProcessError {
     Empty,
     #[error("Dimension mismatch.")]
     DimensionMismatch,
-    #[error("Sigma must be positive.")]
-    SigmaMustbePositive,
     #[error("NaN contaminated.")]
     NaNContamination,
     #[error("Not prepared.")]
@@ -46,6 +46,7 @@ where
     fn kernel(&self) -> &K;
     fn theta(&self) -> &[f64];
 
+    fn n(&self) -> usize;
     fn prepare_predict(&mut self, y: &[f64]) -> Result<(), Box<dyn Error>>;
 
     fn predict(&self, xs: T) -> Result<NormalParams, Box<dyn Error>> {
@@ -55,6 +56,12 @@ where
     }
 
     fn predict_multivariate(&self, xs: &[T]) -> Result<MultivariateNormalParams, Box<dyn Error>>;
+
+    fn kxx_inv_vec(
+        &self,
+        vec: Vec<f64>,
+        params: GaussianProcessParams<T>,
+    ) -> Result<Vec<f64>, Box<dyn Error>>;
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -62,6 +69,6 @@ pub struct GaussianProcessParams<T>
 where
     T: Clone + Debug,
 {
-    x: Option<Vec<T>>,
-    theta: Option<Vec<f64>>,
+    pub x: Option<Vec<T>>,
+    pub theta: Option<Vec<f64>>,
 }

@@ -9,6 +9,13 @@ where
     K: Kernel<Vec<f64>>,
     T: Convolutable + PartialEq,
 {
+    pub(crate) fn m(&self) -> usize {
+        if self.wx.len() != 0 {
+            return self.wx[0].rows;
+        }
+        0
+    }
+
     pub(crate) fn reset_prepare(&mut self) -> Result<&mut Self, Box<dyn Error>> {
         self.ready_to_predict = false;
         self.a = vec![];
@@ -46,10 +53,28 @@ where
         }
     }
 
-    pub(crate) fn for_multivariate_normal(
+    pub(crate) fn wxt_kuu_wx_vec_mul(
+        v: &Vec<f64>,
+        wx: &Vec<SparseMatrix>,
+        kuu: &KroneckerMatrices,
+    ) -> Result<Vec<f64>, Box<dyn Error>> {
+        wx.iter()
+            .map(|wxpi| {
+                let v = v.clone().col_mat();
+                let wx_v = wxpi * &v;
+                let kzz_wx_v = kuu.vec_mul(wx_v.vec())?.col_mat();
+                let wxt_kzz_wx_v = wxpi.t() * kzz_wx_v;
+                Ok(wxt_kzz_wx_v.vec())
+            })
+            .try_fold(vec![0.0; v.len()], |a, b: Result<_, Box<dyn Error>>| {
+                Ok((a.col_mat() + b?.col_mat()).vec())
+            })
+    }
+
+    pub(crate) fn handle_temporal_params(
         &self,
         params: &GaussianProcessParams<T>,
-    ) -> Result<(KroneckerMatrices, Vec<SparseMatrix>), Box<dyn Error>> {
+    ) -> Result<(Vec<SparseMatrix>, KroneckerMatrices), Box<dyn Error>> {
         let (wx, u) = if let Some(x) = params.x.as_ref() {
             self.wx(x, true)?
         } else {
@@ -61,7 +86,7 @@ where
             self.u.kuu(&self.kernel, &self.theta)?
         };
 
-        return Ok((kuu, wx));
+        return Ok((wx, kuu));
     }
 
     /// See Andrew Gordon Wilson

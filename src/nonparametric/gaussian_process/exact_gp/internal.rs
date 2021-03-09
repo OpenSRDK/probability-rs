@@ -18,7 +18,7 @@ where
         Ok(self)
     }
 
-    pub(crate) fn multivariate_normal(
+    pub(crate) fn handle_temporal_params(
         &self,
         params: &GaussianProcessParams<T>,
     ) -> Result<MultivariateNormalParams, Box<dyn Error>> {

@@ -1,11 +1,12 @@
+pub mod distribution;
 pub mod internal;
 
 use super::{
     ey::ey, ey::y_ey, kernel_matrix::kernel_matrix, GaussianProcess, GaussianProcessError,
     GaussianProcessParams,
 };
-use crate::{opensrdk_linear_algebra::*, Distribution};
-use crate::{MultivariateNormal, MultivariateNormalParams};
+use crate::opensrdk_linear_algebra::*;
+use crate::MultivariateNormalParams;
 use opensrdk_kernel_method::*;
 pub use rayon::prelude::*;
 use std::{error::Error, fmt::Debug};
@@ -82,8 +83,12 @@ where
         &self.theta
     }
 
+    fn n(&self) -> usize {
+        self.x.len()
+    }
+
     fn prepare_predict(&mut self, y: &[f64]) -> Result<(), Box<dyn Error>> {
-        let n = self.x.len();
+        let n = self.n();
         if n == 0 {
             return Err(GaussianProcessError::Empty.into());
         }
@@ -118,31 +123,15 @@ where
 
         MultivariateNormalParams::new(mean.vec(), covariance.potrf()?)
     }
-}
 
-impl<K, T> Distribution for ExactGP<K, T>
-where
-    K: Kernel<T>,
-    T: Clone + Debug + PartialEq,
-{
-    type T = Vec<f64>;
-    type U = GaussianProcessParams<T>;
-
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
-        let normal = MultivariateNormal;
-        let params = self.multivariate_normal(theta)?;
-
-        return Ok(normal.p(x, &params)?);
-    }
-
-    fn sample(
+    fn kxx_inv_vec(
         &self,
-        theta: &Self::U,
-        rng: &mut rand::prelude::StdRng,
-    ) -> Result<Self::T, Box<dyn Error>> {
-        let normal = MultivariateNormal;
-        let params = self.multivariate_normal(theta)?;
+        vec: Vec<f64>,
+        params: GaussianProcessParams<T>,
+    ) -> Result<Vec<f64>, Box<dyn Error>> {
+        let params = self.handle_temporal_params(&params)?;
+        let (_, l_sigma) = params.eject();
 
-        return Ok(normal.sample(&params, rng)?);
+        Ok(l_sigma.potrs(vec.col_mat())?.vec())
     }
 }
