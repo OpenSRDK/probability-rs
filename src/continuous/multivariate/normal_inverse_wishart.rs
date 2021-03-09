@@ -1,4 +1,7 @@
-use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{
+    DependentJoint, Distribution, IndependentJoint, InverseWishart, InverseWishartParams,
+    MultivariateNormal, MultivariateNormalParams, RandomVariable,
+};
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
 use std::{error::Error, ops::BitAnd, ops::Mul};
@@ -21,20 +24,29 @@ pub enum NormalInverseWishartError {
 }
 
 impl Distribution for NormalInverseWishart {
-    type T = Vec<f64>;
+    type T = MultivariateNormalParams;
     type U = NormalInverseWishartParams;
 
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
-        let mu = theta.mu();
+        let mu0 = theta.mu0().clone();
         let lambda = theta.lambda();
-        let l_psi = theta.l_psi();
+        let l_psi = theta.l_psi().clone();
         let nu = theta.nu();
 
-        Ok(todo!())
+        let mu = x.mu();
+        let l_sigma = x.l_sigma();
+
+        let n = MultivariateNormal;
+        let w_inv = InverseWishart;
+
+        Ok(n.p(
+            mu,
+            &MultivariateNormalParams::new(mu0, (1.0 / lambda) * l_sigma.clone())?,
+        )? * w_inv.p(l_sigma, &InverseWishartParams::new(l_psi, nu)?)?)
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
-        let mu = theta.mu();
+        let mu0 = theta.mu0();
         let lambda = theta.lambda();
         let l_psi = theta.l_psi();
         let nu = theta.nu();
@@ -45,35 +57,35 @@ impl Distribution for NormalInverseWishart {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct NormalInverseWishartParams {
-    mu: Vec<f64>,
+    mu0: Vec<f64>,
     lambda: f64,
     l_psi: Matrix,
-    nu: u64,
+    nu: f64,
 }
 
 impl NormalInverseWishartParams {
-    pub fn new(mu: Vec<f64>, lambda: f64, l_psi: Matrix, nu: u64) -> Result<Self, Box<dyn Error>> {
-        let n = mu.len();
+    pub fn new(mu0: Vec<f64>, lambda: f64, l_psi: Matrix, nu: f64) -> Result<Self, Box<dyn Error>> {
+        let n = mu0.len();
         if n != l_psi.rows() || n != l_psi.cols() {
             return Err(NormalInverseWishartError::DimensionMismatch.into());
         }
         if lambda <= 0.0 {
             return Err(NormalInverseWishartError::DimensionMismatch.into());
         }
-        if nu < n as u64 {
+        if nu <= n as f64 - 1.0 {
             return Err(NormalInverseWishartError::NuMustBeGTEDimension.into());
         }
 
         Ok(Self {
-            mu,
+            mu0,
             lambda,
             l_psi,
             nu,
         })
     }
 
-    pub fn mu(&self) -> &Vec<f64> {
-        &self.mu
+    pub fn mu0(&self) -> &Vec<f64> {
+        &self.mu0
     }
 
     pub fn lambda(&self) -> f64 {
@@ -84,7 +96,7 @@ impl NormalInverseWishartParams {
         &self.l_psi
     }
 
-    pub fn nu(&self) -> u64 {
+    pub fn nu(&self) -> f64 {
         self.nu
     }
 }
@@ -94,7 +106,8 @@ where
     Rhs: Distribution<T = TRhs, U = NormalInverseWishartParams>,
     TRhs: RandomVariable,
 {
-    type Output = IndependentJoint<Self, Rhs, Vec<f64>, TRhs, NormalInverseWishartParams>;
+    type Output =
+        IndependentJoint<Self, Rhs, MultivariateNormalParams, TRhs, NormalInverseWishartParams>;
 
     fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
@@ -106,7 +119,8 @@ where
     Rhs: Distribution<T = NormalInverseWishartParams, U = URhs>,
     URhs: RandomVariable,
 {
-    type Output = DependentJoint<Self, Rhs, Vec<f64>, NormalInverseWishartParams, URhs>;
+    type Output =
+        DependentJoint<Self, Rhs, MultivariateNormalParams, NormalInverseWishartParams, URhs>;
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)

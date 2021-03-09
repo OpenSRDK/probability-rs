@@ -1,6 +1,8 @@
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
+use special::Gamma;
+use std::f64::consts::PI;
 use std::{error::Error, ops::BitAnd, ops::Mul};
 
 /// # InverseWishart
@@ -18,17 +20,32 @@ pub enum InverseWishartError {
     Unknown,
 }
 
+fn multivariate_gamma(n: u64, a: f64) -> f64 {
+    PI.powf(n as f64 * (n as f64 - 1.0) / 4.0)
+        * (0..n)
+            .into_iter()
+            .map(|i| Gamma::gamma(a + i as f64 / 2.0))
+            .product::<f64>()
+}
+
 impl Distribution for InverseWishart {
-    type T = Vec<f64>;
+    type T = Matrix;
     type U = InverseWishartParams;
 
+    /// x must be cholesky decomposed
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
         let l_psi = theta.l_psi();
         let nu = theta.nu();
 
-        Ok(todo!())
+        let n = x.rows() as f64;
+
+        Ok(l_psi.trdet().powf(nu / 2.0)
+            / (2f64.powf(nu * n / 2.0) * multivariate_gamma(n as u64, nu / 2.0))
+            * x.trdet().powf(-(nu + n + 1.0) / 2.0)
+            * (-0.5 * x.clone().potrs(l_psi * l_psi.t())?.tr()).exp())
     }
 
+    /// output is cholesky decomposed
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
         let l_psi = theta.l_psi();
         let nu = theta.nu();
@@ -40,16 +57,16 @@ impl Distribution for InverseWishart {
 #[derive(Clone, Debug, PartialEq)]
 pub struct InverseWishartParams {
     l_psi: Matrix,
-    nu: u64,
+    nu: f64,
 }
 
 impl InverseWishartParams {
-    pub fn new(l_psi: Matrix, nu: u64) -> Result<Self, Box<dyn Error>> {
+    pub fn new(l_psi: Matrix, nu: f64) -> Result<Self, Box<dyn Error>> {
         let n = l_psi.rows();
         if n != l_psi.cols() {
             return Err(InverseWishartError::DimensionMismatch.into());
         }
-        if nu < n as u64 {
+        if nu <= n as f64 - 1.0 as f64 {
             return Err(InverseWishartError::NuMustBeGTEDimension.into());
         }
 
@@ -60,7 +77,7 @@ impl InverseWishartParams {
         &self.l_psi
     }
 
-    pub fn nu(&self) -> u64 {
+    pub fn nu(&self) -> f64 {
         self.nu
     }
 }
@@ -70,7 +87,7 @@ where
     Rhs: Distribution<T = TRhs, U = InverseWishartParams>,
     TRhs: RandomVariable,
 {
-    type Output = IndependentJoint<Self, Rhs, Vec<f64>, TRhs, InverseWishartParams>;
+    type Output = IndependentJoint<Self, Rhs, Matrix, TRhs, InverseWishartParams>;
 
     fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
@@ -82,7 +99,7 @@ where
     Rhs: Distribution<T = InverseWishartParams, U = URhs>,
     URhs: RandomVariable,
 {
-    type Output = DependentJoint<Self, Rhs, Vec<f64>, InverseWishartParams, URhs>;
+    type Output = DependentJoint<Self, Rhs, Matrix, InverseWishartParams, URhs>;
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
