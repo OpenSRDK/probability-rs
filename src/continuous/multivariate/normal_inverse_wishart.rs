@@ -46,12 +46,21 @@ impl Distribution for NormalInverseWishart {
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
-        let mu0 = theta.mu0();
+        let mu0 = theta.mu0().clone();
         let lambda = theta.lambda();
-        let lpsi = theta.lpsi();
+        let lpsi = theta.lpsi().clone();
         let nu = theta.nu();
 
-        Ok(todo!())
+        let n = MultivariateNormal;
+        let winv = InverseWishart;
+
+        let lsigma = winv.sample(&InverseWishartParams::new(lpsi, nu)?, rng)?;
+        let mu = n.sample(
+            &MultivariateNormalParams::new(mu0, (1.0 / lambda).sqrt() * lsigma.clone())?,
+            rng,
+        )?;
+
+        Ok(MultivariateNormalParams::new(mu, lsigma)?)
     }
 }
 
