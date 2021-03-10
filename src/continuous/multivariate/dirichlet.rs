@@ -1,6 +1,8 @@
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::Dirichlet as RandDirichlet;
+use rayon::{iter::IntoParallelIterator, prelude::*};
+use special::Gamma;
 use std::{error::Error, ops::BitAnd, ops::Mul};
 
 /// # Dirichlet
@@ -10,12 +12,22 @@ pub struct Dirichlet;
 
 #[derive(thiserror::Error, Debug)]
 pub enum DirichletError {
+    #[error("Dimension mismatch")]
+    DimensionMismatch,
     #[error("Length of 'α' must be >= 2")]
     AlphaLenMustBeGTE2,
     #[error("'α' must be positibe")]
     AlphaMustBePositive,
     #[error("Unknown error")]
     Unknown,
+}
+
+fn multivariate_beta(alpha: &[f64]) -> f64 {
+    alpha
+        .into_par_iter()
+        .map(|&alphai| Gamma::gamma(alphai))
+        .product::<f64>()
+        / Gamma::gamma(alpha.into_par_iter().sum::<f64>())
 }
 
 impl Distribution for Dirichlet {
@@ -25,7 +37,15 @@ impl Distribution for Dirichlet {
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
         let alpha = theta.alpha();
 
-        Ok(todo!())
+        if x.len() != alpha.len() {
+            return Err(DirichletError::DimensionMismatch.into());
+        }
+
+        Ok(1.0 / multivariate_beta(alpha)
+            * x.into_par_iter()
+                .zip(alpha.into_par_iter())
+                .map(|(&xi, &alphai)| xi.powf(alphai - 1.0))
+                .product::<f64>())
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
