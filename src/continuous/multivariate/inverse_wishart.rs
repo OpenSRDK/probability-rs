@@ -34,20 +34,20 @@ impl Distribution for InverseWishart {
 
     /// x must be cholesky decomposed
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
-        let l_psi = theta.l_psi();
+        let lpsi = theta.lpsi();
         let nu = theta.nu();
 
         let n = x.rows() as f64;
 
-        Ok(l_psi.trdet().powf(nu / 2.0)
+        Ok(lpsi.trdet().powf(nu / 2.0)
             / (2f64.powf(nu * n / 2.0) * multivariate_gamma(n as u64, nu / 2.0))
             * x.trdet().powf(-(nu + n + 1.0) / 2.0)
-            * (-0.5 * x.clone().potrs(l_psi * l_psi.t())?.tr()).exp())
+            * (-0.5 * x.clone().potrs(lpsi * lpsi.t())?.tr()).exp())
     }
 
     /// output is cholesky decomposed
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
-        let l_psi = theta.l_psi();
+        let lpsi = theta.lpsi();
         let nu = theta.nu();
 
         Ok(todo!())
@@ -56,25 +56,25 @@ impl Distribution for InverseWishart {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct InverseWishartParams {
-    l_psi: Matrix,
+    lpsi: Matrix,
     nu: f64,
 }
 
 impl InverseWishartParams {
-    pub fn new(l_psi: Matrix, nu: f64) -> Result<Self, Box<dyn Error>> {
-        let n = l_psi.rows();
-        if n != l_psi.cols() {
+    pub fn new(lpsi: Matrix, nu: f64) -> Result<Self, Box<dyn Error>> {
+        let n = lpsi.rows();
+        if n != lpsi.cols() {
             return Err(InverseWishartError::DimensionMismatch.into());
         }
         if nu <= n as f64 - 1.0 as f64 {
             return Err(InverseWishartError::NuMustBeGTEDimension.into());
         }
 
-        Ok(Self { l_psi, nu })
+        Ok(Self { lpsi, nu })
     }
 
-    pub fn l_psi(&self) -> &Matrix {
-        &self.l_psi
+    pub fn lpsi(&self) -> &Matrix {
+        &self.lpsi
     }
 
     pub fn nu(&self) -> f64 {

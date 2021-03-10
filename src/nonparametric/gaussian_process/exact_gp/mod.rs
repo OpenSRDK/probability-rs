@@ -34,7 +34,7 @@ where
     ready_to_predict: bool,
     ey: f64,
     x: Vec<T>,
-    l_kxx: Matrix,
+    lkxx: Matrix,
     kxx_inv_y: Matrix,
 }
 
@@ -51,7 +51,7 @@ where
             ready_to_predict: false,
             ey: 0.0,
             x: vec![],
-            l_kxx: mat!(),
+            lkxx: mat!(),
             kxx_inv_y: mat!(),
         }
     }
@@ -105,8 +105,8 @@ where
         let y_ey = &y_ey(y, self.ey);
 
         let kxx = kernel_matrix(&self.kernel, &self.theta, &self.x, &self.x)?;
-        self.l_kxx = kxx.potrf()?;
-        self.kxx_inv_y = self.l_kxx.potrs(y_ey.to_vec().col_mat())?.vec().col_mat();
+        self.lkxx = kxx.potrf()?;
+        self.kxx_inv_y = self.lkxx.potrs(y_ey.to_vec().col_mat())?.vec().col_mat();
 
         self.ready_to_predict = true;
 
@@ -119,7 +119,7 @@ where
         }
 
         let kxxs = kernel_matrix(&self.kernel, &self.theta, &self.x, xs)?;
-        let kxx_inv_kxxs_t = self.l_kxx.potrs(kxxs.clone())?;
+        let kxx_inv_kxxs_t = self.lkxx.potrs(kxxs.clone())?;
         let kxsxs = kernel_matrix(&self.kernel, &self.theta, xs, xs)?;
 
         let mean = self.ey + (&self.kxx_inv_y.t() * &kxxs).t();
@@ -132,22 +132,22 @@ where
         &self,
         vec: Vec<f64>,
         params: &GaussianProcessParams<T>,
-        with_detkxx: bool,
+        with_det_lkxx: bool,
     ) -> Result<(Vec<f64>, Option<f64>), Box<dyn Error>> {
         let params = self.handle_temporal_params(params)?;
-        let (_, l_sigma) = params.eject();
+        let (_, lsigma) = params.eject();
 
-        let det = if with_detkxx {
-            Some(l_sigma.trdet())
+        let det = if with_det_lkxx {
+            Some(lsigma.trdet())
         } else {
             None
         };
-        let kxx_inv_vec = l_sigma.potrs(vec.col_mat())?.vec();
+        let kxx_inv_vec = lsigma.potrs(vec.col_mat())?.vec();
 
         Ok((kxx_inv_vec, det))
     }
 
-    fn l_kxx_vec(
+    fn lkxx_vec(
         &self,
         vec: Vec<f64>,
         params: &GaussianProcessParams<T>,

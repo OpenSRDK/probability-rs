@@ -24,7 +24,7 @@ impl Distribution for MultivariateStudentT {
 
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
         let mu = theta.mu();
-        let l_sigma = theta.l_sigma();
+        let lsigma = theta.lsigma();
         let nu = theta.nu();
 
         let n = x.len();
@@ -43,23 +43,23 @@ impl Distribution for MultivariateStudentT {
             .col_mat();
 
         Ok((Gamma::gamma((nu + n) / 2.0)
-            / (Gamma::gamma(nu / 2.0) * nu.powf(n / 2.0) * PI.powf(n / 2.0) * l_sigma.trdet()))
-            * (1.0 + (x_mu.t() * l_sigma.potrs(x_mu)?)[0][0] / nu).powf(-(nu + n) / 2.0))
+            / (Gamma::gamma(nu / 2.0) * nu.powf(n / 2.0) * PI.powf(n / 2.0) * lsigma.trdet()))
+            * (1.0 + (x_mu.t() * lsigma.potrs(x_mu)?)[0][0] / nu).powf(-(nu + n) / 2.0))
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
         let mu = theta.mu();
-        let l_sigma = theta.l_sigma();
+        let lsigma = theta.lsigma();
         let nu = theta.nu();
 
         let student_t = RandStudentT::new(nu as f64)?;
 
-        let z = (0..l_sigma.rows())
+        let z = (0..lsigma.rows())
             .into_iter()
             .map(|_| rng.sample(student_t))
             .collect::<Vec<_>>();
 
-        let y = mu.clone().col_mat().gemm(l_sigma, &z.col_mat(), 1.0, 1.0)?;
+        let y = mu.clone().col_mat().gemm(lsigma, &z.col_mat(), 1.0, 1.0)?;
 
         Ok(y.vec())
     }
@@ -68,29 +68,29 @@ impl Distribution for MultivariateStudentT {
 #[derive(Clone, Debug, PartialEq)]
 pub struct MultivariateStudentTParams {
     mu: Vec<f64>,
-    l_sigma: Matrix,
+    lsigma: Matrix,
     nu: f64,
 }
 
 impl MultivariateStudentTParams {
     /// # Multivariate student t
     /// `L` is needed as second argument under decomposition `Sigma = L * L^T`
-    /// l_sigma = sigma.potrf()?;
-    pub fn new(mu: Vec<f64>, l_sigma: Matrix, nu: f64) -> Result<Self, Box<dyn Error>> {
+    /// lsigma = sigma.potrf()?;
+    pub fn new(mu: Vec<f64>, lsigma: Matrix, nu: f64) -> Result<Self, Box<dyn Error>> {
         let n = mu.len();
-        if n != l_sigma.rows() || n != l_sigma.cols() {
+        if n != lsigma.rows() || n != lsigma.cols() {
             return Err(MultivariateStudentTError::DimensionMismatch.into());
         }
 
-        Ok(Self { mu, l_sigma, nu })
+        Ok(Self { mu, lsigma, nu })
     }
 
     pub fn mu(&self) -> &Vec<f64> {
         &self.mu
     }
 
-    pub fn l_sigma(&self) -> &Matrix {
-        &self.l_sigma
+    pub fn lsigma(&self) -> &Matrix {
+        &self.lsigma
     }
 
     pub fn nu(&self) -> f64 {

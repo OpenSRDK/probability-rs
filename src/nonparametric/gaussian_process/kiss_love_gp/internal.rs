@@ -60,9 +60,9 @@ where
             .map(|wxpi| {
                 let v = v.clone().col_mat();
                 let wx_v = wxpi * &v;
-                let kzz_wx_v = kuu.vec_mul(wx_v.vec())?.col_mat();
-                let wxt_kzz_wx_v = wxpi.t() * kzz_wx_v;
-                Ok(wxt_kzz_wx_v.vec())
+                let kuu_wx_v = kuu.vec_mul(wx_v.vec())?.col_mat();
+                let wxt_kuu_wx_v = wxpi.t() * kuu_wx_v;
+                Ok(wxt_kuu_wx_v.vec())
             })
             .try_fold(vec![0.0; v.len()], |a, b: Result<_, Box<dyn Error>>| {
                 Ok((a.col_mat() + b?.col_mat()).vec())
@@ -133,7 +133,7 @@ where
         Ok(det)
     }
 
-    pub(crate) fn luu(kuu: KroneckerMatrices) -> Result<KroneckerMatrices, Box<dyn Error>> {
+    pub(crate) fn lkuu(kuu: KroneckerMatrices) -> Result<KroneckerMatrices, Box<dyn Error>> {
         let matrices = kuu.eject();
         Ok(KroneckerMatrices::new(
             matrices

@@ -12,7 +12,7 @@ where
 {
     pub(crate) fn reset_prepare(&mut self) {
         self.ready_to_predict = false;
-        self.l_kxx = mat!();
+        self.lkxx = mat!();
         self.kxx_inv_y = mat!();
     }
 
@@ -22,7 +22,7 @@ where
     ) -> Result<MultivariateNormalParams, Box<dyn Error>> {
         if params.x.is_none() && params.theta.is_none() {
             let params =
-                MultivariateNormalParams::new(vec![self.ey; self.x.len()], self.l_kxx.clone())?;
+                MultivariateNormalParams::new(vec![self.ey; self.x.len()], self.lkxx.clone())?;
 
             return Ok(params);
         }
@@ -30,9 +30,9 @@ where
         let params_x = params.x.as_ref().unwrap_or(&self.x);
         let params_theta = params.theta.as_ref().unwrap_or(&self.theta);
         let kxx = kernel_matrix(&self.kernel, params_theta, params_x, params_x)?;
-        let l_kxx = kxx.potrf()?;
+        let lkxx = kxx.potrf()?;
 
-        let params = MultivariateNormalParams::new(vec![self.ey; self.x.len()], l_kxx)?;
+        let params = MultivariateNormalParams::new(vec![self.ey; self.x.len()], lkxx)?;
 
         return Ok(params);
     }

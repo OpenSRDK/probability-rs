@@ -261,13 +261,13 @@ where
         &self,
         vec: Vec<f64>,
         params: &GaussianProcessParams<T>,
-        with_detkxx: bool,
+        with_det_lkxx: bool,
     ) -> Result<(Vec<f64>, Option<f64>), Box<dyn Error>> {
         const K: usize = 100;
         let (wx, kuu) = self.handle_temporal_params(params)?;
 
-        let det = if with_detkxx {
-            Some(Self::det_kxx(&kuu, &wx)?)
+        let det = if with_det_lkxx {
+            Some(Self::det_kxx(&kuu, &wx)?.sqrt())
         } else {
             None
         };
@@ -278,25 +278,25 @@ where
         Ok((wxt_kuu_wx_inv_vec, det))
     }
 
-    fn l_kxx_vec(
+    fn lkxx_vec(
         &self,
         vec: Vec<f64>,
         params: &GaussianProcessParams<T>,
     ) -> Result<Vec<f64>, Box<dyn Error>> {
         let (wx, kuu) = self.handle_temporal_params(params)?;
         let n = self.n();
-        let luu = Self::luu(kuu)?;
+        let lkuu = Self::lkuu(kuu)?;
 
-        let luu_vec = luu.vec_mul(vec)?.col_mat();
+        let lkuu_vec = lkuu.vec_mul(vec)?.col_mat();
 
-        let wxt_luu_vec = wx
+        let wxt_lkuu_vec = wx
             .par_iter()
             .map(|wxpi| {
                 let wxpit = wxpi.t();
-                wxpit * &luu_vec
+                wxpit * &lkuu_vec
             })
             .reduce(|| Matrix::new(n, 1), |a, b| a + b);
 
-        Ok(wxt_luu_vec.vec())
+        Ok(wxt_lkuu_vec.vec())
     }
 }

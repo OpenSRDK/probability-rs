@@ -22,7 +22,7 @@ impl Distribution for MultivariateNormal {
 
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
         let mu = theta.mu();
-        let l_sigma = theta.l_sigma();
+        let lsigma = theta.lsigma();
 
         let n = x.len();
 
@@ -38,20 +38,20 @@ impl Distribution for MultivariateNormal {
             .collect::<Vec<_>>()
             .col_mat();
 
-        Ok(1.0 / ((2.0 * PI).powf(n / 2.0) * l_sigma.trdet())
-            * (-1.0 / 2.0 * (x_mu.t() * l_sigma.potrs(x_mu)?)[0][0]).exp())
+        Ok(1.0 / ((2.0 * PI).powf(n / 2.0) * lsigma.trdet())
+            * (-1.0 / 2.0 * (x_mu.t() * lsigma.potrs(x_mu)?)[0][0]).exp())
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
         let mu = theta.mu();
-        let l_sigma = theta.l_sigma();
+        let lsigma = theta.lsigma();
 
-        let z = (0..l_sigma.rows())
+        let z = (0..lsigma.rows())
             .into_iter()
             .map(|_| rng.sample(StandardNormal))
             .collect::<Vec<_>>();
 
-        let y = mu.clone().col_mat().gemm(l_sigma, &z.col_mat(), 1.0, 1.0)?;
+        let y = mu.clone().col_mat().gemm(lsigma, &z.col_mat(), 1.0, 1.0)?;
 
         Ok(y.vec())
     }
@@ -60,32 +60,32 @@ impl Distribution for MultivariateNormal {
 #[derive(Clone, Debug, PartialEq)]
 pub struct MultivariateNormalParams {
     mu: Vec<f64>,
-    l_sigma: Matrix,
+    lsigma: Matrix,
 }
 
 impl MultivariateNormalParams {
     /// # Multivariate normal
     /// `L` is needed as second argument under decomposition `Sigma = L * L^T`
     /// l_sigma = sigma.potrf()?;
-    pub fn new(mu: Vec<f64>, l_sigma: Matrix) -> Result<Self, Box<dyn Error>> {
+    pub fn new(mu: Vec<f64>, lsigma: Matrix) -> Result<Self, Box<dyn Error>> {
         let n = mu.len();
-        if n != l_sigma.rows() || n != l_sigma.cols() {
+        if n != lsigma.rows() || n != lsigma.cols() {
             return Err(MultivariateNormalError::DimensionMismatch.into());
         }
 
-        Ok(Self { mu, l_sigma })
+        Ok(Self { mu, lsigma })
     }
 
     pub fn mu(&self) -> &Vec<f64> {
         &self.mu
     }
 
-    pub fn l_sigma(&self) -> &Matrix {
-        &self.l_sigma
+    pub fn lsigma(&self) -> &Matrix {
+        &self.lsigma
     }
 
     pub fn eject(self) -> (Vec<f64>, Matrix) {
-        (self.mu, self.l_sigma)
+        (self.mu, self.lsigma)
     }
 }
 

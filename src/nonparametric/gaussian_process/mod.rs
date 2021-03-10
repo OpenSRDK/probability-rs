@@ -53,7 +53,7 @@ where
     fn predict(&self, xs: T) -> Result<NormalParams, Box<dyn Error>> {
         let mul_n = self.predict_multivariate(&[xs])?;
 
-        NormalParams::new(mul_n.mu()[0], mul_n.l_sigma()[0][0])
+        NormalParams::new(mul_n.mu()[0], mul_n.lsigma()[0][0])
     }
 
     fn predict_multivariate(&self, xs: &[T]) -> Result<MultivariateNormalParams, Box<dyn Error>>;
@@ -62,10 +62,10 @@ where
         &self,
         vec: Vec<f64>,
         params: &GaussianProcessParams<T>,
-        with_detkxx: bool,
+        with_det_lkxx: bool,
     ) -> Result<(Vec<f64>, Option<f64>), Box<dyn Error>>;
 
-    fn l_kxx_vec(
+    fn lkxx_vec(
         &self,
         vec: Vec<f64>,
         params: &GaussianProcessParams<T>,

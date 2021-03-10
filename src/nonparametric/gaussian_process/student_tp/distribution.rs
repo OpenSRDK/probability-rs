@@ -51,7 +51,7 @@ where
         let (kxx_inv_y_ey, det) = (kxx_inv_y_ey.col_mat(), det.unwrap());
 
         Ok((Gamma::gamma((nu + n) / 2.0)
-            / (Gamma::gamma(nu / 2.0) * nu.powf(n / 2.0) * PI.powf(n / 2.0) * det.sqrt()))
+            / (Gamma::gamma(nu / 2.0) * nu.powf(n / 2.0) * PI.powf(n / 2.0) * det))
             * (1.0 + (y_ey_t * kxx_inv_y_ey)[0][0] / nu).powf(-(nu + n) / 2.0))
     }
 
@@ -68,9 +68,9 @@ where
             .map(|_| rng.sample(student_t))
             .collect::<Vec<_>>();
 
-        let wxt_luu_z = self
+        let wxt_lkuu_z = self
             .gp
-            .l_kxx_vec(
+            .lkxx_vec(
                 z,
                 &GaussianProcessParams {
                     x: theta.x.clone(),
@@ -80,7 +80,7 @@ where
             .col_mat();
 
         let mu = vec![self.gp.ey(); n].col_mat();
-        let y = mu + wxt_luu_z;
+        let y = mu + wxt_lkuu_z;
 
         Ok(y.vec())
     }

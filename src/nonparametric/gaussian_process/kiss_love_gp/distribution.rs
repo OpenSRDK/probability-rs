@@ -31,7 +31,7 @@ where
         let (kxx_inv_y_ey, det) = self.kxx_inv_vec(y_ey.vec(), theta, true)?;
         let (kxx_inv_y_ey, det) = (kxx_inv_y_ey.col_mat(), det.unwrap());
 
-        Ok(1.0 / ((2.0 * PI).powf(n as f64 / 2.0) * det.sqrt())
+        Ok(1.0 / ((2.0 * PI).powf(n as f64 / 2.0) * det)
             * (-1.0 / 2.0 * (y_ey_t * kxx_inv_y_ey)[0][0]).exp())
     }
 
@@ -46,10 +46,10 @@ where
             .map(|_| rng.sample(StandardNormal))
             .collect::<Vec<_>>();
 
-        let wxt_luu_z = self.l_kxx_vec(z, theta)?.col_mat();
+        let wxt_lkuu_z = self.lkxx_vec(z, theta)?.col_mat();
 
         let mu = vec![self.ey; n].col_mat();
-        let y = mu + wxt_luu_z;
+        let y = mu + wxt_lkuu_z;
 
         Ok(y.vec())
     }

@@ -30,25 +30,25 @@ impl Distribution for NormalInverseWishart {
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
         let mu0 = theta.mu0().clone();
         let lambda = theta.lambda();
-        let l_psi = theta.l_psi().clone();
+        let lpsi = theta.lpsi().clone();
         let nu = theta.nu();
 
         let mu = x.mu();
-        let l_sigma = x.l_sigma();
+        let lsigma = x.lsigma();
 
         let n = MultivariateNormal;
         let w_inv = InverseWishart;
 
         Ok(n.p(
             mu,
-            &MultivariateNormalParams::new(mu0, (1.0 / lambda) * l_sigma.clone())?,
-        )? * w_inv.p(l_sigma, &InverseWishartParams::new(l_psi, nu)?)?)
+            &MultivariateNormalParams::new(mu0, (1.0 / lambda) * lsigma.clone())?,
+        )? * w_inv.p(lsigma, &InverseWishartParams::new(lpsi, nu)?)?)
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
         let mu0 = theta.mu0();
         let lambda = theta.lambda();
-        let l_psi = theta.l_psi();
+        let lpsi = theta.lpsi();
         let nu = theta.nu();
 
         Ok(todo!())
@@ -59,14 +59,14 @@ impl Distribution for NormalInverseWishart {
 pub struct NormalInverseWishartParams {
     mu0: Vec<f64>,
     lambda: f64,
-    l_psi: Matrix,
+    lpsi: Matrix,
     nu: f64,
 }
 
 impl NormalInverseWishartParams {
-    pub fn new(mu0: Vec<f64>, lambda: f64, l_psi: Matrix, nu: f64) -> Result<Self, Box<dyn Error>> {
+    pub fn new(mu0: Vec<f64>, lambda: f64, lpsi: Matrix, nu: f64) -> Result<Self, Box<dyn Error>> {
         let n = mu0.len();
-        if n != l_psi.rows() || n != l_psi.cols() {
+        if n != lpsi.rows() || n != lpsi.cols() {
             return Err(NormalInverseWishartError::DimensionMismatch.into());
         }
         if lambda <= 0.0 {
@@ -79,7 +79,7 @@ impl NormalInverseWishartParams {
         Ok(Self {
             mu0,
             lambda,
-            l_psi,
+            lpsi,
             nu,
         })
     }
@@ -92,8 +92,8 @@ impl NormalInverseWishartParams {
         self.lambda
     }
 
-    pub fn l_psi(&self) -> &Matrix {
-        &self.l_psi
+    pub fn lpsi(&self) -> &Matrix {
+        &self.lpsi
     }
 
     pub fn nu(&self) -> f64 {
