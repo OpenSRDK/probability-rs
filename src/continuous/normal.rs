@@ -91,8 +91,21 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::{Distribution, Normal, NormalParams};
+    use rand::prelude::*;
+
     #[test]
     fn it_works() {
-        assert_eq!(2 + 2, 4);
+        let n = Normal;
+        let mut rng = StdRng::from_seed([1; 32]);
+
+        let mu = 2.0;
+        let sigma = 3.0;
+
+        let x = n
+            .sample(&NormalParams::new(mu, sigma).unwrap(), &mut rng)
+            .unwrap();
+
+        println!("{}", x);
     }
 }

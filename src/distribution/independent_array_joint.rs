@@ -5,6 +5,7 @@ use std::{error::Error, ops::BitAnd, ops::Mul};
 
 /// # IndependentArrayJoint
 /// ![tex](https://latex.codecogs.com/svg.latex?p%28\mathbf%7Ba%7D%7Cb%29%3D\prod_%7Bi\in%20I%7Dp%28a_i%7Cb%29)
+#[derive(Clone, Debug)]
 pub struct IndependentArrayJoint<D, T, U>
 where
     D: Distribution<T = T, U = U>,
@@ -74,7 +75,7 @@ where
     T: RandomVariable,
     U: RandomVariable,
 {
-    fn product(self) -> IndependentArrayJoint<D, T, U>;
+    fn joint(self) -> IndependentArrayJoint<D, T, U>;
 }
 
 impl<I, D, T, U> DistributionProduct<D, T, U> for I
@@ -84,9 +85,28 @@ where
     T: RandomVariable,
     U: RandomVariable,
 {
-    fn product(self) -> IndependentArrayJoint<D, T, U> {
+    fn joint(self) -> IndependentArrayJoint<D, T, U> {
         let distributions = self.collect::<Vec<_>>();
 
         IndependentArrayJoint::<D, T, U> { distributions }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::distribution::Distribution;
+    use crate::*;
+    use rand::prelude::*;
+    #[test]
+    fn it_works() {
+        let model = vec![Normal; 3].into_iter().joint();
+
+        let mut rng = StdRng::from_seed([1; 32]);
+
+        let x = model
+            .sample(&NormalParams::new(0.0, 1.0).unwrap(), &mut rng)
+            .unwrap();
+
+        println!("{:#?}", x);
     }
 }

@@ -45,8 +45,9 @@ impl Distribution for MultivariateNormal {
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
         let mu = theta.mu();
         let lsigma = theta.lsigma();
+        let p = mu.len();
 
-        let z = (0..lsigma.rows())
+        let z = (0..p)
             .into_iter()
             .map(|_| rng.sample(StandardNormal))
             .collect::<Vec<_>>();
@@ -115,8 +116,33 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::{Distribution, MultivariateNormal, MultivariateNormalParams};
+    use opensrdk_linear_algebra::*;
+    use rand::prelude::*;
     #[test]
     fn it_works() {
-        assert_eq!(2 + 2, 4);
+        let n = MultivariateNormal;
+        let mut rng = StdRng::from_seed([1; 32]);
+
+        let p = 6usize;
+        let mu = vec![p as f64, 1.0, 2.0, 3.0, 4.0, 5.0];
+        let lsigma = mat!(
+             1.0,  0.0,  0.0,  0.0,  0.0,  0.0;
+             2.0,  3.0,  0.0,  0.0,  0.0,  0.0;
+             4.0,  5.0,  6.0,  0.0,  0.0,  0.0;
+             7.0,  8.0,  9.0, 10.0,  0.0,  0.0;
+            11.0, 12.0, 13.0, 14.0, 15.0,  0.0;
+            16.0, 17.0, 18.0, 19.0, 20.0, 21.0
+        );
+        println!("{:#?}", lsigma);
+
+        let x = n
+            .sample(
+                &MultivariateNormalParams::new(mu, lsigma).unwrap(),
+                &mut rng,
+            )
+            .unwrap();
+
+        println!("{:#?}", x);
     }
 }

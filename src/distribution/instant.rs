@@ -2,9 +2,11 @@ use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::StdRng;
 use std::{
     error::Error,
+    fmt::Debug,
     ops::{BitAnd, Mul},
 };
 
+#[derive(Clone)]
 pub struct InstantDistribution<'a, T, U>
 where
     T: RandomVariable,
@@ -24,6 +26,16 @@ where
         sample: &'a dyn Fn(&U, &mut StdRng) -> Result<T, Box<dyn Error>>,
     ) -> Self {
         Self { p, sample }
+    }
+}
+
+impl<'a, T, U> Debug for InstantDistribution<'a, T, U>
+where
+    T: RandomVariable,
+    U: RandomVariable,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Instant")
     }
 }
 

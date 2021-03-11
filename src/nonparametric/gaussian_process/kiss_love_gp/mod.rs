@@ -16,6 +16,7 @@ use std::{error::Error, marker::PhantomData};
 /// | prediction      | ![tex](https://latex.codecogs.com/svg.latex?O%28K%29)                 |
 ///
 /// where ![tex](https://latex.codecogs.com/svg.latex?k=100) here.
+#[derive(Clone, Debug)]
 pub struct KissLoveGP<K, T>
 where
     K: Kernel<Vec<f64>>,

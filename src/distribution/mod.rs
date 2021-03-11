@@ -1,3 +1,14 @@
+pub mod converted;
+pub mod dependent_joint;
+pub mod independent_array_joint;
+pub mod independent_joint;
+pub mod instant;
+
+pub use converted::*;
+pub use dependent_joint::*;
+pub use independent_array_joint::*;
+pub use independent_joint::*;
+pub use instant::*;
 use rand::prelude::*;
 use std::{error::Error, fmt::Debug};
 
@@ -12,7 +23,7 @@ pub enum DistributionError {
 
 /// # Distribution
 /// ![tex](https://latex.codecogs.com/svg.latex?p%28x%7C\mathbf{\theta}%29)
-pub trait Distribution {
+pub trait Distribution: Clone + Debug {
     type T: RandomVariable;
     type U: RandomVariable;
 

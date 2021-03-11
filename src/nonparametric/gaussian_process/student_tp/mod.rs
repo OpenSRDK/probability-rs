@@ -14,6 +14,7 @@ pub enum StudentTPError {
     NuMustBePositive,
 }
 
+#[derive(Clone, Debug)]
 pub struct StudentTP<G, K, T>
 where
     G: GaussianProcess<K, T>,

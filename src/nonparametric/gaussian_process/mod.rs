@@ -5,7 +5,7 @@ pub mod kiss_love_gp;
 pub mod regressor;
 pub mod student_tp;
 
-use crate::RandomVariable;
+use crate::{Distribution, RandomVariable};
 pub use exact_gp::*;
 pub use ey::*;
 pub use kernel_matrix::*;
@@ -30,7 +30,7 @@ pub enum GaussianProcessError {
 ///
 /// ![tex](https://latex.codecogs.com/svg.latex?\mathbf{f}%7CX\sim\mathcal{GP}%280,K_{XX}%29)
 ///
-pub trait GaussianProcess<K, T>
+pub trait GaussianProcess<K, T>: Distribution
 where
     K: Kernel<T>,
     T: RandomVariable,
