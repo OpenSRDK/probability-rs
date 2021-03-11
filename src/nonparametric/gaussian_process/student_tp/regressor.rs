@@ -7,23 +7,23 @@ use opensrdk_kernel_method::Kernel;
 use opensrdk_linear_algebra::*;
 use std::{error::Error, marker::PhantomData};
 
-pub struct StudentTPRegressor<G, G2, K, T>
+pub struct StudentTPRegressor<G, R, K, T>
 where
     G: GaussianProcess<K, T>,
-    G2: GaussianProcessRegressor<G, K, T>,
+    R: GaussianProcessRegressor<G, K, T>,
     K: Kernel<T>,
     T: RandomVariable,
 {
-    gpr: G2,
+    gpr: R,
     nu: f64,
     beta: f64,
     phantom: PhantomData<(G, K, T)>,
 }
 
-impl<G, G2, K, T> StudentTPRegressor<G, G2, K, T>
+impl<G, R, K, T> StudentTPRegressor<G, R, K, T>
 where
     G: GaussianProcess<K, T>,
-    G2: GaussianProcessRegressor<G, K, T>,
+    R: GaussianProcessRegressor<G, K, T>,
     K: Kernel<T>,
     T: RandomVariable,
 {
@@ -37,7 +37,7 @@ where
         let kxx_inv_y = tp.gp.kxx_inv_vec(y.to_vec(), &params, false)?.0.col_mat();
         let yt = y.to_vec().row_mat();
 
-        let gpr = G2::new(tp.gp, y, params)?;
+        let gpr = R::new(tp.gp, y, params)?;
 
         let beta = (yt * kxx_inv_y)[0][0];
 
@@ -49,7 +49,7 @@ where
         })
     }
 
-    pub fn gpr(&self) -> &G2 {
+    pub fn gpr(&self) -> &R {
         &self.gpr
     }
 

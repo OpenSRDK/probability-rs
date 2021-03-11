@@ -25,7 +25,7 @@ impl EllipticalSliceable for Vec<f64> {
     }
 }
 
-/// Sample from posterior p(b|a) with likelihood p(a|b) and prior p(b)
+/// Sample from posterior p(b|a,c) with likelihood p(a|b,c) and prior p(b|c)
 pub struct EllipticalSliceSampler<'a, L, P, A, B>
 where
     L: Distribution<T = A, U = B>,
