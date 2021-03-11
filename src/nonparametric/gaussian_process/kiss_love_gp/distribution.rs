@@ -1,6 +1,6 @@
 use super::KissLoveGP;
 use crate::{
-    nonparametric::{y_ey, GaussianProcess, GaussianProcessError, GaussianProcessParams},
+    nonparametric::{GaussianProcess, GaussianProcessParams},
     opensrdk_linear_algebra::*,
     Distribution,
 };
@@ -19,13 +19,9 @@ where
 
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
         let y = x;
-        let n = self.n();
+        let n = y.len();
 
-        if y.len() != n {
-            return Err(GaussianProcessError::DimensionMismatch.into());
-        }
-
-        let y_ey = y_ey(y, self.ey).col_mat();
+        let y_ey = y.clone().col_mat();
 
         let y_ey_t = y_ey.t();
         let (kxx_inv_y_ey, det) = self.kxx_inv_vec(y_ey.vec(), theta, true)?;
@@ -40,7 +36,7 @@ where
         theta: &Self::U,
         rng: &mut rand::prelude::StdRng,
     ) -> Result<Self::T, Box<dyn Error>> {
-        let n = self.n();
+        let n = theta.x.len();
         let z = (0..n)
             .into_iter()
             .map(|_| rng.sample(StandardNormal))
@@ -48,8 +44,7 @@ where
 
         let wxt_lkuu_z = self.lkxx_vec(z, theta)?.col_mat();
 
-        let mu = vec![self.ey; n].col_mat();
-        let y = mu + wxt_lkuu_z;
+        let y = wxt_lkuu_z;
 
         Ok(y.vec())
     }

@@ -1,15 +1,15 @@
-use crate::MultivariateNormal;
 use crate::{nonparametric::GaussianProcessParams, Distribution};
+use crate::{MultivariateNormal, RandomVariable};
 use opensrdk_kernel_method::*;
 pub use rayon::prelude::*;
-use std::{error::Error, fmt::Debug};
+use std::{error::Error};
 
 use super::ExactGP;
 
 impl<K, T> Distribution for ExactGP<K, T>
 where
     K: Kernel<T>,
-    T: Clone + Debug + PartialEq,
+    T: RandomVariable,
 {
     type T = Vec<f64>;
     type U = GaussianProcessParams<T>;

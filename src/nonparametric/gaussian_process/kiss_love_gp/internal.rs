@@ -1,5 +1,5 @@
 use super::{grid::Grid, GaussianProcessError, GaussianProcessParams, KissLoveGP};
-use crate::opensrdk_linear_algebra::*;
+use crate::{opensrdk_linear_algebra::*, RandomVariable};
 use opensrdk_kernel_method::{Convolutable, Kernel};
 use rayon::prelude::*;
 use std::{cmp::Ordering, error::Error};
@@ -7,26 +7,9 @@ use std::{cmp::Ordering, error::Error};
 impl<K, T> KissLoveGP<K, T>
 where
     K: Kernel<Vec<f64>>,
-    T: Convolutable + PartialEq,
+    T: RandomVariable + Convolutable,
 {
-    pub(crate) fn m(&self) -> usize {
-        if self.wx.len() != 0 {
-            return self.wx[0].rows;
-        }
-        0
-    }
-
-    pub(crate) fn reset_prepare(&mut self) {
-        self.ready_to_predict = false;
-        self.a = vec![];
-        self.s = vec![];
-    }
-
-    pub(crate) fn wx(
-        &self,
-        x: &Vec<T>,
-        force_with_u: bool,
-    ) -> Result<(Vec<SparseMatrix>, Option<Grid>), Box<dyn Error>> {
+    pub(crate) fn wx_u(x: &Vec<T>) -> Result<(Vec<SparseMatrix>, Grid), Box<dyn Error>> {
         let n = x.len();
         if n == 0 {
             return Err(GaussianProcessError::Empty.into());
@@ -38,17 +21,11 @@ where
             return Err(GaussianProcessError::Empty.into());
         }
 
-        if force_with_u || self.u.axes().len() == 0 {
-            let points = vec![(n / 2usize.pow(data_len as u32)).max(2); data_len];
-            let u = Grid::from(&x, &points)?;
+        let points = vec![(n / 2usize.pow(data_len as u32)).max(2); data_len];
+        let u = Grid::from(&x, &points)?;
+        let wx = u.interpolation_weight(&x)?;
 
-            let wx = self.u.interpolation_weight(&x)?;
-            return Ok((wx, Some(u)));
-        } else {
-            let wx = self.u.interpolation_weight(&x)?;
-
-            return Ok((wx, None));
-        }
+        return Ok((wx, u));
     }
 
     pub(crate) fn wxt_kuu_wx_vec_mul(
@@ -73,16 +50,8 @@ where
         &self,
         params: &GaussianProcessParams<T>,
     ) -> Result<(Vec<SparseMatrix>, KroneckerMatrices), Box<dyn Error>> {
-        let (wx, u) = if let Some(x) = params.x.as_ref() {
-            self.wx(x, true)?
-        } else {
-            (self.wx.clone(), None)
-        };
-        let kuu = if let Some(u) = u {
-            u.kuu(&self.kernel, &self.theta)?
-        } else {
-            self.u.kuu(&self.kernel, &self.theta)?
-        };
+        let (wx, u) = Self::wx_u(&params.x)?;
+        let kuu = u.kuu(&self.kernel, &params.theta)?;
 
         return Ok((wx, kuu));
     }
