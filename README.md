@@ -15,5 +15,8 @@ extern crate blas_src;
 extern crate lapack_src;
 ```
 
-You can also use accelerate, intel-mkl, or netlib instead.
-See [here](https://github.com/blas-lapack-rs/blas-lapack-rs.github.io/wiki).
+You can also use accelerate, intel-mkl and so on.
+See
+
+- [https://github.com/blas-lapack-rs/blas-src]
+- [https://github.com/blas-lapack-rs/lapack-src]
