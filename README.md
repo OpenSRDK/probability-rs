@@ -29,5 +29,7 @@ use opensrdk_probability::nonparametric::*;
 
 ## Examples
 
-- [macros test code](src/macros/mod.rs)
-- [operators test code](src/matrix/operators/mul.rs)
+- [converted distribution test code](src/distribution/converted.rs)
+- [dependent joint distribution test code](src/distribution/dependent_joint.rs)
+- [independent array joint distribution test code](src/distribution/independent_array_joint.rs)
+- [independent joint distribution test code](src/distribution/independent_joint.rs)
