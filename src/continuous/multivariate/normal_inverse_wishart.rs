@@ -51,11 +51,11 @@ impl Distribution for NormalInverseWishart {
         let lpsi = theta.lpsi().clone();
         let nu = theta.nu();
 
-        let n = MultivariateNormal;
+        let p = MultivariateNormal;
         let winv = InverseWishart;
 
         let lsigma = winv.sample(&InverseWishartParams::new(lpsi, nu)?, rng)?;
-        let mu = n.sample(
+        let mu = p.sample(
             &MultivariateNormalParams::new(mu0, (1.0 / lambda).sqrt() * lsigma.clone())?,
             rng,
         )?;

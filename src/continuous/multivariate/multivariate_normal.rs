@@ -24,12 +24,12 @@ impl Distribution for MultivariateNormal {
         let mu = theta.mu();
         let lsigma = theta.lsigma();
 
-        let n = x.len();
+        let p = x.len();
 
-        if n != mu.len() {
+        if p != mu.len() {
             return Err(MultivariateNormalError::DimensionMismatch.into());
         }
-        let n = n as f64;
+        let p = p as f64;
 
         let x_mu = x
             .par_iter()
@@ -38,7 +38,7 @@ impl Distribution for MultivariateNormal {
             .collect::<Vec<_>>()
             .col_mat();
 
-        Ok(1.0 / ((2.0 * PI).powf(n / 2.0) * lsigma.trdet())
+        Ok(1.0 / ((2.0 * PI).powf(p / 2.0) * lsigma.trdet())
             * (-1.0 / 2.0 * (x_mu.t() * lsigma.potrs(x_mu)?)[0][0]).exp())
     }
 
@@ -68,8 +68,8 @@ impl MultivariateNormalParams {
     /// `L` is needed as second argument under decomposition `Sigma = L * L^T`
     /// l_sigma = sigma.potrf()?;
     pub fn new(mu: Vec<f64>, lsigma: Matrix) -> Result<Self, Box<dyn Error>> {
-        let n = mu.len();
-        if n != lsigma.rows() || n != lsigma.cols() {
+        let p = mu.len();
+        if p != lsigma.rows() || p != lsigma.cols() {
             return Err(MultivariateNormalError::DimensionMismatch.into());
         }
 

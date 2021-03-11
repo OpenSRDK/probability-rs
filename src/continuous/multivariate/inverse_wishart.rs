@@ -20,9 +20,9 @@ pub enum InverseWishartError {
     Unknown,
 }
 
-fn multivariate_gamma(n: u64, a: f64) -> f64 {
-    PI.powf(n as f64 * (n as f64 - 1.0) / 4.0)
-        * (0..n)
+fn multivariate_gamma(p: u64, a: f64) -> f64 {
+    PI.powf(p as f64 * (p as f64 - 1.0) / 4.0)
+        * (0..p)
             .into_iter()
             .map(|i| Gamma::gamma(a + i as f64 / 2.0))
             .product::<f64>()
@@ -37,11 +37,11 @@ impl Distribution for InverseWishart {
         let lpsi = theta.lpsi();
         let nu = theta.nu();
 
-        let n = x.rows() as f64;
+        let p = x.rows() as f64;
 
         Ok(lpsi.trdet().powf(nu / 2.0)
-            / (2f64.powf(nu * n / 2.0) * multivariate_gamma(n as u64, nu / 2.0))
-            * x.trdet().powf(-(nu + n + 1.0) / 2.0)
+            / (2f64.powf(nu * p / 2.0) * multivariate_gamma(p as u64, nu / 2.0))
+            * x.trdet().powf(-(nu + p + 1.0) / 2.0)
             * (-0.5 * x.clone().potrs(lpsi * lpsi.t())?.tr()).exp())
     }
 
@@ -62,11 +62,11 @@ pub struct InverseWishartParams {
 
 impl InverseWishartParams {
     pub fn new(lpsi: Matrix, nu: f64) -> Result<Self, Box<dyn Error>> {
-        let n = lpsi.rows();
-        if n != lpsi.cols() {
+        let p = lpsi.rows();
+        if p != lpsi.cols() {
             return Err(InverseWishartError::DimensionMismatch.into());
         }
-        if nu <= n as f64 - 1.0 as f64 {
+        if nu <= p as f64 - 1.0 as f64 {
             return Err(InverseWishartError::NuMustBeGTEDimension.into());
         }
 

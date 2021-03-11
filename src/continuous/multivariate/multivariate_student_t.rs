@@ -27,12 +27,12 @@ impl Distribution for MultivariateStudentT {
         let lsigma = theta.lsigma();
         let nu = theta.nu();
 
-        let n = x.len();
+        let p = x.len();
 
-        if n != mu.len() {
+        if p != mu.len() {
             return Err(MultivariateStudentTError::DimensionMismatch.into());
         }
-        let n = n as f64;
+        let p = p as f64;
         let nu = nu;
 
         let x_mu = x
@@ -42,9 +42,9 @@ impl Distribution for MultivariateStudentT {
             .collect::<Vec<_>>()
             .col_mat();
 
-        Ok((Gamma::gamma((nu + n) / 2.0)
-            / (Gamma::gamma(nu / 2.0) * nu.powf(n / 2.0) * PI.powf(n / 2.0) * lsigma.trdet()))
-            * (1.0 + (x_mu.t() * lsigma.potrs(x_mu)?)[0][0] / nu).powf(-(nu + n) / 2.0))
+        Ok((Gamma::gamma((nu + p) / 2.0)
+            / (Gamma::gamma(nu / 2.0) * nu.powf(p / 2.0) * PI.powf(p / 2.0) * lsigma.trdet()))
+            * (1.0 + (x_mu.t() * lsigma.potrs(x_mu)?)[0][0] / nu).powf(-(nu + p) / 2.0))
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
