@@ -1,3 +1,4 @@
+use super::wishart::{Wishart, WishartParams};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
@@ -6,7 +7,6 @@ use std::f64::consts::PI;
 use std::{error::Error, ops::BitAnd, ops::Mul};
 
 /// # InverseWishart
-/// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\Sigma%29)
 #[derive(Clone, Debug)]
 pub struct InverseWishart;
 
@@ -50,7 +50,14 @@ impl Distribution for InverseWishart {
         let lpsi = theta.lpsi();
         let nu = theta.nu();
 
-        Ok(todo!())
+        let lpsi_inv = lpsi.clone().potri()?;
+        let w = Wishart;
+        let w_params = WishartParams::new(lpsi_inv, nu)?;
+
+        let x = w.sample(&w_params, rng)?;
+        let x_inv = x.potri()?;
+
+        Ok(x_inv)
     }
 }
 

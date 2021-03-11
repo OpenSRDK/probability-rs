@@ -7,7 +7,6 @@ use rand::prelude::*;
 use std::{error::Error, ops::BitAnd, ops::Mul};
 
 /// # NormalInverseWishart
-/// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\Sigma%29)
 #[derive(Clone, Debug)]
 pub struct NormalInverseWishart;
 
