@@ -10,102 +10,101 @@ pub struct Normal;
 
 #[derive(thiserror::Error, Debug)]
 pub enum NormalError {
-    #[error("'σ' must be positive")]
-    SigmaMustBePositive,
-    #[error("Unknown error")]
-    Unknown,
+  #[error("'σ' must be positive")]
+  SigmaMustBePositive,
+  #[error("Unknown error")]
+  Unknown,
 }
 
 impl Distribution for Normal {
-    type T = f64;
-    type U = NormalParams;
+  type T = f64;
+  type U = NormalParams;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
-        let mu = theta.mu();
-        let sigma = theta.sigma();
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+    let mu = theta.mu();
+    let sigma = theta.sigma();
 
-        Ok(1.0 / (2.0 * PI * sigma.powi(2)).sqrt()
-            * (-(x - mu).powi(2) / (2.0 * sigma.powi(2))).exp())
-    }
+    Ok(1.0 / (2.0 * PI * sigma.powi(2)).sqrt() * (-(x - mu).powi(2) / (2.0 * sigma.powi(2))).exp())
+  }
 
-    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
-        let mu = theta.mu();
-        let sigma = theta.sigma();
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+    let mu = theta.mu();
+    let sigma = theta.sigma();
 
-        let normal = match RandNormal::new(mu, sigma) {
-            Ok(n) => n,
-            Err(_) => return Err(NormalError::SigmaMustBePositive.into()),
-        };
+    let normal = match RandNormal::new(mu, sigma) {
+      Ok(n) => n,
+      Err(_) => return Err(NormalError::SigmaMustBePositive.into()),
+    };
 
-        Ok(rng.sample(normal))
-    }
+    Ok(rng.sample(normal))
+  }
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct NormalParams {
-    mu: f64,
-    sigma: f64,
+  mu: f64,
+  sigma: f64,
 }
 
 impl NormalParams {
-    pub fn new(mu: f64, sigma: f64) -> Result<Self, Box<dyn Error>> {
-        if sigma <= 0.0 {
-            return Err(NormalError::SigmaMustBePositive.into());
-        }
-
-        Ok(Self { mu, sigma })
+  pub fn new(mu: f64, sigma: f64) -> Result<Self, Box<dyn Error>> {
+    if sigma <= 0.0 {
+      return Err(NormalError::SigmaMustBePositive.into());
     }
 
-    pub fn mu(&self) -> f64 {
-        self.mu
-    }
+    Ok(Self { mu, sigma })
+  }
 
-    pub fn sigma(&self) -> f64 {
-        self.sigma
-    }
+  pub fn mu(&self) -> f64 {
+    self.mu
+  }
+
+  pub fn sigma(&self) -> f64 {
+    self.sigma
+  }
 }
 
 impl<Rhs, TRhs> Mul<Rhs> for Normal
 where
-    Rhs: Distribution<T = TRhs, U = NormalParams>,
-    TRhs: RandomVariable,
+  Rhs: Distribution<T = TRhs, U = NormalParams>,
+  TRhs: RandomVariable,
 {
-    type Output = IndependentJoint<Self, Rhs, f64, TRhs, NormalParams>;
+  type Output = IndependentJoint<Self, Rhs, f64, TRhs, NormalParams>;
 
-    fn mul(self, rhs: Rhs) -> Self::Output {
-        IndependentJoint::new(self, rhs)
-    }
+  fn mul(self, rhs: Rhs) -> Self::Output {
+    IndependentJoint::new(self, rhs)
+  }
 }
 
 impl<Rhs, URhs> BitAnd<Rhs> for Normal
 where
-    Rhs: Distribution<T = NormalParams, U = URhs>,
-    URhs: RandomVariable,
+  Rhs: Distribution<T = NormalParams, U = URhs>,
+  URhs: RandomVariable,
 {
-    type Output = DependentJoint<Self, Rhs, f64, NormalParams, URhs>;
+  type Output = DependentJoint<Self, Rhs, f64, NormalParams, URhs>;
 
-    fn bitand(self, rhs: Rhs) -> Self::Output {
-        DependentJoint::new(self, rhs)
-    }
+  fn bitand(self, rhs: Rhs) -> Self::Output {
+    DependentJoint::new(self, rhs)
+  }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{Distribution, Normal, NormalParams};
-    use rand::prelude::*;
+  use crate::{Distribution, Normal, NormalParams};
+  use rand::prelude::*;
 
-    #[test]
-    fn it_works() {
-        let n = Normal;
-        let mut rng = StdRng::from_seed([1; 32]);
+  #[test]
+  fn it_works() {
+    let n = Normal;
+    let mut rng = StdRng::from_seed([1; 32]);
 
-        let mu = 2.0;
-        let sigma = 3.0;
+    let mu = 2.0;
+    let sigma = 3.0;
 
-        let x = n
-            .sample(&NormalParams::new(mu, sigma).unwrap(), &mut rng)
-            .unwrap();
+    let x = n
+      .sample(&NormalParams::new(mu, sigma).unwrap(), &mut rng)
+      .unwrap();
 
-        println!("{}", x);
-    }
+    println!("{}", x);
+  }
 }

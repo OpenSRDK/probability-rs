@@ -23,52 +23,52 @@ use std::{error::Error, fmt::Debug, marker::PhantomData};
 #[derive(Clone, Debug)]
 pub struct ExactGP<K, T>
 where
-    K: Kernel<T>,
-    T: RandomVariable,
+  K: Kernel<T>,
+  T: RandomVariable,
 {
-    kernel: K,
-    phantom: PhantomData<T>,
+  kernel: K,
+  phantom: PhantomData<T>,
 }
 
 impl<K, T> GaussianProcess<K, T> for ExactGP<K, T>
 where
-    K: Kernel<T>,
-    T: RandomVariable,
+  K: Kernel<T>,
+  T: RandomVariable,
 {
-    fn new(kernel: K) -> Self {
-        Self {
-            kernel,
-            phantom: PhantomData,
-        }
+  fn new(kernel: K) -> Self {
+    Self {
+      kernel,
+      phantom: PhantomData,
     }
+  }
 
-    fn kxx_inv_vec(
-        &self,
-        vec: Vec<f64>,
-        params: &GaussianProcessParams<T>,
-        with_det_lkxx: bool,
-    ) -> Result<(Vec<f64>, Option<f64>), Box<dyn Error>> {
-        let params = self.handle_temporal_params(params)?;
-        let (_, lsigma) = params.eject();
+  fn kxx_inv_vec(
+    &self,
+    vec: Vec<f64>,
+    params: &GaussianProcessParams<T>,
+    with_det_lkxx: bool,
+  ) -> Result<(Vec<f64>, Option<f64>), Box<dyn Error>> {
+    let params = self.handle_temporal_params(params)?;
+    let (_, lsigma) = params.eject();
 
-        let det = if with_det_lkxx {
-            Some(lsigma.trdet())
-        } else {
-            None
-        };
-        let kxx_inv_vec = lsigma.potrs(vec.col_mat())?.vec();
+    let det = if with_det_lkxx {
+      Some(lsigma.trdet())
+    } else {
+      None
+    };
+    let kxx_inv_vec = lsigma.potrs(vec.col_mat())?.vec();
 
-        Ok((kxx_inv_vec, det))
-    }
+    Ok((kxx_inv_vec, det))
+  }
 
-    fn lkxx_vec(
-        &self,
-        vec: Vec<f64>,
-        params: &GaussianProcessParams<T>,
-    ) -> Result<Vec<f64>, Box<dyn Error>> {
-        let params = self.handle_temporal_params(params)?;
-        let (_, l_sigma) = params.eject();
+  fn lkxx_vec(
+    &self,
+    vec: Vec<f64>,
+    params: &GaussianProcessParams<T>,
+  ) -> Result<Vec<f64>, Box<dyn Error>> {
+    let params = self.handle_temporal_params(params)?;
+    let (_, l_sigma) = params.eject();
 
-        Ok((l_sigma * vec.col_mat()).vec())
-    }
+    Ok((l_sigma * vec.col_mat()).vec())
+  }
 }

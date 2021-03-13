@@ -8,33 +8,33 @@ use std::{fmt::Debug, marker::PhantomData};
 
 #[derive(thiserror::Error, Debug)]
 pub enum StudentTPError {
-    #[error("Dimension mismatch.")]
-    DimensionMismatch,
-    #[error("'ν' must be positive")]
-    NuMustBePositive,
+  #[error("Dimension mismatch.")]
+  DimensionMismatch,
+  #[error("'ν' must be positive")]
+  NuMustBePositive,
 }
 
 #[derive(Clone, Debug)]
 pub struct StudentTP<G, K, T>
 where
-    G: GaussianProcess<K, T>,
-    K: Kernel<T>,
-    T: RandomVariable,
+  G: GaussianProcess<K, T>,
+  K: Kernel<T>,
+  T: RandomVariable,
 {
-    gp: G,
-    phantom: PhantomData<(K, T)>,
+  gp: G,
+  phantom: PhantomData<(K, T)>,
 }
 
 impl<G, K, T> StudentTP<G, K, T>
 where
-    G: GaussianProcess<K, T>,
-    K: Kernel<T>,
-    T: RandomVariable,
+  G: GaussianProcess<K, T>,
+  K: Kernel<T>,
+  T: RandomVariable,
 {
-    pub fn new(gp: G) -> Self {
-        Self {
-            gp,
-            phantom: PhantomData,
-        }
+  pub fn new(gp: G) -> Self {
+    Self {
+      gp,
+      phantom: PhantomData,
     }
+  }
 }

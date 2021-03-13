@@ -17,12 +17,12 @@ pub use student_tp::*;
 
 #[derive(thiserror::Error, Debug)]
 pub enum GaussianProcessError {
-    #[error("Data is empty.")]
-    Empty,
-    #[error("Dimension mismatch.")]
-    DimensionMismatch,
-    #[error("NaN contaminated.")]
-    NaNContamination,
+  #[error("Data is empty.")]
+  Empty,
+  #[error("Dimension mismatch.")]
+  DimensionMismatch,
+  #[error("NaN contaminated.")]
+  NaNContamination,
 }
 
 ///
@@ -32,43 +32,43 @@ pub enum GaussianProcessError {
 ///
 pub trait GaussianProcess<K, T>: Distribution
 where
-    K: Kernel<T>,
-    T: RandomVariable,
+  K: Kernel<T>,
+  T: RandomVariable,
 {
-    fn new(kernel: K) -> Self;
+  fn new(kernel: K) -> Self;
 
-    fn kxx_inv_vec(
-        &self,
-        vec: Vec<f64>,
-        params: &GaussianProcessParams<T>,
-        with_det_lkxx: bool,
-    ) -> Result<(Vec<f64>, Option<f64>), Box<dyn Error>>;
+  fn kxx_inv_vec(
+    &self,
+    vec: Vec<f64>,
+    params: &GaussianProcessParams<T>,
+    with_det_lkxx: bool,
+  ) -> Result<(Vec<f64>, Option<f64>), Box<dyn Error>>;
 
-    fn lkxx_vec(
-        &self,
-        vec: Vec<f64>,
-        params: &GaussianProcessParams<T>,
-    ) -> Result<Vec<f64>, Box<dyn Error>>;
+  fn lkxx_vec(
+    &self,
+    vec: Vec<f64>,
+    params: &GaussianProcessParams<T>,
+  ) -> Result<Vec<f64>, Box<dyn Error>>;
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct GaussianProcessParams<T>
 where
-    T: RandomVariable,
+  T: RandomVariable,
 {
-    x: Vec<T>,
-    theta: Vec<f64>,
+  x: Vec<T>,
+  theta: Vec<f64>,
 }
 
 impl<T> GaussianProcessParams<T>
 where
-    T: RandomVariable,
+  T: RandomVariable,
 {
-    pub fn new(x: Vec<T>, theta: Vec<f64>) -> Self {
-        Self { x, theta }
-    }
+  pub fn new(x: Vec<T>, theta: Vec<f64>) -> Self {
+    Self { x, theta }
+  }
 
-    pub fn eject(self) -> (Vec<T>, Vec<f64>) {
-        (self.x, self.theta)
-    }
+  pub fn eject(self) -> (Vec<T>, Vec<f64>) {
+    (self.x, self.theta)
+  }
 }

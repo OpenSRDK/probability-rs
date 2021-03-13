@@ -11,95 +11,97 @@ pub struct Gamma;
 
 #[derive(thiserror::Error, Debug)]
 pub enum GammaError {
-    #[error("'shape' must be positive")]
-    ShapeMustBePositive,
-    #[error("'scale' must be positive")]
-    ScaleMustBePositive,
-    #[error("Unknown error")]
-    Unknown,
+  #[error("'shape' must be positive")]
+  ShapeMustBePositive,
+  #[error("'scale' must be positive")]
+  ScaleMustBePositive,
+  #[error("Unknown error")]
+  Unknown,
 }
 
 impl Distribution for Gamma {
-    type T = f64;
-    type U = GammaParams;
+  type T = f64;
+  type U = GammaParams;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
-        let shape = theta.shape();
-        let scale = theta.scale();
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+    let shape = theta.shape();
+    let scale = theta.scale();
 
-        Ok((1.0 / GammaFunc::gamma(shape) * scale.powf(shape))
-            * x.powf(shape - 1.0)
-            * (-x / scale).exp())
-    }
+    Ok(
+      (1.0 / GammaFunc::gamma(shape) * scale.powf(shape))
+        * x.powf(shape - 1.0)
+        * (-x / scale).exp(),
+    )
+  }
 
-    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
-        let shape = theta.shape();
-        let scale = theta.scale();
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+    let shape = theta.shape();
+    let scale = theta.scale();
 
-        let gamma = match RandGamma::new(shape, scale) {
-            Ok(n) => n,
-            Err(_) => return Err(GammaError::Unknown.into()),
-        };
+    let gamma = match RandGamma::new(shape, scale) {
+      Ok(n) => n,
+      Err(_) => return Err(GammaError::Unknown.into()),
+    };
 
-        Ok(rng.sample(gamma))
-    }
+    Ok(rng.sample(gamma))
+  }
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct GammaParams {
-    shape: f64,
-    scale: f64,
+  shape: f64,
+  scale: f64,
 }
 
 impl GammaParams {
-    pub fn new(shape: f64, scale: f64) -> Result<Self, Box<dyn Error>> {
-        if shape <= 0.0 {
-            return Err(GammaError::ShapeMustBePositive.into());
-        }
-        if scale <= 0.0 {
-            return Err(GammaError::ScaleMustBePositive.into());
-        }
-
-        Ok(Self { shape, scale })
+  pub fn new(shape: f64, scale: f64) -> Result<Self, Box<dyn Error>> {
+    if shape <= 0.0 {
+      return Err(GammaError::ShapeMustBePositive.into());
+    }
+    if scale <= 0.0 {
+      return Err(GammaError::ScaleMustBePositive.into());
     }
 
-    pub fn shape(&self) -> f64 {
-        self.shape
-    }
+    Ok(Self { shape, scale })
+  }
 
-    pub fn scale(&self) -> f64 {
-        self.scale
-    }
+  pub fn shape(&self) -> f64 {
+    self.shape
+  }
+
+  pub fn scale(&self) -> f64 {
+    self.scale
+  }
 }
 
 impl<Rhs, TRhs> Mul<Rhs> for Gamma
 where
-    Rhs: Distribution<T = TRhs, U = GammaParams>,
-    TRhs: RandomVariable,
+  Rhs: Distribution<T = TRhs, U = GammaParams>,
+  TRhs: RandomVariable,
 {
-    type Output = IndependentJoint<Self, Rhs, f64, TRhs, GammaParams>;
+  type Output = IndependentJoint<Self, Rhs, f64, TRhs, GammaParams>;
 
-    fn mul(self, rhs: Rhs) -> Self::Output {
-        IndependentJoint::new(self, rhs)
-    }
+  fn mul(self, rhs: Rhs) -> Self::Output {
+    IndependentJoint::new(self, rhs)
+  }
 }
 
 impl<Rhs, URhs> BitAnd<Rhs> for Gamma
 where
-    Rhs: Distribution<T = GammaParams, U = URhs>,
-    URhs: RandomVariable,
+  Rhs: Distribution<T = GammaParams, U = URhs>,
+  URhs: RandomVariable,
 {
-    type Output = DependentJoint<Self, Rhs, f64, GammaParams, URhs>;
+  type Output = DependentJoint<Self, Rhs, f64, GammaParams, URhs>;
 
-    fn bitand(self, rhs: Rhs) -> Self::Output {
-        DependentJoint::new(self, rhs)
-    }
+  fn bitand(self, rhs: Rhs) -> Self::Output {
+    DependentJoint::new(self, rhs)
+  }
 }
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
+  #[test]
+  fn it_works() {
+    assert_eq!(2 + 2, 4);
+  }
 }
