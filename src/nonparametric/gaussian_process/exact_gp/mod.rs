@@ -3,10 +3,11 @@ pub mod internal;
 pub mod regressor;
 
 use super::{GaussianProcess, GaussianProcessParams};
+use crate::DistributionError;
 use crate::{opensrdk_linear_algebra::*, RandomVariable};
 use opensrdk_kernel_method::*;
 pub use rayon::prelude::*;
-use std::{error::Error, fmt::Debug, marker::PhantomData};
+use std::{fmt::Debug, marker::PhantomData};
 
 /// Gaussian Process without approximation for scalability.
 ///
@@ -47,7 +48,7 @@ where
     vec: Vec<f64>,
     params: &GaussianProcessParams<T>,
     with_det_lkxx: bool,
-  ) -> Result<(Vec<f64>, Option<f64>), Box<dyn Error>> {
+  ) -> Result<(Vec<f64>, Option<f64>), DistributionError> {
     let params = self.handle_temporal_params(params)?;
     let (_, lsigma) = params.eject();
 
@@ -65,7 +66,7 @@ where
     &self,
     vec: Vec<f64>,
     params: &GaussianProcessParams<T>,
-  ) -> Result<Vec<f64>, Box<dyn Error>> {
+  ) -> Result<Vec<f64>, DistributionError> {
     let params = self.handle_temporal_params(params)?;
     let (_, l_sigma) = params.eject();
 

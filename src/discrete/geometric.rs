@@ -1,7 +1,8 @@
+use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::Geometric as RandGeometric;
-use std::{error::Error, ops::BitAnd, ops::Mul};
+use std::{ops::BitAnd, ops::Mul};
 
 /// # Geometric
 /// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
@@ -12,27 +13,25 @@ pub struct Geometric;
 pub enum GeometricError {
   #[error("'p' must be probability.")]
   PMustBeProbability,
-  #[error("Unknown error")]
-  Unknown,
 }
 
 impl Distribution for Geometric {
   type T = u64;
   type U = GeometricParams;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let p = theta.p();
 
     Ok((1.0 - p).powi((x - 1) as i32) * p)
   }
 
-  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
     let p = theta.p();
 
     let geometric = match RandGeometric::new(p) {
-      Ok(n) => n,
-      Err(_) => return Err(GeometricError::Unknown.into()),
-    };
+      Ok(v) => Ok(v),
+      Err(e) => Err(DistributionError::Others(e.into())),
+    }?;
 
     Ok(rng.sample(geometric))
   }
@@ -44,7 +43,7 @@ pub struct GeometricParams {
 }
 
 impl GeometricParams {
-  pub fn new(p: f64) -> Result<Self, Box<dyn Error>> {
+  pub fn new(p: f64) -> Result<Self, GeometricError> {
     if p < 0.0 || 1.0 < p {
       return Err(GeometricError::PMustBeProbability.into());
     }

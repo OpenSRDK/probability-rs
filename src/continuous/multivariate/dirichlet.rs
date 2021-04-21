@@ -1,9 +1,10 @@
+use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::Dirichlet as RandDirichlet;
 use rayon::{iter::IntoParallelIterator, prelude::*};
 use special::Gamma;
-use std::{error::Error, ops::BitAnd, ops::Mul};
+use std::{ops::BitAnd, ops::Mul};
 
 /// # Dirichlet
 /// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
@@ -34,11 +35,13 @@ impl Distribution for Dirichlet {
   type T = Vec<f64>;
   type U = DirichletParams;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let alpha = theta.alpha();
 
     if x.len() != alpha.len() {
-      return Err(DirichletError::DimensionMismatch.into());
+      return Err(DistributionError::InvalidParameters(
+        DirichletError::DimensionMismatch.into(),
+      ));
     }
 
     Ok(
@@ -51,12 +54,12 @@ impl Distribution for Dirichlet {
     )
   }
 
-  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
     let alpha = theta.alpha();
 
     let dirichlet = match RandDirichlet::new(alpha) {
       Ok(n) => n,
-      Err(_) => return Err(DirichletError::Unknown.into()),
+      Err(e) => return Err(DistributionError::Others(e.into())),
     };
 
     Ok(rng.sample(dirichlet))
@@ -69,13 +72,17 @@ pub struct DirichletParams {
 }
 
 impl DirichletParams {
-  pub fn new(alpha: Vec<f64>) -> Result<Self, Box<dyn Error>> {
+  pub fn new(alpha: Vec<f64>) -> Result<Self, DistributionError> {
     if alpha.len() < 2 {
-      return Err(DirichletError::AlphaLenMustBeGTE2.into());
+      return Err(DistributionError::InvalidParameters(
+        DirichletError::AlphaLenMustBeGTE2.into(),
+      ));
     }
     for &alpha_i in alpha.iter() {
       if alpha_i <= 0.0 {
-        return Err(DirichletError::AlphaMustBePositive.into());
+        return Err(DistributionError::InvalidParameters(
+          DirichletError::AlphaMustBePositive.into(),
+        ));
       }
     }
 

@@ -1,10 +1,11 @@
 use super::wishart::{Wishart, WishartParams};
+use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
 use special::Gamma;
 use std::f64::consts::PI;
-use std::{error::Error, ops::BitAnd, ops::Mul};
+use std::{ops::BitAnd, ops::Mul};
 
 /// # InverseWishart
 #[derive(Clone, Debug)]
@@ -33,7 +34,7 @@ impl Distribution for InverseWishart {
   type U = InverseWishartParams;
 
   /// x must be cholesky decomposed
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let lpsi = theta.lpsi();
     let nu = theta.nu();
 
@@ -48,7 +49,7 @@ impl Distribution for InverseWishart {
   }
 
   /// output is cholesky decomposed
-  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
     let lpsi = theta.lpsi();
     let nu = theta.nu();
 
@@ -70,13 +71,17 @@ pub struct InverseWishartParams {
 }
 
 impl InverseWishartParams {
-  pub fn new(lpsi: Matrix, nu: f64) -> Result<Self, Box<dyn Error>> {
+  pub fn new(lpsi: Matrix, nu: f64) -> Result<Self, DistributionError> {
     let p = lpsi.rows();
     if p != lpsi.cols() {
-      return Err(InverseWishartError::DimensionMismatch.into());
+      return Err(DistributionError::InvalidParameters(
+        InverseWishartError::DimensionMismatch.into(),
+      ));
     }
     if nu <= p as f64 - 1.0 as f64 {
-      return Err(InverseWishartError::NuMustBeGTEDimension.into());
+      return Err(DistributionError::InvalidParameters(
+        InverseWishartError::NuMustBeGTEDimension.into(),
+      ));
     }
 
     Ok(Self { lpsi, nu })

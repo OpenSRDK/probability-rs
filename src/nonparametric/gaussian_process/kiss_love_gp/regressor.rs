@@ -3,6 +3,7 @@ use super::{
   grid::Grid,
   KissLoveGP,
 };
+use crate::DistributionError;
 use crate::{
   nonparametric::regressor::{GaussianProcessRegressor, GaussianProcessRegressorError},
   RandomVariable,
@@ -35,16 +36,20 @@ where
     gp: KissLoveGP<K, T>,
     y: &[f64],
     params: GaussianProcessParams<T>,
-  ) -> Result<Self, Box<dyn Error>> {
+  ) -> Result<Self, DistributionError> {
     let (x, theta) = params.eject();
 
     let n = y.len();
     if n == 0 {
-      return Err(GaussianProcessRegressorError::Empty.into());
+      return Err(DistributionError::InvalidParameters(
+        GaussianProcessRegressorError::Empty.into(),
+      ));
     }
 
     if n != x.len() {
-      return Err(GaussianProcessRegressorError::DimensionMismatch.into());
+      return Err(DistributionError::InvalidParameters(
+        GaussianProcessRegressorError::DimensionMismatch.into(),
+      ));
     }
 
     let (wx, u) = KissLoveGP::<K, T>::wx_u(&x)?;
@@ -146,17 +151,21 @@ where
     self.ey
   }
 
-  fn predict_multivariate(&self, xs: &[T]) -> Result<MultivariateNormalParams, Box<dyn Error>> {
+  fn predict_multivariate(&self, xs: &[T]) -> Result<MultivariateNormalParams, DistributionError> {
     let len = xs.len();
     if len == 0 {
-      return Err(GaussianProcessRegressorError::Empty.into());
+      return Err(DistributionError::InvalidParameters(
+        GaussianProcessRegressorError::Empty.into(),
+      ));
     }
 
     let wxs = &self.u.interpolation_weight(xs)?;
     let p = self.a.len();
 
     if p != wxs.len() {
-      return Err(GaussianProcessRegressorError::DimensionMismatch.into());
+      return Err(DistributionError::InvalidParameters(
+        GaussianProcessRegressorError::DimensionMismatch.into(),
+      ));
     }
 
     let (mu, l_sigma) = (0..p)

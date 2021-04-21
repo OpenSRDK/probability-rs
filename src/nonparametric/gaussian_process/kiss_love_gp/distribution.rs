@@ -1,4 +1,5 @@
 use super::KissLoveGP;
+use crate::DistributionError;
 use crate::{
   nonparametric::{GaussianProcess, GaussianProcessParams},
   opensrdk_linear_algebra::*,
@@ -7,7 +8,7 @@ use crate::{
 use opensrdk_kernel_method::{Convolutable, Kernel};
 use rand::Rng;
 use rand_distr::StandardNormal;
-use std::{error::Error, f64::consts::PI};
+use std::f64::consts::PI;
 
 impl<K, T> Distribution for KissLoveGP<K, T>
 where
@@ -17,7 +18,7 @@ where
   type T = Vec<f64>;
   type U = GaussianProcessParams<T>;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let y = x;
     let n = y.len();
 
@@ -37,7 +38,7 @@ where
     &self,
     theta: &Self::U,
     rng: &mut rand::prelude::StdRng,
-  ) -> Result<Self::T, Box<dyn Error>> {
+  ) -> Result<Self::T, DistributionError> {
     let n = theta.x.len();
     let z = (0..n)
       .into_iter()

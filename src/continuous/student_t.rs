@@ -1,9 +1,10 @@
+use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::StudentT as RandStudentT;
 use special::Gamma;
 use std::f64::consts::PI;
-use std::{error::Error, ops::BitAnd, ops::Mul};
+use std::{ops::BitAnd, ops::Mul};
 
 /// # StudentT
 /// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
@@ -11,16 +12,13 @@ use std::{error::Error, ops::BitAnd, ops::Mul};
 pub struct StudentT;
 
 #[derive(thiserror::Error, Debug)]
-pub enum StudentTError {
-  #[error("Unknown error")]
-  Unknown,
-}
+pub enum StudentTError {}
 
 impl Distribution for StudentT {
   type T = f64;
   type U = StudentTParams;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let nu = theta.nu();
 
     Ok(
@@ -29,13 +27,13 @@ impl Distribution for StudentT {
     )
   }
 
-  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
     let nu = theta.nu();
 
     let student_t = match RandStudentT::new(nu) {
-      Ok(n) => n,
-      Err(_) => return Err(StudentTError::Unknown.into()),
-    };
+      Ok(v) => Ok(v),
+      Err(e) => Err(DistributionError::Others(e.into())),
+    }?;
 
     Ok(rng.sample(student_t))
   }
@@ -47,7 +45,7 @@ pub struct StudentTParams {
 }
 
 impl StudentTParams {
-  pub fn new(nu: f64) -> Result<Self, Box<dyn Error>> {
+  pub fn new(nu: f64) -> Result<Self, DistributionError> {
     Ok(Self { nu })
   }
 

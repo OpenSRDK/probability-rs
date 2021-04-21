@@ -4,10 +4,11 @@ pub mod internal;
 pub mod regressor;
 
 use super::{GaussianProcess, GaussianProcessError, GaussianProcessParams};
+use crate::DistributionError;
 use crate::{opensrdk_linear_algebra::*, RandomVariable};
 use opensrdk_kernel_method::{Convolutable, Convolutional, Kernel};
 use rayon::prelude::*;
-use std::{error::Error, marker::PhantomData};
+use std::marker::PhantomData;
 
 /// # Lanczos Variance Estimate Kernel Interpolation for Scalable Structured Gaussian Process
 /// |                 | time                                                                  |
@@ -68,7 +69,7 @@ where
     vec: Vec<f64>,
     params: &GaussianProcessParams<T>,
     with_det_lkxx: bool,
-  ) -> Result<(Vec<f64>, Option<f64>), Box<dyn Error>> {
+  ) -> Result<(Vec<f64>, Option<f64>), DistributionError> {
     const K: usize = 100;
     let (wx, kuu) = self.handle_temporal_params(params)?;
 
@@ -88,7 +89,7 @@ where
     &self,
     vec: Vec<f64>,
     params: &GaussianProcessParams<T>,
-  ) -> Result<Vec<f64>, Box<dyn Error>> {
+  ) -> Result<Vec<f64>, DistributionError> {
     let (wx, kuu) = self.handle_temporal_params(params)?;
     let n = params.x.len();
     let lkuu = Self::lkuu(kuu)?;

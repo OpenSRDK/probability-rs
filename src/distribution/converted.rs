@@ -1,7 +1,7 @@
+use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::StdRng;
 use std::{
-  error::Error,
   fmt::Debug,
   ops::{BitAnd, Mul},
 };
@@ -15,8 +15,8 @@ where
   U: RandomVariable,
 {
   distribution: D,
-  map: &'a dyn Fn(T1) -> Result<T2, Box<dyn Error>>,
-  inv: &'a dyn Fn(&T2) -> Result<T1, Box<dyn Error>>,
+  map: &'a (dyn Fn(T1) -> Result<T2, DistributionError> + Send + Sync),
+  inv: &'a (dyn Fn(&T2) -> Result<T1, DistributionError> + Send + Sync),
 }
 
 impl<'a, D, T1, T2, U> ConvertedDistribution<'a, D, T1, T2, U>
@@ -28,8 +28,8 @@ where
 {
   pub fn new(
     distribution: D,
-    map: &'a dyn Fn(T1) -> Result<T2, Box<dyn Error>>,
-    inv: &'a dyn Fn(&T2) -> Result<T1, Box<dyn Error>>,
+    map: &'a (dyn Fn(T1) -> Result<T2, DistributionError> + Send + Sync),
+    inv: &'a (dyn Fn(&T2) -> Result<T1, DistributionError> + Send + Sync),
   ) -> Self {
     Self {
       distribution,
@@ -65,11 +65,11 @@ where
   type T = T2;
   type U = U;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     self.distribution.p(&(self.inv)(x)?, theta)
   }
 
-  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
     let value = self.distribution.sample(theta, rng)?;
 
     Ok((self.map)(value)?)
@@ -79,8 +79,8 @@ where
 pub trait ConvertableDistribution: Distribution + Sized {
   fn convert<'a, T2>(
     self,
-    map: &'a dyn Fn(Self::T) -> Result<T2, Box<dyn Error>>,
-    inv: &'a dyn Fn(&T2) -> Result<Self::T, Box<dyn Error>>,
+    map: &'a (dyn Fn(Self::T) -> Result<T2, DistributionError> + Send + Sync),
+    inv: &'a (dyn Fn(&T2) -> Result<Self::T, DistributionError> + Send + Sync),
   ) -> ConvertedDistribution<'a, Self, Self::T, T2, Self::U>
   where
     T2: RandomVariable;
@@ -94,8 +94,8 @@ where
 {
   fn convert<'a, T2>(
     self,
-    map: &'a dyn Fn(Self::T) -> Result<T2, Box<dyn Error>>,
-    inv: &'a dyn Fn(&T2) -> Result<Self::T, Box<dyn Error>>,
+    map: &'a (dyn Fn(Self::T) -> Result<T2, DistributionError> + Send + Sync),
+    inv: &'a (dyn Fn(&T2) -> Result<Self::T, DistributionError> + Send + Sync),
   ) -> ConvertedDistribution<'a, Self, Self::T, T2, Self::U>
   where
     T2: RandomVariable,

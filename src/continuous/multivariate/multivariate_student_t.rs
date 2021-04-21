@@ -1,3 +1,4 @@
+use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
@@ -21,7 +22,7 @@ impl Distribution for MultivariateStudentT {
   type T = Vec<f64>;
   type U = MultivariateStudentTParams;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let mu = theta.mu();
     let lsigma = theta.lsigma();
     let nu = theta.nu();
@@ -29,7 +30,9 @@ impl Distribution for MultivariateStudentT {
     let p = x.len();
 
     if p != mu.len() {
-      return Err(MultivariateStudentTError::DimensionMismatch.into());
+      return Err(DistributionError::InvalidParameters(
+        MultivariateStudentTError::DimensionMismatch.into(),
+      ));
     }
     let p = p as f64;
     let nu = nu;
@@ -48,12 +51,15 @@ impl Distribution for MultivariateStudentT {
     )
   }
 
-  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
     let mu = theta.mu();
     let lsigma = theta.lsigma();
     let nu = theta.nu();
 
-    let student_t = RandStudentT::new(nu as f64)?;
+    let student_t = match RandStudentT::new(nu as f64) {
+      Ok(v) => Ok(v),
+      Err(e) => Err(DistributionError::Others(e.into())),
+    }?;
 
     let z = (0..lsigma.rows())
       .into_iter()

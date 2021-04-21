@@ -1,5 +1,6 @@
 use super::super::{ey::ey, ey::y_ey};
 use super::ExactGP;
+use crate::DistributionError;
 use crate::{
   nonparametric::{kernel_matrix, regressor::GaussianProcessRegressor},
   RandomVariable,
@@ -10,7 +11,6 @@ use crate::{
 };
 use opensrdk_kernel_method::Kernel;
 use opensrdk_linear_algebra::*;
-use std::error::Error;
 
 #[derive(Clone, Debug)]
 pub struct ExactGPRegressor<K, T>
@@ -35,16 +35,20 @@ where
     gp: ExactGP<K, T>,
     y: &[f64],
     params: GaussianProcessParams<T>,
-  ) -> Result<Self, Box<dyn Error>> {
+  ) -> Result<Self, DistributionError> {
     let (x, theta) = params.eject();
 
     let n = y.len();
     if n == 0 {
-      return Err(GaussianProcessRegressorError::Empty.into());
+      return Err(DistributionError::InvalidParameters(
+        GaussianProcessRegressorError::Empty.into(),
+      ));
     }
 
     if n != x.len() {
-      return Err(GaussianProcessRegressorError::DimensionMismatch.into());
+      return Err(DistributionError::InvalidParameters(
+        GaussianProcessRegressorError::DimensionMismatch.into(),
+      ));
     }
 
     let ey = ey(y);
@@ -72,7 +76,7 @@ where
     self.ey
   }
 
-  fn predict_multivariate(&self, xs: &[T]) -> Result<MultivariateNormalParams, Box<dyn Error>> {
+  fn predict_multivariate(&self, xs: &[T]) -> Result<MultivariateNormalParams, DistributionError> {
     let kxxs = kernel_matrix(&self.gp.kernel, &self.theta, &self.x, xs)?;
     let kxx_inv_kxxs_t = self.lkxx.potrs(kxxs.clone())?;
     let kxsxs = kernel_matrix(&self.gp.kernel, &self.theta, xs, xs)?;

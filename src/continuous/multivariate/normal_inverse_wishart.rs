@@ -1,10 +1,11 @@
+use crate::DistributionError;
 use crate::{
   DependentJoint, Distribution, IndependentJoint, InverseWishart, InverseWishartParams,
   MultivariateNormal, MultivariateNormalParams, RandomVariable,
 };
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
-use std::{error::Error, ops::BitAnd, ops::Mul};
+use std::{ops::BitAnd, ops::Mul};
 
 /// # NormalInverseWishart
 #[derive(Clone, Debug)]
@@ -26,7 +27,7 @@ impl Distribution for NormalInverseWishart {
   type T = MultivariateNormalParams;
   type U = NormalInverseWishartParams;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let mu0 = theta.mu0().clone();
     let lambda = theta.lambda();
     let lpsi = theta.lpsi().clone();
@@ -46,7 +47,7 @@ impl Distribution for NormalInverseWishart {
     )
   }
 
-  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
     let mu0 = theta.mu0().clone();
     let lambda = theta.lambda();
     let lpsi = theta.lpsi().clone();
@@ -74,7 +75,12 @@ pub struct NormalInverseWishartParams {
 }
 
 impl NormalInverseWishartParams {
-  pub fn new(mu0: Vec<f64>, lambda: f64, lpsi: Matrix, nu: f64) -> Result<Self, Box<dyn Error>> {
+  pub fn new(
+    mu0: Vec<f64>,
+    lambda: f64,
+    lpsi: Matrix,
+    nu: f64,
+  ) -> Result<Self, NormalInverseWishartError> {
     let n = mu0.len();
     if n != lpsi.rows() || n != lpsi.cols() {
       return Err(NormalInverseWishartError::DimensionMismatch.into());

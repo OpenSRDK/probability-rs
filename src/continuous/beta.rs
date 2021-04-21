@@ -1,8 +1,9 @@
+use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::Beta as RandBeta;
 use special::Beta as BetaFunc;
-use std::{error::Error, ops::BitAnd, ops::Mul};
+use std::{ops::BitAnd, ops::Mul};
 
 /// # Beta
 /// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
@@ -15,29 +16,27 @@ pub enum BetaError {
   AlphaMustBePositive,
   #[error("'β' must be positive")]
   BetaMustBePositive,
-  #[error("Unknown error")]
-  Unknown,
 }
 
 impl Distribution for Beta {
   type T = f64;
   type U = BetaParams;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let alpha = theta.alpha();
     let beta = theta.beta();
 
     Ok((x.powf(alpha - 1.0) * (1.0 - x).powf(beta - 1.0)) / BetaFunc::ln_beta(alpha, beta).exp())
   }
 
-  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
     let alpha = theta.alpha();
     let beta = theta.beta();
 
     let beta = match RandBeta::new(alpha, beta) {
-      Ok(n) => n,
-      Err(_) => return Err(BetaError::Unknown.into()),
-    };
+      Ok(v) => Ok(v),
+      Err(e) => Err(DistributionError::Others(e.into())),
+    }?;
 
     Ok(rng.sample(beta))
   }
@@ -50,12 +49,16 @@ pub struct BetaParams {
 }
 
 impl BetaParams {
-  pub fn new(alpha: f64, beta: f64) -> Result<Self, Box<dyn Error>> {
+  pub fn new(alpha: f64, beta: f64) -> Result<Self, DistributionError> {
     if alpha <= 0.0 {
-      return Err(BetaError::AlphaMustBePositive.into());
+      return Err(DistributionError::InvalidParameters(
+        BetaError::AlphaMustBePositive.into(),
+      ));
     }
     if alpha <= 0.0 {
-      return Err(BetaError::BetaMustBePositive.into());
+      return Err(DistributionError::InvalidParameters(
+        BetaError::BetaMustBePositive.into(),
+      ));
     }
 
     Ok(Self { alpha, beta })

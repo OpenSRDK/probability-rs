@@ -1,8 +1,8 @@
+use crate::DistributionError;
 use crate::{nonparametric::GaussianProcessParams, Distribution};
 use crate::{MultivariateNormal, RandomVariable};
 use opensrdk_kernel_method::*;
 pub use rayon::prelude::*;
-use std::error::Error;
 
 use super::ExactGP;
 
@@ -14,7 +14,7 @@ where
   type T = Vec<f64>;
   type U = GaussianProcessParams<T>;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let normal = MultivariateNormal;
     let params = self.handle_temporal_params(theta)?;
 
@@ -25,7 +25,7 @@ where
     &self,
     theta: &Self::U,
     rng: &mut rand::prelude::StdRng,
-  ) -> Result<Self::T, Box<dyn Error>> {
+  ) -> Result<Self::T, DistributionError> {
     let normal = MultivariateNormal;
     let params = self.handle_temporal_params(theta)?;
 

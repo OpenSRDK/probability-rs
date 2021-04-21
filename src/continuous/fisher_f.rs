@@ -1,8 +1,9 @@
+use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::FisherF as RandFisherF;
 use special::Beta;
-use std::{error::Error, ops::BitAnd, ops::Mul};
+use std::{ops::BitAnd, ops::Mul};
 
 /// # FisherF
 /// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
@@ -15,15 +16,13 @@ pub enum FisherFError {
   MMustBePositive,
   #[error("'n' must be positibe")]
   NMustBePositive,
-  #[error("Unknown error")]
-  Unknown,
 }
 
 impl Distribution for FisherF {
   type T = f64;
   type U = FisherFParams;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let m = theta.m();
     let n = theta.n();
 
@@ -33,14 +32,14 @@ impl Distribution for FisherF {
     )
   }
 
-  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
     let m = theta.m();
     let n = theta.n();
 
     let fisher_f = match RandFisherF::new(m, n) {
-      Ok(n) => n,
-      Err(_) => return Err(FisherFError::Unknown.into()),
-    };
+      Ok(v) => Ok(v),
+      Err(e) => Err(DistributionError::Others(e.into())),
+    }?;
 
     Ok(rng.sample(fisher_f))
   }
@@ -53,12 +52,16 @@ pub struct FisherFParams {
 }
 
 impl FisherFParams {
-  pub fn new(m: f64, n: f64) -> Result<Self, Box<dyn Error>> {
+  pub fn new(m: f64, n: f64) -> Result<Self, DistributionError> {
     if m <= 0.0 {
-      return Err(FisherFError::MMustBePositive.into());
+      return Err(DistributionError::InvalidParameters(
+        FisherFError::MMustBePositive.into(),
+      ));
     }
     if n <= 0.0 {
-      return Err(FisherFError::NMustBePositive.into());
+      return Err(DistributionError::InvalidParameters(
+        FisherFError::NMustBePositive.into(),
+      ));
     }
 
     Ok(Self { m, n })

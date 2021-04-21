@@ -1,3 +1,4 @@
+use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use std::{error::Error, ops::BitAnd, ops::Mul};
@@ -19,7 +20,7 @@ impl Distribution for ChineseRestaurantDP {
   type T = u64;
   type U = ChineseRestaurantDPParams;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let i = theta.i();
     let alpha = theta.alpha();
     let z = theta.z();
@@ -38,7 +39,7 @@ impl Distribution for ChineseRestaurantDP {
     }
   }
 
-  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
     let i = theta.i();
     let alpha = theta.alpha();
     let z = theta.z();

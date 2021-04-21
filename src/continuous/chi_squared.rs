@@ -1,8 +1,9 @@
+use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::ChiSquared as RandChiSquared;
 use special::Gamma;
-use std::{error::Error, ops::BitAnd, ops::Mul};
+use std::{ops::BitAnd, ops::Mul};
 
 /// # ChiSquared
 /// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
@@ -13,15 +14,13 @@ pub struct ChiSquared;
 pub enum ChiSquaredError {
   #[error("'k' must be positibe")]
   KMustBePositive,
-  #[error("Unknown error")]
-  Unknown,
 }
 
 impl Distribution for ChiSquared {
   type T = f64;
   type U = ChiSquaredParams;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let k = theta.k();
 
     Ok(
@@ -30,13 +29,13 @@ impl Distribution for ChiSquared {
     )
   }
 
-  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
     let k = theta.k();
 
     let chi_squared = match RandChiSquared::new(k) {
-      Ok(n) => n,
-      Err(_) => return Err(ChiSquaredError::Unknown.into()),
-    };
+      Ok(v) => Ok(v),
+      Err(e) => Err(DistributionError::Others(e.into())),
+    }?;
 
     Ok(rng.sample(chi_squared))
   }
@@ -48,9 +47,11 @@ pub struct ChiSquaredParams {
 }
 
 impl ChiSquaredParams {
-  pub fn new(k: f64) -> Result<Self, Box<dyn Error>> {
+  pub fn new(k: f64) -> Result<Self, DistributionError> {
     if k <= 0.0 {
-      return Err(ChiSquaredError::KMustBePositive.into());
+      return Err(DistributionError::InvalidParameters(
+        ChiSquaredError::KMustBePositive.into(),
+      ));
     }
 
     Ok(Self { k })

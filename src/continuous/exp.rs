@@ -1,7 +1,8 @@
+use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::Exp as RandExp;
-use std::{error::Error, ops::BitAnd, ops::Mul};
+use std::{ops::BitAnd, ops::Mul};
 
 /// # Exp
 /// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
@@ -12,27 +13,25 @@ pub struct Exp;
 pub enum ExpError {
   #[error("Lambda must be positive")]
   LambdaMustBePositive,
-  #[error("Unknown error")]
-  Unknown,
 }
 
 impl Distribution for Exp {
   type T = f64;
   type U = ExpParams;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let lambda = theta.lambda();
 
     Ok(lambda * (-lambda * x).exp())
   }
 
-  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
     let lambda = theta.lambda();
 
     let exp = match RandExp::new(lambda) {
-      Ok(n) => n,
-      Err(_) => return Err(ExpError::Unknown.into()),
-    };
+      Ok(v) => Ok(v),
+      Err(e) => Err(DistributionError::Others(e.into())),
+    }?;
 
     Ok(rng.sample(exp))
   }
@@ -44,9 +43,11 @@ pub struct ExpParams {
 }
 
 impl ExpParams {
-  pub fn new(lambda: f64) -> Result<Self, Box<dyn Error>> {
+  pub fn new(lambda: f64) -> Result<Self, DistributionError> {
     if lambda <= 0.0 {
-      return Err(ExpError::LambdaMustBePositive.into());
+      return Err(DistributionError::InvalidParameters(
+        ExpError::LambdaMustBePositive.into(),
+      ));
     }
 
     Ok(Self { lambda })

@@ -1,9 +1,10 @@
+use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
 use rand_distr::StandardNormal;
 use rayon::prelude::*;
-use std::{error::Error, f64::consts::PI, ops::BitAnd, ops::Mul};
+use std::{f64::consts::PI, ops::BitAnd, ops::Mul};
 
 /// # MultivariateNormal
 /// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\Sigma%29)
@@ -20,14 +21,16 @@ impl Distribution for MultivariateNormal {
   type T = Vec<f64>;
   type U = MultivariateNormalParams;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let mu = theta.mu();
     let lsigma = theta.lsigma();
 
     let p = x.len();
 
     if p != mu.len() {
-      return Err(MultivariateNormalError::DimensionMismatch.into());
+      return Err(DistributionError::InvalidParameters(
+        MultivariateNormalError::DimensionMismatch.into(),
+      ));
     }
     let p = p as f64;
 
@@ -44,7 +47,7 @@ impl Distribution for MultivariateNormal {
     )
   }
 
-  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
     let mu = theta.mu();
     let lsigma = theta.lsigma();
     let p = mu.len();
@@ -70,10 +73,12 @@ impl MultivariateNormalParams {
   /// # Multivariate normal
   /// `L` is needed as second argument under decomposition `Sigma = L * L^T`
   /// l_sigma = sigma.potrf()?;
-  pub fn new(mu: Vec<f64>, lsigma: Matrix) -> Result<Self, Box<dyn Error>> {
+  pub fn new(mu: Vec<f64>, lsigma: Matrix) -> Result<Self, DistributionError> {
     let p = mu.len();
     if p != lsigma.rows() || p != lsigma.cols() {
-      return Err(MultivariateNormalError::DimensionMismatch.into());
+      return Err(DistributionError::InvalidParameters(
+        MultivariateNormalError::DimensionMismatch.into(),
+      ));
     }
 
     Ok(Self { mu, lsigma })

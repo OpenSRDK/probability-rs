@@ -1,7 +1,8 @@
+use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::Poisson as RandPoisson;
-use std::{error::Error, ops::BitAnd, ops::Mul};
+use std::{ops::BitAnd, ops::Mul};
 
 /// # Poisson
 /// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
@@ -12,8 +13,6 @@ pub struct Poisson;
 pub enum PoissonError {
   #[error("'λ' must be positive")]
   LambdaMustBePositive,
-  #[error("Unknown error")]
-  Unknown,
 }
 
 fn factorial(num: u64) -> u64 {
@@ -27,19 +26,19 @@ impl Distribution for Poisson {
   type T = u64;
   type U = PoissonParams;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let lambda = theta.lambda();
 
     Ok(lambda.powi(*x as i32) / factorial(*x) as f64 * (-lambda).exp())
   }
 
-  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
     let lambda = theta.lambda();
 
     let poisson = match RandPoisson::new(lambda) {
-      Ok(n) => n,
-      Err(_) => return Err(PoissonError::Unknown.into()),
-    };
+      Ok(v) => Ok(v),
+      Err(e) => Err(DistributionError::Others(e.into())),
+    }?;
 
     Ok(rng.sample(poisson) as u64)
   }
@@ -51,7 +50,7 @@ pub struct PoissonParams {
 }
 
 impl PoissonParams {
-  pub fn new(lambda: f64) -> Result<Self, Box<dyn Error>> {
+  pub fn new(lambda: f64) -> Result<Self, PoissonError> {
     if lambda <= 0.0 {
       return Err(PoissonError::LambdaMustBePositive.into());
     }

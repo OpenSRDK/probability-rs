@@ -1,3 +1,4 @@
+use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use num_integer::binomial;
 use rand::prelude::*;
@@ -21,21 +22,21 @@ impl Distribution for Binominal {
   type T = u64;
   type U = BinominalParams;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let n = theta.n();
     let p = theta.p();
 
     Ok(binomial(n, *x) as f64 * p.powi(*x as i32) * (1.0 - p).powi((n - x) as i32))
   }
 
-  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
     let n = theta.n();
     let p = theta.p();
 
     let binominal = match RandBinominal::new(n, p) {
-      Ok(n) => n,
-      Err(_) => return Err(BinominalError::Unknown.into()),
-    };
+      Ok(v) => Ok(v),
+      Err(e) => Err(DistributionError::Others(e.into())),
+    }?;
 
     Ok(rng.sample(binominal))
   }

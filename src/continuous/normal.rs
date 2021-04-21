@@ -1,7 +1,8 @@
+use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::Normal as RandNormal;
-use std::{error::Error, f64::consts::PI, ops::BitAnd, ops::Mul};
+use std::{f64::consts::PI, ops::BitAnd, ops::Mul};
 
 /// # Normal
 /// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
@@ -12,28 +13,30 @@ pub struct Normal;
 pub enum NormalError {
   #[error("'σ' must be positive")]
   SigmaMustBePositive,
-  #[error("Unknown error")]
-  Unknown,
 }
 
 impl Distribution for Normal {
   type T = f64;
   type U = NormalParams;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let mu = theta.mu();
     let sigma = theta.sigma();
 
     Ok(1.0 / (2.0 * PI * sigma.powi(2)).sqrt() * (-(x - mu).powi(2) / (2.0 * sigma.powi(2))).exp())
   }
 
-  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
     let mu = theta.mu();
     let sigma = theta.sigma();
 
     let normal = match RandNormal::new(mu, sigma) {
       Ok(n) => n,
-      Err(_) => return Err(NormalError::SigmaMustBePositive.into()),
+      Err(_) => {
+        return Err(DistributionError::InvalidParameters(
+          NormalError::SigmaMustBePositive.into(),
+        ))
+      }
     };
 
     Ok(rng.sample(normal))
@@ -47,9 +50,11 @@ pub struct NormalParams {
 }
 
 impl NormalParams {
-  pub fn new(mu: f64, sigma: f64) -> Result<Self, Box<dyn Error>> {
+  pub fn new(mu: f64, sigma: f64) -> Result<Self, DistributionError> {
     if sigma <= 0.0 {
-      return Err(NormalError::SigmaMustBePositive.into());
+      return Err(DistributionError::InvalidParameters(
+        NormalError::SigmaMustBePositive.into(),
+      ));
     }
 
     Ok(Self { mu, sigma })

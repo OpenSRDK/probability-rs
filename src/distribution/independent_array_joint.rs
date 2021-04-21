@@ -1,7 +1,8 @@
+use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::StdRng;
 use std::iter::Iterator;
-use std::{error::Error, ops::BitAnd, ops::Mul};
+use std::{ops::BitAnd, ops::Mul};
 
 /// # IndependentArrayJoint
 /// ![tex](https://latex.codecogs.com/svg.latex?p%28\mathbf%7Ba%7D%7Cb%29%3D\prod_%7Bi\in%20I%7Dp%28a_i%7Cb%29)
@@ -24,14 +25,14 @@ where
   type T = Vec<T>;
   type U = U;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     x.iter()
       .enumerate()
       .map(|(i, xi)| self.distributions[i].p(xi, theta))
       .product()
   }
 
-  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
     self
       .distributions
       .iter()

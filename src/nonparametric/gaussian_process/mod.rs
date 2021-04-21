@@ -5,6 +5,7 @@ pub mod kiss_love_gp;
 pub mod regressor;
 pub mod student_tp;
 
+use crate::DistributionError;
 use crate::{Distribution, RandomVariable};
 pub use exact_gp::*;
 pub use ey::*;
@@ -12,7 +13,7 @@ pub use kernel_matrix::*;
 pub use kiss_love_gp::*;
 use opensrdk_kernel_method::Kernel;
 pub use regressor::*;
-use std::{error::Error, fmt::Debug};
+use std::fmt::Debug;
 pub use student_tp::*;
 
 #[derive(thiserror::Error, Debug)]
@@ -42,13 +43,13 @@ where
     vec: Vec<f64>,
     params: &GaussianProcessParams<T>,
     with_det_lkxx: bool,
-  ) -> Result<(Vec<f64>, Option<f64>), Box<dyn Error>>;
+  ) -> Result<(Vec<f64>, Option<f64>), DistributionError>;
 
   fn lkxx_vec(
     &self,
     vec: Vec<f64>,
     params: &GaussianProcessParams<T>,
-  ) -> Result<Vec<f64>, Box<dyn Error>>;
+  ) -> Result<Vec<f64>, DistributionError>;
 }
 
 #[derive(Clone, Debug, PartialEq)]

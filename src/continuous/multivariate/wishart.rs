@@ -1,10 +1,11 @@
 use super::multivariate_normal::{MultivariateNormal, MultivariateNormalParams};
+use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
 use special::Gamma;
 use std::f64::consts::PI;
-use std::{error::Error, ops::BitAnd, ops::Mul};
+use std::{ops::BitAnd, ops::Mul};
 
 /// # Wishart
 #[derive(Clone, Debug)]
@@ -16,8 +17,6 @@ pub enum WishartError {
   DimensionMismatch,
   #[error("'n' must be >= dimension")]
   NMustBeGTEDimension,
-  #[error("Unknown error")]
-  Unknown,
 }
 
 fn multivariate_gamma(p: u64, a: f64) -> f64 {
@@ -33,7 +32,7 @@ impl Distribution for Wishart {
   type U = WishartParams;
 
   /// x must be cholesky decomposed
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let lv = theta.lv();
     let n = theta.n();
 
@@ -48,7 +47,7 @@ impl Distribution for Wishart {
   }
 
   /// output is cholesky decomposed
-  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
     let lv = theta.lv();
     let n = theta.n() as usize;
 
@@ -60,9 +59,9 @@ impl Distribution for Wishart {
     let w = (0..n)
       .into_iter()
       .map(|_| normal.sample(&normal_params, rng))
-      .try_fold::<Matrix, _, Result<Matrix, Box<dyn Error>>>(
+      .try_fold::<Matrix, _, Result<Matrix, DistributionError>>(
         Matrix::new(p, p),
-        |acc, v: Result<Vec<f64>, Box<dyn Error>>| {
+        |acc, v: Result<Vec<f64>, DistributionError>| {
           let v = v?;
           Ok(acc + v.clone().row_mat() * v.col_mat())
         },
@@ -79,13 +78,17 @@ pub struct WishartParams {
 }
 
 impl WishartParams {
-  pub fn new(lv: Matrix, n: f64) -> Result<Self, Box<dyn Error>> {
+  pub fn new(lv: Matrix, n: f64) -> Result<Self, DistributionError> {
     let p = lv.rows();
     if p != lv.cols() {
-      return Err(WishartError::DimensionMismatch.into());
+      return Err(DistributionError::InvalidParameters(
+        WishartError::DimensionMismatch.into(),
+      ));
     }
     if n <= p as f64 - 1.0 as f64 {
-      return Err(WishartError::NMustBeGTEDimension.into());
+      return Err(DistributionError::InvalidParameters(
+        WishartError::NMustBeGTEDimension.into(),
+      ));
     }
 
     Ok(Self { lv, n })

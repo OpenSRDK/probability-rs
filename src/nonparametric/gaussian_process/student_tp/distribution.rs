@@ -1,4 +1,5 @@
 use super::{GaussianProcess, StudentTP, StudentTPError};
+use crate::DistributionError;
 use crate::{nonparametric::GaussianProcessParams, Distribution, RandomVariable};
 use opensrdk_kernel_method::Kernel;
 use opensrdk_linear_algebra::*;
@@ -44,7 +45,7 @@ where
   type T = Vec<f64>;
   type U = StudentTPParams<T>;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn std::error::Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let y = x;
     let n = y.len();
 
@@ -75,10 +76,13 @@ where
     &self,
     theta: &Self::U,
     rng: &mut rand::prelude::StdRng,
-  ) -> Result<Self::T, Box<dyn std::error::Error>> {
+  ) -> Result<Self::T, DistributionError> {
     let n = theta.x.len();
 
-    let student_t = StudentT::new(theta.nu)?;
+    let student_t = match StudentT::new(theta.nu) {
+      Ok(v) => Ok(v),
+      Err(e) => Err(DistributionError::Others(e.into())),
+    }?;
     let z = (0..n)
       .into_iter()
       .map(|_| rng.sample(student_t))

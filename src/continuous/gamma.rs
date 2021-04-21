@@ -1,8 +1,9 @@
+use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::Gamma as RandGamma;
 use special::Gamma as GammaFunc;
-use std::{error::Error, ops::BitAnd, ops::Mul};
+use std::{ops::BitAnd, ops::Mul};
 
 /// # Gamma
 /// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
@@ -15,15 +16,13 @@ pub enum GammaError {
   ShapeMustBePositive,
   #[error("'scale' must be positive")]
   ScaleMustBePositive,
-  #[error("Unknown error")]
-  Unknown,
 }
 
 impl Distribution for Gamma {
   type T = f64;
   type U = GammaParams;
 
-  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
     let shape = theta.shape();
     let scale = theta.scale();
 
@@ -34,14 +33,14 @@ impl Distribution for Gamma {
     )
   }
 
-  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, Box<dyn Error>> {
+  fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
     let shape = theta.shape();
     let scale = theta.scale();
 
     let gamma = match RandGamma::new(shape, scale) {
-      Ok(n) => n,
-      Err(_) => return Err(GammaError::Unknown.into()),
-    };
+      Ok(v) => Ok(v),
+      Err(e) => Err(DistributionError::Others(e.into())),
+    }?;
 
     Ok(rng.sample(gamma))
   }
@@ -54,12 +53,16 @@ pub struct GammaParams {
 }
 
 impl GammaParams {
-  pub fn new(shape: f64, scale: f64) -> Result<Self, Box<dyn Error>> {
+  pub fn new(shape: f64, scale: f64) -> Result<Self, DistributionError> {
     if shape <= 0.0 {
-      return Err(GammaError::ShapeMustBePositive.into());
+      return Err(DistributionError::InvalidParameters(
+        GammaError::ShapeMustBePositive.into(),
+      ));
     }
     if scale <= 0.0 {
-      return Err(GammaError::ScaleMustBePositive.into());
+      return Err(DistributionError::InvalidParameters(
+        GammaError::ScaleMustBePositive.into(),
+      ));
     }
 
     Ok(Self { shape, scale })

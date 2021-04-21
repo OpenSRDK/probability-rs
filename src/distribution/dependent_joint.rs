@@ -1,7 +1,8 @@
+use crate::DistributionError;
 use rand::prelude::StdRng;
 
 use crate::{Distribution, IndependentJoint, RandomVariable};
-use std::{error::Error, ops::BitAnd, ops::Mul};
+use std::{ops::BitAnd, ops::Mul};
 
 /// # DependentJoint
 /// ![tex](https://latex.codecogs.com/svg.latex?p%28a,b%7Cc%29%3Dp%28a%7Cb%29p%28b%7Cc%29)
@@ -42,11 +43,11 @@ where
   type T = (T, UL);
   type U = UR;
 
-  fn p(&self, x: &(T, UL), theta: &UR) -> Result<f64, Box<dyn Error>> {
+  fn p(&self, x: &(T, UL), theta: &UR) -> Result<f64, DistributionError> {
     Ok(self.lhs.p(&x.0, &x.1)? * self.rhs.p(&x.1, theta)?)
   }
 
-  fn sample(&self, theta: &UR, rng: &mut StdRng) -> Result<(T, UL), Box<dyn Error>> {
+  fn sample(&self, theta: &UR, rng: &mut StdRng) -> Result<(T, UL), DistributionError> {
     let rhs = self.rhs.sample(theta, rng)?;
     Ok((self.lhs.sample(&rhs, rng)?, rhs))
   }
