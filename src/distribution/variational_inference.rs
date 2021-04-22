@@ -42,14 +42,15 @@ where
 
     SgdAdam::default().with_max_iter(max_iter).minimize(
       &mut params,
-      &|indice, p| {
+      &|indice, theta| {
+        let theta = theta.to_vec();
         let x = indice.iter().map(|&i| &x[i]).collect::<Vec<_>>();
 
         let grad = x
           .par_iter()
           .map(|xi| -> Result<_, DistributionError> {
-            let dfdq = self.ln_p(xi, &params)? - likelihood.ln_p(u, xi)? - prior.ln_p(xi, &())?;
-            Ok(dfdq * dqdtheta(xi, &params).col_mat())
+            let dfdq = self.ln_p(xi, &theta)? - likelihood.ln_p(u, xi)? - prior.ln_p(xi, &())?;
+            Ok(dfdq * dqdtheta(xi, &theta).col_mat())
           })
           .try_reduce(
             || vec![0.0; theta_len].col_mat(),

@@ -11,7 +11,7 @@ use crate::{
 use crate::{nonparametric::GaussianProcessParams, MultivariateNormalParams};
 use opensrdk_kernel_method::{Convolutable, Convolutional, Kernel};
 use opensrdk_linear_algebra::*;
-use std::{error::Error, marker::PhantomData};
+use std::marker::PhantomData;
 
 pub struct KissLoveGPregressor<K, T>
 where
@@ -64,7 +64,11 @@ where
     let ey = ey(y);
     let y_ey = &y_ey(y, ey);
 
-    let wxt_kuu_wx_vec_mul = move |v: Vec<f64>| KissLoveGP::<K, T>::wxt_kuu_wx_vec_mul(&v, wx, kuu);
+    let wxt_kuu_wx_vec_mul =
+      move |v: Vec<f64>| match KissLoveGP::<K, T>::wxt_kuu_wx_vec_mul(&v, wx, kuu) {
+        Ok(v) => Ok(v),
+        Err(e) => Err(e.into()),
+      };
 
     let wxt_kuu_wx_inv_y = Matrix::posv_cgm(&wxt_kuu_wx_vec_mul, y_ey.to_vec(), K)?.col_mat();
 
@@ -77,7 +81,7 @@ where
         let a = kuu.vec_mul((wxpi * &wxt_kuu_wx_inv_y).vec())?.col_mat();
         Ok(a)
       })
-      .collect::<Result<Vec<_>, Box<dyn Error>>>()?;
+      .collect::<Result<Vec<_>, DistributionError>>()?;
 
     // (wxt * kuu * wx)^{-1} = q * t^{-1} * qt
     // q: n×k
@@ -101,7 +105,7 @@ where
           .into_iter()
           .map(|ki| &wx_q[ki])
           .map(|wx_q_col| Ok(kuu.vec_mul(wx_q_col.to_owned())?))
-          .collect::<Result<Vec<_>, Box<dyn Error>>>()?;
+          .collect::<Result<Vec<_>, DistributionError>>()?;
         // r = qt * wxt * kuu
         let r = Matrix::from(m, kuu_wx_r_cols.concat());
 
@@ -131,7 +135,7 @@ where
 
         Ok(s)
       })
-      .collect::<Result<Vec<_>, Box<dyn Error>>>()?;
+      .collect::<Result<Vec<_>, DistributionError>>()?;
 
     Ok(Self {
       n,
@@ -182,9 +186,9 @@ where
 
         Ok((mupi, l_sigma_pi))
       })
-      .try_fold::<(Vec<f64>, Matrix), _, Result<(Vec<f64>, Matrix), Box<dyn Error>>>(
+      .try_fold::<(Vec<f64>, Matrix), _, Result<(Vec<f64>, Matrix), DistributionError>>(
         (vec![self.ey; len], Matrix::new(len, len)),
-        |a, b: Result<(Vec<f64>, Matrix), Box<dyn Error>>| {
+        |a, b: Result<(Vec<f64>, Matrix), DistributionError>| {
           let b = b?;
           Ok(((a.0.col_mat() + b.0.col_mat()).vec(), a.1 + b.1))
         },

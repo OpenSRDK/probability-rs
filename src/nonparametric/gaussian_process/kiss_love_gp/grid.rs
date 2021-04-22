@@ -1,7 +1,8 @@
+use crate::DistributionError;
 use crate::{nonparametric::kernel_matrix, opensrdk_linear_algebra::*};
+use opensrdk_kernel_method::KernelError;
 use opensrdk_kernel_method::{Convolutable, Kernel};
 use rayon::prelude::*;
-use std::error::Error;
 
 #[derive(thiserror::Error, Debug)]
 pub enum InducingGridError {
@@ -25,12 +26,16 @@ pub struct Axis {
 }
 
 impl Axis {
-  pub fn new(min: f64, max: f64, points: usize) -> Result<Self, Box<dyn Error>> {
+  pub fn new(min: f64, max: f64, points: usize) -> Result<Self, DistributionError> {
     if max <= min {
-      return Err(InducingGridError::InvalidRange.into());
+      return Err(DistributionError::InvalidParameters(
+        InducingGridError::InvalidRange.into(),
+      ));
     }
     if points < 2 {
-      return Err(InducingGridError::TooLessPoints.into());
+      return Err(DistributionError::InvalidParameters(
+        InducingGridError::TooLessPoints.into(),
+      ));
     }
 
     Ok(Self { min, max, points })
@@ -58,18 +63,22 @@ impl Grid {
     Self { axes }
   }
 
-  pub fn from<T>(x: &[T], points: &[usize]) -> Result<Grid, Box<dyn Error>>
+  pub fn from<T>(x: &[T], points: &[usize]) -> Result<Grid, DistributionError>
   where
     T: Convolutable,
   {
     let n = x.len();
     if n == 0 {
-      return Err(InducingGridError::Empty.into());
+      return Err(DistributionError::InvalidParameters(
+        InducingGridError::Empty.into(),
+      ));
     }
 
     let d = x[0].data_len();
     if d == 0 {
-      return Err(InducingGridError::Empty.into());
+      return Err(DistributionError::InvalidParameters(
+        InducingGridError::Empty.into(),
+      ));
     }
 
     let axis_factory = |(nd, &points_)| {
@@ -87,7 +96,7 @@ impl Grid {
       .into_iter()
       .zip(points)
       .map(axis_factory)
-      .collect::<Result<Vec<_>, Box<dyn Error>>>()?;
+      .collect::<Result<Vec<_>, DistributionError>>()?;
 
     Ok(Grid::new(axes))
   }
@@ -100,7 +109,7 @@ impl Grid {
     &self,
     kernel: &impl Kernel<Vec<f64>>,
     params: &[f64],
-  ) -> Result<KroneckerMatrices, Box<dyn Error>> {
+  ) -> Result<KroneckerMatrices, KernelError> {
     let d = self.axes.len();
 
     let k = self
@@ -120,7 +129,7 @@ impl Grid {
 
         kernel_matrix(kernel, params, &udi_array, &udi_array.as_ref())
       })
-      .collect::<Result<Vec<_>, Box<dyn Error>>>()?;
+      .collect::<Result<Vec<_>, KernelError>>()?;
 
     let ks = KroneckerMatrices::new(k);
 
@@ -153,24 +162,30 @@ impl Grid {
     new_matrix
   }
 
-  pub fn interpolation_weight<T>(&self, x: &[T]) -> Result<Vec<SparseMatrix>, Box<dyn Error>>
+  pub fn interpolation_weight<T>(&self, x: &[T]) -> Result<Vec<SparseMatrix>, DistributionError>
   where
     T: Convolutable,
   {
     let m = self.axes().par_iter().map(|ud| ud.points).product();
     let n = x.len();
     if n == 0 {
-      return Err(InducingGridError::Empty.into());
+      return Err(DistributionError::InvalidParameters(
+        InducingGridError::Empty.into(),
+      ));
     }
 
     let p = x[0].parts_len();
     let d = x[0].data_len();
     if p == 0 || d == 0 {
-      return Err(InducingGridError::Empty.into());
+      return Err(DistributionError::InvalidParameters(
+        InducingGridError::Empty.into(),
+      ));
     }
 
     if d != self.axes.len() {
-      return Err(InducingGridError::DimensionMismatch.into());
+      return Err(DistributionError::InvalidParameters(
+        InducingGridError::DimensionMismatch.into(),
+      ));
     }
 
     let wxpinidi_factory = |pi: usize, ni: usize| {

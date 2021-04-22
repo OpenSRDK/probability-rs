@@ -1,24 +1,29 @@
 use super::{grid::Grid, GaussianProcessError, GaussianProcessParams, KissLoveGP};
+use crate::DistributionError;
 use crate::{opensrdk_linear_algebra::*, RandomVariable};
 use opensrdk_kernel_method::{Convolutable, Kernel};
 use rayon::prelude::*;
-use std::{cmp::Ordering, error::Error};
+use std::cmp::Ordering;
 
 impl<K, T> KissLoveGP<K, T>
 where
   K: Kernel<Vec<f64>>,
   T: RandomVariable + Convolutable,
 {
-  pub(crate) fn wx_u(x: &Vec<T>) -> Result<(Vec<SparseMatrix>, Grid), Box<dyn Error>> {
+  pub(crate) fn wx_u(x: &Vec<T>) -> Result<(Vec<SparseMatrix>, Grid), DistributionError> {
     let n = x.len();
     if n == 0 {
-      return Err(GaussianProcessError::Empty.into());
+      return Err(DistributionError::InvalidParameters(
+        GaussianProcessError::Empty.into(),
+      ));
     }
 
     let parts_len = x[0].parts_len();
     let data_len = x[0].data_len();
     if parts_len == 0 || data_len == 0 {
-      return Err(GaussianProcessError::Empty.into());
+      return Err(DistributionError::InvalidParameters(
+        GaussianProcessError::Empty.into(),
+      ));
     }
 
     let points = vec![(n / 2usize.pow(data_len as u32)).max(2); data_len];
@@ -32,7 +37,7 @@ where
     v: &Vec<f64>,
     wx: &Vec<SparseMatrix>,
     kuu: &KroneckerMatrices,
-  ) -> Result<Vec<f64>, Box<dyn Error>> {
+  ) -> Result<Vec<f64>, DistributionError> {
     wx.iter()
       .map(|wxpi| {
         let v = v.clone().col_mat();
@@ -41,7 +46,7 @@ where
         let wxt_kuu_wx_v = wxpi.t() * kuu_wx_v;
         Ok(wxt_kuu_wx_v.vec())
       })
-      .try_fold(vec![0.0; v.len()], |a, b: Result<_, Box<dyn Error>>| {
+      .try_fold(vec![0.0; v.len()], |a, b: Result<_, DistributionError>| {
         Ok((a.col_mat() + b?.col_mat()).vec())
       })
   }
@@ -49,7 +54,7 @@ where
   pub(crate) fn handle_temporal_params(
     &self,
     params: &GaussianProcessParams<T>,
-  ) -> Result<(Vec<SparseMatrix>, KroneckerMatrices), Box<dyn Error>> {
+  ) -> Result<(Vec<SparseMatrix>, KroneckerMatrices), DistributionError> {
     let (wx, u) = Self::wx_u(&params.x)?;
     let kuu = u.kuu(&self.kernel, &params.theta)?;
 
@@ -60,7 +65,7 @@ where
   pub(crate) fn det_kxx(
     kuu: &KroneckerMatrices,
     wx: &Vec<SparseMatrix>,
-  ) -> Result<f64, Box<dyn Error>> {
+  ) -> Result<f64, DistributionError> {
     let m = wx[0].rows;
     let n = wx[0].cols;
 
@@ -68,7 +73,7 @@ where
       .matrices()
       .iter()
       .map(|kp| Ok(ToeplitzMatrix::new(kp[0].to_vec(), kp[0][1..].to_vec())?))
-      .collect::<Result<Vec<_>, Box<dyn Error>>>()?;
+      .collect::<Result<Vec<_>, DistributionError>>()?;
 
     let lambda = kuu_toeplitz
       .par_iter()
@@ -89,7 +94,9 @@ where
       })
     });
     if !lambda[0].re.is_finite() {
-      return Err(GaussianProcessError::NaNContamination.into());
+      return Err(DistributionError::Others(
+        GaussianProcessError::NaNContamination.into(),
+      ));
     }
 
     let lambda = &lambda[m - n..];
@@ -102,7 +109,7 @@ where
     Ok(det)
   }
 
-  pub(crate) fn lkuu(kuu: KroneckerMatrices) -> Result<KroneckerMatrices, Box<dyn Error>> {
+  pub(crate) fn lkuu(kuu: KroneckerMatrices) -> Result<KroneckerMatrices, DistributionError> {
     let matrices = kuu.eject();
     Ok(KroneckerMatrices::new(
       matrices

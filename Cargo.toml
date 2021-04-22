@@ -18,7 +18,7 @@ thiserror = "1.0.24"
 rayon = "1.5.0"
 num-integer = "0.1"
 special = "0.8.1"
-opensrdk-linear-algebra = "0.6.6"
+opensrdk-linear-algebra = "0.6.7"
 opensrdk-kernel-method = "0.1.5"
 opensrdk-optimization = "0.1.3"
 

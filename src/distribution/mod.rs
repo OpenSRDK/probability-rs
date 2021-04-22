@@ -22,13 +22,13 @@ impl<T> RandomVariable for T where T: Clone + Debug + PartialEq + Send + Sync {}
 #[derive(thiserror::Error, Debug)]
 pub enum DistributionError {
   #[error("Invalid parameters")]
-  InvalidParameters(Box<dyn Error>),
+  InvalidParameters(Box<dyn Error + Send + Sync>),
   #[error("Matrix error")]
   MatrixError(MatrixError),
   #[error("Kernel error")]
   KernelError(KernelError),
   #[error("Others")]
-  Others(Box<dyn Error>),
+  Others(Box<dyn Error + Send + Sync>),
 }
 
 impl From<MatrixError> for DistributionError {
@@ -43,8 +43,8 @@ impl From<KernelError> for DistributionError {
   }
 }
 
-impl From<Box<dyn Error>> for DistributionError {
-  fn from(e: Box<dyn Error>) -> Self {
+impl From<Box<dyn Error + Send + Sync>> for DistributionError {
+  fn from(e: Box<dyn Error + Send + Sync>) -> Self {
     Self::Others(e)
   }
 }

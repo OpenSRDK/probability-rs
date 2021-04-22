@@ -1,26 +1,29 @@
 use crate::opensrdk_linear_algebra::*;
 use opensrdk_kernel_method::*;
-use std::error::Error;
+use rayon::prelude::*;
 
 pub fn kernel_matrix<T>(
   kernel: &impl Kernel<T>,
   params: &[f64],
   x: &[T],
   x_prime: &[T],
-) -> Result<Matrix, Box<dyn Error>>
+) -> Result<Matrix, KernelError>
 where
   T: Value,
 {
   let m = x.len();
   let n = x_prime.len();
 
-  let mut k = Matrix::new(m, n);
+  let elems = (0..n)
+    .into_par_iter()
+    .flat_map(|j| {
+      (0..m)
+        .into_par_iter()
+        .map(move |i| Ok(kernel.value(params, &x[i], &x_prime[j])?))
+    })
+    .collect::<Result<Vec<_>, KernelError>>()?;
 
-  for i in 0..m {
-    for j in 0..n {
-      k[i][j] = kernel.value(params, &x[i], &x_prime[j])?;
-    }
-  }
+  let k = Matrix::from(m, elems);
 
   Ok(k)
 }

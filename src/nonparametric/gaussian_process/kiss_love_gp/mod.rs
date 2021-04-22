@@ -78,7 +78,10 @@ where
     } else {
       None
     };
-    let wxt_kuu_wx_vec_mul = move |v: Vec<f64>| Self::wxt_kuu_wx_vec_mul(&v, &wx, &kuu);
+    let wxt_kuu_wx_vec_mul = move |v: Vec<f64>| match Self::wxt_kuu_wx_vec_mul(&v, &wx, &kuu) {
+      Ok(v) => Ok(v),
+      Err(e) => Err(e.into()),
+    };
 
     let wxt_kuu_wx_inv_vec = Matrix::posv_cgm(&wxt_kuu_wx_vec_mul, vec, K)?;
 

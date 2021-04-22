@@ -6,7 +6,7 @@ use rand_distr::StudentT as RandStudentT;
 use rayon::prelude::*;
 use special::Gamma;
 use std::f64::consts::PI;
-use std::{error::Error, ops::BitAnd, ops::Mul};
+use std::{ops::BitAnd, ops::Mul};
 
 /// # MultivariateStudentT
 #[derive(Clone, Debug)]
@@ -83,10 +83,12 @@ impl MultivariateStudentTParams {
   /// # Multivariate student t
   /// `L` is needed as second argument under decomposition `Sigma = L * L^T`
   /// lsigma = sigma.potrf()?;
-  pub fn new(mu: Vec<f64>, lsigma: Matrix, nu: f64) -> Result<Self, Box<dyn Error>> {
+  pub fn new(mu: Vec<f64>, lsigma: Matrix, nu: f64) -> Result<Self, DistributionError> {
     let n = mu.len();
     if n != lsigma.rows() || n != lsigma.cols() {
-      return Err(MultivariateStudentTError::DimensionMismatch.into());
+      return Err(DistributionError::InvalidParameters(
+        MultivariateStudentTError::DimensionMismatch.into(),
+      ));
     }
 
     Ok(Self { mu, lsigma, nu })
