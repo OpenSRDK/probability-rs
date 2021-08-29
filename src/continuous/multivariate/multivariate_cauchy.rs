@@ -25,13 +25,13 @@ where
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let studentt_params = MultivariateStudentTWrapper::new(theta);
 
-        MultivariateStudentT::p(self, x, studentt_params)
+        MultivariateStudentT.p(x, studentt_params)
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
         let studentt_params = MultivariateStudentTWrapper::new(theta);
 
-        MultivariateStudentT::p(self, studentt_params, rng)
+        MultivariateStudentT.p(studentt_params, rng)
     }
 }
 
