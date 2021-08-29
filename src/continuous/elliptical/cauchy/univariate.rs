@@ -1,4 +1,4 @@
-use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{CauchyError, DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use crate::{DistributionError, StudentT, StudentTParams};
 use rand::prelude::*;
 use std::{ops::BitAnd, ops::Mul};
@@ -7,12 +7,6 @@ use std::{ops::BitAnd, ops::Mul};
 /// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
 #[derive(Clone, Debug)]
 pub struct Cauchy;
-
-#[derive(thiserror::Error, Debug)]
-pub enum CauchyError {
-    #[error("'σ' must be positive")]
-    SigmaMustBePositive,
-}
 
 impl Distribution for Cauchy {
     type T = f64;

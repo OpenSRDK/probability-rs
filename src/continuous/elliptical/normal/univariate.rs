@@ -1,5 +1,5 @@
-use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{DistributionError, NormalError};
 use rand::prelude::*;
 use rand_distr::Normal as RandNormal;
 use std::{f64::consts::PI, ops::BitAnd, ops::Mul};
@@ -8,12 +8,6 @@ use std::{f64::consts::PI, ops::BitAnd, ops::Mul};
 /// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
 #[derive(Clone, Debug)]
 pub struct Normal;
-
-#[derive(thiserror::Error, Debug)]
-pub enum NormalError {
-    #[error("'σ' must be positive")]
-    SigmaMustBePositive,
-}
 
 impl Distribution for Normal {
     type T = f64;

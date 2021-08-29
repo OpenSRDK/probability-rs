@@ -1,5 +1,5 @@
-use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{DistributionError, StudentTError};
 use rand::prelude::*;
 use rand_distr::StudentT as RandStudentT;
 use special::Gamma;
@@ -10,12 +10,6 @@ use std::{ops::BitAnd, ops::Mul};
 /// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
 #[derive(Clone, Debug)]
 pub struct StudentT;
-
-#[derive(thiserror::Error, Debug)]
-pub enum StudentTError {
-    #[error("'σ' must be positive")]
-    SigmaMustBePositive,
-}
 
 impl Distribution for StudentT {
     type T = f64;
