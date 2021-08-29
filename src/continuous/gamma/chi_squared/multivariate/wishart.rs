@@ -1,6 +1,6 @@
-use super::multivariate_normal::{ExactMultivariateNormalParams, MultivariateNormal};
 use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{ExactMultivariateNormalParams, MultivariateNormal};
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
 use special::Gamma;
