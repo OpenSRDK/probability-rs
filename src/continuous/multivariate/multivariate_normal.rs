@@ -1,6 +1,7 @@
-use crate::DistributionError;
-use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
-use opensrdk_linear_algebra::*;
+use crate::{
+    DependentJoint, Distribution, ExactEllipticalParams, IndependentJoint, RandomVariable,
+};
+use crate::{DistributionError, EllipticalParams};
 use rand::prelude::*;
 use rand_distr::StandardNormal;
 use rayon::prelude::*;
@@ -9,110 +10,62 @@ use std::{f64::consts::PI, ops::BitAnd, ops::Mul};
 /// # MultivariateNormal
 /// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\Sigma%29)
 #[derive(Clone, Debug)]
-pub struct MultivariateNormal;
+pub struct MultivariateNormal<T = ExactEllipticalParams>
+where
+    T: EllipticalParams;
 
 #[derive(thiserror::Error, Debug)]
-pub enum MultivariateNormalError {
-    #[error("dimension mismatch")]
-    DimensionMismatch,
-}
+pub enum MultivariateNormalError {}
 
-impl Distribution for MultivariateNormal {
+impl<T> Distribution for MultivariateNormal<T>
+where
+    T: EllipticalParams,
+{
     type T = Vec<f64>;
-    type U = MultivariateNormalParams;
+    type U = T;
 
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
-        let mu = theta.mu();
-        let lsigma = theta.lsigma();
+        let x_mu = theta.x_mu(x)?;
+        let n = x_mu.len() as f64;
 
-        let n = x.len();
-
-        if n != mu.len() {
-            return Err(DistributionError::InvalidParameters(
-                MultivariateNormalError::DimensionMismatch.into(),
-            ));
-        }
-        let n = n as f64;
-
-        let x_mu = x
-            .par_iter()
-            .zip(mu.par_iter())
-            .map(|(&xi, &mui)| xi - mui)
-            .collect::<Vec<_>>()
-            .col_mat();
-
-        Ok(1.0 / ((2.0 * PI).powf(n / 2.0) * lsigma.trdet())
-            * (-1.0 / 2.0 * (x_mu.t() * lsigma.potrs(x_mu)?)[0][0]).exp())
+        Ok(1.0 / ((2.0 * PI).powf(n / 2.0) * theta.lsigma_det())
+            * (-1.0 / 2.0 * theta.x_mu_t_sigma_inv_x_mu(x_mu)?).exp())
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
-        let mu = theta.mu();
-        let lsigma = theta.lsigma();
-        let n = mu.len();
-
-        let z = (0..n)
+        let z = (0..theta.z_len_for_sample())
             .into_iter()
             .map(|_| rng.sample(StandardNormal))
-            .collect::<Vec<_>>();
+            .collect::<Vec<f64>>();
 
-        let y = mu.clone().col_mat().gemm(lsigma, &z.col_mat(), 1.0, 1.0)?;
+        let y = theta.sample_from_z(&z)?;
 
         Ok(y.vec())
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct MultivariateNormalParams {
-    mu: Vec<f64>,
-    lsigma: Matrix,
-}
+pub type ExactMultivariateNormalParams = ExactEllipticalParams;
 
-impl MultivariateNormalParams {
-    /// # Multivariate normal
-    /// `L` is needed as second argument under decomposition `Sigma = L * L^T`
-    /// l_sigma = sigma.potrf()?;
-    pub fn new(mu: Vec<f64>, lsigma: Matrix) -> Result<Self, DistributionError> {
-        let p = mu.len();
-        if p != lsigma.rows() || p != lsigma.cols() {
-            return Err(DistributionError::InvalidParameters(
-                MultivariateNormalError::DimensionMismatch.into(),
-            ));
-        }
-
-        Ok(Self { mu, lsigma })
-    }
-
-    pub fn mu(&self) -> &Vec<f64> {
-        &self.mu
-    }
-
-    pub fn lsigma(&self) -> &Matrix {
-        &self.lsigma
-    }
-
-    pub fn eject(self) -> (Vec<f64>, Matrix) {
-        (self.mu, self.lsigma)
-    }
-}
-
-impl<Rhs, TRhs> Mul<Rhs> for MultivariateNormal
+impl<T, Rhs, TRhs> Mul<Rhs> for MultivariateNormal<T>
 where
-    Rhs: Distribution<T = TRhs, U = MultivariateNormalParams>,
+    T: EllipticalParams,
+    Rhs: Distribution<T = TRhs, U = T>,
     TRhs: RandomVariable,
 {
-    type Output = IndependentJoint<Self, Rhs, Vec<f64>, TRhs, MultivariateNormalParams>;
+    type Output = IndependentJoint<Self, Rhs, Vec<f64>, TRhs, T>;
 
     fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
     }
 }
 
-impl<Rhs, URhs> BitAnd<Rhs> for MultivariateNormal
+impl<T, Rhs, URhs> BitAnd<Rhs> for MultivariateNormal<T>
 where
-    Rhs: Distribution<T = MultivariateNormalParams, U = URhs>,
+    T: EllipticalParams,
+    Rhs: Distribution<T = T, U = URhs>,
     URhs: RandomVariable,
 {
-    type Output = DependentJoint<Self, Rhs, Vec<f64>, MultivariateNormalParams, URhs>;
+    type Output = DependentJoint<Self, Rhs, Vec<f64>, T, URhs>;
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
@@ -121,7 +74,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{Distribution, MultivariateNormal, MultivariateNormalParams};
+    use crate::{Distribution, ExactMultivariateNormalParams, MultivariateNormal};
     use opensrdk_linear_algebra::*;
     use rand::prelude::*;
     #[test]
@@ -143,7 +96,7 @@ mod tests {
 
         let x = n
             .sample(
-                &MultivariateNormalParams::new(mu, lsigma).unwrap(),
+                &ExactMultivariateNormalParams::new(mu, lsigma).unwrap(),
                 &mut rng,
             )
             .unwrap();
