@@ -42,19 +42,19 @@ impl EllipticalParams for ExactEllipticalParams {
         self.mu()
     }
 
-    fn x_mu_t_sigma_inv_x_mu(&self, x_mu: Vec<f64>) -> Result<f64, DistributionError> {
-        Ok((x_mu.t() * self.lsigma.potrs(x_mu)?)[0][0])
+    fn sigma_inv_mul(&self, v: Vec<f64>) -> Result<f64, DistributionError> {
+        Ok(self.lsigma.potrs(v)?)
     }
 
-    fn lsigma_det(&self) -> Result<f64, DistributionError> {
+    fn sigma_det_sqrt(&self) -> Result<f64, DistributionError> {
         Ok(self.lsigma.trdet()?)
     }
 
-    fn z_len_for_sample(&self) -> usize {
+    fn lsigma_cols(&self) -> usize {
         self.lsigma.cols()
     }
 
-    fn sample_from_z(&self, z: Vec<f64>) -> Result<Vec<f64>, DistributionError> {
+    fn sample(&self, z: Vec<f64>) -> Result<Vec<f64>, DistributionError> {
         Ok(self
             .mu
             .clone()

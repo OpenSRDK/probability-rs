@@ -42,8 +42,8 @@ where
             / (Gamma::gamma(nu / 2.0)
                 * nu.powf(n / 2.0)
                 * PI.powf(n / 2.0)
-                * elliptical.lsigma_det()))
-            * (1.0 + elliptical.x_mu_t_sigma_inv_x_mu(x_mu)? / nu).powf(-(nu + n) / 2.0))
+                * elliptical.sigma_det_sqrt()))
+            * (1.0 + (x_mu.t() * elliptical.sigma_inv_mul(x_mu)?)[0][0] / nu).powf(-(nu + n) / 2.0))
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
@@ -55,14 +55,12 @@ where
             Err(e) => Err(DistributionError::Others(e.into())),
         }?;
 
-        let z = (0..elliptical.z_len_for_sample())
+        let z = (0..elliptical.lsigma_cols())
             .into_iter()
             .map(|_| rng.sample(student_t))
             .collect::<Vec<_>>();
 
-        let y = elliptical.sample_from_z(&z)?;
-
-        Ok(y.vec())
+        Ok(elliptical.sample(&z)?)
     }
 }
 
