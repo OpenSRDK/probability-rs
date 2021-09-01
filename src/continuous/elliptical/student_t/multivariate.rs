@@ -8,6 +8,8 @@ use rand_distr::StudentT as RandStudentT;
 use rayon::prelude::*;
 use special::Gamma;
 use std::f64::consts::PI;
+use std::fmt::Debug;
+use std::marker::PhantomData;
 use std::{ops::BitAnd, ops::Mul};
 
 /// # MultivariateStudentT
@@ -15,7 +17,22 @@ use std::{ops::BitAnd, ops::Mul};
 pub struct MultivariateStudentT<T = ExactMultivariateStudentTParams, U = ExactEllipticalParams>
 where
     T: MultivariateStudentTParams<U>,
-    U: EllipticalParams;
+    U: EllipticalParams,
+{
+    phantom: PhantomData<(T, U)>,
+}
+
+impl<T, U> MultivariateStudentT<T, U>
+where
+    T: MultivariateStudentTParams<U>,
+    U: EllipticalParams,
+{
+    pub fn new() -> Self {
+        Self {
+            phantom: PhantomData,
+        }
+    }
+}
 
 #[derive(thiserror::Error, Debug)]
 pub enum MultivariateStudentTError {
@@ -64,7 +81,7 @@ where
     }
 }
 
-pub trait MultivariateStudentTParams<T>
+pub trait MultivariateStudentTParams<T>: RandomVariable
 where
     T: EllipticalParams,
 {

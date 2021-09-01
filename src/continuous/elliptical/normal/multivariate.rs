@@ -5,6 +5,8 @@ use crate::{DistributionError, EllipticalParams};
 use rand::prelude::*;
 use rand_distr::StandardNormal;
 use rayon::prelude::*;
+use std::fmt::Debug;
+use std::marker::PhantomData;
 use std::{f64::consts::PI, ops::BitAnd, ops::Mul};
 
 /// # MultivariateNormal
@@ -12,7 +14,21 @@ use std::{f64::consts::PI, ops::BitAnd, ops::Mul};
 #[derive(Clone, Debug)]
 pub struct MultivariateNormal<T = ExactEllipticalParams>
 where
-    T: EllipticalParams;
+    T: EllipticalParams,
+{
+    phantom: PhantomData<T>,
+}
+
+impl<T> MultivariateNormal<T>
+where
+    T: EllipticalParams,
+{
+    pub fn new() -> Self {
+        Self {
+            phantom: PhantomData,
+        }
+    }
+}
 
 #[derive(thiserror::Error, Debug)]
 pub enum MultivariateNormalError {}
@@ -77,7 +93,7 @@ mod tests {
     use rand::prelude::*;
     #[test]
     fn it_works() {
-        let n = MultivariateNormal;
+        let normal = MultivariateNormal::new();
         let mut rng = StdRng::from_seed([1; 32]);
 
         let p = 6usize;
@@ -92,7 +108,7 @@ mod tests {
         );
         println!("{:#?}", lsigma);
 
-        let x = n
+        let x = normal
             .sample(
                 &ExactMultivariateNormalParams::new(mu, lsigma).unwrap(),
                 &mut rng,

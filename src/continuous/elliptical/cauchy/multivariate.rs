@@ -4,13 +4,29 @@ use crate::{
 };
 use crate::{DistributionError, EllipticalParams};
 use rand::prelude::*;
+use std::fmt::Debug;
+use std::marker::PhantomData;
 use std::{ops::BitAnd, ops::Mul};
 
 /// # MultivariateCauchy
 #[derive(Clone, Debug)]
 pub struct MultivariateCauchy<T = ExactEllipticalParams>
 where
-    T: EllipticalParams;
+    T: EllipticalParams,
+{
+    phantom: PhantomData<T>,
+}
+
+impl<T> MultivariateCauchy<T>
+where
+    T: EllipticalParams,
+{
+    pub fn new() -> Self {
+        Self {
+            phantom: PhantomData,
+        }
+    }
+}
 
 #[derive(thiserror::Error, Debug)]
 pub enum MultivariateCauchyError {}
@@ -25,16 +41,17 @@ where
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let studentt_params = MultivariateStudentTWrapper::new(theta);
 
-        MultivariateStudentT.p(x, studentt_params)
+        MultivariateStudentT::new().p(x, studentt_params)
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
         let studentt_params = MultivariateStudentTWrapper::new(theta);
 
-        MultivariateStudentT.p(studentt_params, rng)
+        MultivariateStudentT::new().p(studentt_params, rng)
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
 struct MultivariateStudentTWrapper<'a, T>
 where
     T: EllipticalParams,
@@ -79,7 +96,7 @@ where
     }
 }
 
-impl<T, Rhs, URhs> BitAnd<Rhs> for MultivariateCauchy
+impl<T, Rhs, URhs> BitAnd<Rhs> for MultivariateCauchy<T>
 where
     T: EllipticalParams,
     Rhs: Distribution<T = T, U = URhs>,

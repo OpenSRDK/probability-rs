@@ -1,12 +1,11 @@
 pub mod exact;
 
-use crate::{DistributionError, EllipticalError};
+use crate::{DistributionError, EllipticalError, RandomVariable};
 pub use exact::*;
 use opensrdk_linear_algebra::*;
 use rayon::prelude::*;
-use std::fmt::Debug;
 
-pub trait EllipticalParams: Clone + Debug + PartialEq {
+pub trait EllipticalParams: RandomVariable {
     fn mu(&self) -> &Vec<f64>;
 
     fn x_mu(&self, x: &[f64]) -> Result<Vec<f64>, DistributionError> {
@@ -29,7 +28,7 @@ pub trait EllipticalParams: Clone + Debug + PartialEq {
         x_mu
     }
 
-    fn sigma_inv_mul(&self, v: Vec<f64>) -> Result<Vec<f64>, DistributionError>;
+    fn sigma_inv_mul(&self, v: Matrix) -> Result<Matrix, DistributionError>;
     fn sigma_det_sqrt(&self) -> Result<f64, DistributionError>;
 
     fn lsigma_cols(&self) -> usize;

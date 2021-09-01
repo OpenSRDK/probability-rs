@@ -53,7 +53,7 @@ impl Distribution for Wishart {
 
         let p = lv.rows();
 
-        let normal = MultivariateNormal;
+        let normal = MultivariateNormal::new();
         let normal_params = ExactMultivariateNormalParams::new(vec![0.0; p], lv.clone())?;
 
         let w = (0..n)
