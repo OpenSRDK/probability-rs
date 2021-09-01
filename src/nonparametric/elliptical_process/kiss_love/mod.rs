@@ -1,15 +1,16 @@
 pub mod grid;
 pub mod regressor;
 
+pub use grid::*;
+pub use rayon::prelude::*;
+pub use regressor::*;
+
 use super::{BaseEllipticalProcessParams, EllipticalProcessParams};
 use crate::nonparametric::{ey, kernel_matrix};
 use crate::{opensrdk_linear_algebra::*, RandomVariable};
 use crate::{DistributionError, EllipticalParams};
 use ey::y_ey;
-pub use grid::*;
 use opensrdk_kernel_method::*;
-pub use rayon::prelude::*;
-pub use regressor::*;
 use std::fmt::Debug;
 
 #[derive(Clone, Debug)]
@@ -18,7 +19,7 @@ where
     K: Kernel<Vec<f64>>,
     T: RandomVariable + Convolutable,
 {
-    base: BaseEllipticalProcessParams<K, T>,
+    base: BaseEllipticalProcessParams<Convolutional<K>, T>,
     mu: Vec<f64>,
     kxx_det_sqrt: f64,
     y_ey: Vec<f64>,
@@ -30,44 +31,50 @@ where
     K: Kernel<Vec<f64>>,
     T: RandomVariable + Convolutable,
 {
-    fn new(base: BaseEllipticalProcessParams<K, T>, y: &[f64]) -> Self {
+    fn new(
+        base: BaseEllipticalProcessParams<Convolutional<K>, T>,
+        y: &[f64],
+    ) -> Result<Self, DistributionError> {
         let ey = ey(y);
         let mu = vec![ey; base.x.len()].col_mat();
         let kxx = kernel_matrix(&base.kernel, &base.theta, &base.x, &base.x)?;
         let lkxx = kxx.potrf()?;
         let y_ey = y_ey(y, ey);
-        let kxx_inv_y = lkxx.potrs(y_ey.clone())?;
+        let kxx_inv_y = lkxx.potrs(y_ey.clone().col_mat())?;
 
-        Self {
+        Ok(Self {
             base,
             mu,
             lkxx,
             y_ey,
             kxx_inv_y,
-        }
+        })
     }
 }
 
-impl<K, T> BaseEllipticalProcessParams<K, T>
+impl<K, T> BaseEllipticalProcessParams<Convolutional<K>, T>
 where
-    K: Kernel<T>,
-    T: RandomVariable,
+    K: Kernel<Vec<f64>>,
+    T: RandomVariable + Convolutable,
 {
-    pub fn kiss_love(self, y: &[f64]) -> KissLoveEllipticalProcessParams<K, T> {
+    pub fn kiss_love(
+        self,
+        y: &[f64],
+    ) -> Result<KissLoveEllipticalProcessParams<K, T>, DistributionError> {
         KissLoveEllipticalProcessParams::new(self, y)
     }
 }
 
 impl<K, T> EllipticalParams for KissLoveEllipticalProcessParams<K, T>
 where
-    K: Kernel<T>,
-    T: RandomVariable,
+    K: Kernel<Vec<f64>>,
+    T: RandomVariable + Convolutable,
 {
     fn mu(&self) -> &Vec<f64> {
         &self.mu
     }
 
-    fn sigma_inv_mul(&self, v: Vec<f64>) -> Result<Vec<f64>, DistributionError> {
+    fn sigma_inv_mul(&self, v: Matrix) -> Result<Matrix, DistributionError> {
         Ok(self.lkxx.potrs(v)?)
     }
 
@@ -84,10 +91,10 @@ where
     }
 }
 
-impl<K, T> EllipticalProcessParams<K, T> for KissLoveEllipticalProcessParams<K, T>
+impl<K, T> EllipticalProcessParams<Convolutional<K>, T> for KissLoveEllipticalProcessParams<K, T>
 where
-    K: Kernel<T>,
-    T: RandomVariable,
+    K: Kernel<Vec<f64>>,
+    T: RandomVariable + Convolutable,
 {
     fn mahalanobis_squared(&self) -> f64 {}
 }

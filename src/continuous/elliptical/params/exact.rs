@@ -1,9 +1,8 @@
 use crate::{DistributionError, EllipticalError, EllipticalParams};
 use opensrdk_linear_algebra::*;
-use rayon::prelude::*;
 use std::fmt::Debug;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct ExactEllipticalParams {
     mu: Vec<f64>,
     lsigma: Matrix,
@@ -42,12 +41,12 @@ impl EllipticalParams for ExactEllipticalParams {
         self.mu()
     }
 
-    fn sigma_inv_mul(&self, v: Vec<f64>) -> Result<f64, DistributionError> {
+    fn sigma_inv_mul(&self, v: Matrix) -> Result<Matrix, DistributionError> {
         Ok(self.lsigma.potrs(v)?)
     }
 
     fn sigma_det_sqrt(&self) -> Result<f64, DistributionError> {
-        Ok(self.lsigma.trdet()?)
+        Ok(self.lsigma.trdet())
     }
 
     fn lsigma_cols(&self) -> usize {
@@ -59,6 +58,7 @@ impl EllipticalParams for ExactEllipticalParams {
             .mu
             .clone()
             .col_mat()
-            .gemm(&self.lsigma, &z.col_mat(), 1.0, 1.0)?)
+            .gemm(&self.lsigma, &z.col_mat(), 1.0, 1.0)?
+            .vec())
     }
 }

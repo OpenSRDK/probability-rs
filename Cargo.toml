@@ -1,6 +1,6 @@
 [package]
 name = "opensrdk-probability"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Kimura Yu <33382781+KimuraYu45z@users.noreply.github.com>"]
 edition = "2018"
 description = "Standard probability library for OpenSRDK toolchain."
@@ -19,9 +19,9 @@ rayon = "1.5.0"
 num-integer = "0.1"
 special = "0.8.1"
 opensrdk-linear-algebra = "0.6.7"
-opensrdk-kernel-method = "0.1.5"
+opensrdk-kernel-method = "0.1.6"
 opensrdk-optimization = "0.1.3"
 
 [dev-dependencies]
-blas-src = { version = "0.7", features = ["intel-mkl"] } 
-lapack-src = { version = "0.6", features = ["intel-mkl"] }
+blas-src = { version = "0.8", features = ["intel-mkl"] } 
+lapack-src = { version = "0.8", features = ["intel-mkl"] }

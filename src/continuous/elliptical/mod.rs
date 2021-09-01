@@ -6,8 +6,9 @@ pub mod student_t;
 pub use cauchy::*;
 pub use normal::*;
 pub use params::*;
-use std::fmt::Debug;
 pub use student_t::*;
+
+use std::fmt::Debug;
 
 #[derive(thiserror::Error, Debug)]
 pub enum EllipticalError {

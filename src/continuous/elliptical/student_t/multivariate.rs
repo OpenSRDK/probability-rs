@@ -5,7 +5,6 @@ use crate::{DistributionError, EllipticalParams};
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
 use rand_distr::StudentT as RandStudentT;
-use rayon::prelude::*;
 use special::Gamma;
 use std::f64::consts::PI;
 use std::fmt::Debug;
@@ -50,16 +49,16 @@ where
 
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let elliptical = theta.elliptical();
-        let x_mu = elliptical.x_mu(x)?;
+        let x_mu = elliptical.x_mu(x)?.col_mat();
 
-        let n = x_mu.len() as f64;
+        let n = x_mu.rows() as f64;
         let nu = theta.nu();
 
         Ok((Gamma::gamma((nu + n) / 2.0)
             / (Gamma::gamma(nu / 2.0)
                 * nu.powf(n / 2.0)
                 * PI.powf(n / 2.0)
-                * elliptical.sigma_det_sqrt()))
+                * elliptical.sigma_det_sqrt()?))
             * (1.0 + (x_mu.t() * elliptical.sigma_inv_mul(x_mu)?)[0][0] / nu).powf(-(nu + n) / 2.0))
     }
 
@@ -77,7 +76,7 @@ where
             .map(|_| rng.sample(student_t))
             .collect::<Vec<_>>();
 
-        Ok(elliptical.sample(&z)?)
+        Ok(elliptical.sample(z)?)
     }
 }
 
@@ -89,7 +88,7 @@ where
     fn elliptical(&self) -> &T;
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct ExactMultivariateStudentTParams {
     nu: f64,
     elliptical: ExactEllipticalParams,
@@ -105,10 +104,6 @@ impl ExactMultivariateStudentTParams {
         Ok(Self { nu, elliptical })
     }
 
-    pub fn nu(&self) -> f64 {
-        self.nu
-    }
-
     pub fn mu(&self) -> &Vec<f64> {
         self.elliptical.mu()
     }
@@ -118,15 +113,12 @@ impl ExactMultivariateStudentTParams {
     }
 }
 
-impl<T> MultivariateStudentTParams<T> for ExactMultivariateStudentTParams
-where
-    T: EllipticalParams,
-{
+impl MultivariateStudentTParams<ExactEllipticalParams> for ExactMultivariateStudentTParams {
     fn nu(&self) -> f64 {
         self.nu
     }
 
-    fn elliptical(&self) -> &T {
+    fn elliptical(&self) -> &ExactEllipticalParams {
         &self.elliptical
     }
 }

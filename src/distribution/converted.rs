@@ -143,11 +143,11 @@ mod tests {
     use rand::prelude::*;
     #[test]
     fn it_works() {
-        let model = Cauchy.convert(&|x| CauchyParams::new(1.0, x), &|theta| Ok(theta.sigma()));
+        let model = Normal.convert(&|x| NormalParams::new(1.0, x), &|theta| Ok(theta.sigma()));
         let mut rng = StdRng::from_seed([1; 32]);
 
         let x = model
-            .sample(&CauchyParams::new(0.0, 1.0).unwrap(), &mut rng)
+            .sample(&NormalParams::new(0.0, 1.0).unwrap(), &mut rng)
             .unwrap();
 
         println!("{:#?}", x);

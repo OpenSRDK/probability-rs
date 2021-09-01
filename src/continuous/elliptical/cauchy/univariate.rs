@@ -1,6 +1,7 @@
 use crate::{CauchyError, DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use crate::{DistributionError, StudentT, StudentTParams};
 use rand::prelude::*;
+use std::fmt::Debug;
 use std::{ops::BitAnd, ops::Mul};
 
 /// # Cauchy
@@ -15,17 +16,17 @@ impl Distribution for Cauchy {
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let studentt_params = StudentTParams::new(1.0, theta.mu, theta.sigma)?;
 
-        StudentT.p(x, studentt_params)
+        StudentT.p(x, &studentt_params)
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
         let studentt_params = StudentTParams::new(1.0, theta.mu, theta.sigma)?;
 
-        StudentT.sample(studentt_params, rng)
+        StudentT.sample(&studentt_params, rng)
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct CauchyParams {
     mu: f64,
     sigma: f64,
@@ -77,7 +78,8 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{Cauchy, CauchyParams, Distribution};
+    use crate::distribution::Distribution;
+    use crate::*;
     use rand::prelude::*;
 
     #[test]

@@ -1,18 +1,18 @@
 use super::utils::ref_to_slice;
-use crate::nonparametric::{EllipticalProcessParams, GaussianProcessRegressor};
-use crate::RandomVariable;
+use crate::nonparametric::GaussianProcessRegressor;
 use crate::{DistributionError, ExactMultivariateStudentTParams, StudentTParams};
+use crate::{MultivariateStudentTParams, RandomVariable};
 use opensrdk_kernel_method::Kernel;
 
-pub trait CauchyProcessRegressor<K, T>: EllipticalProcessParams<K, T>
+pub trait CauchyProcessRegressor<K, T>: GaussianProcessRegressor<K, T>
 where
     K: Kernel<T>,
     T: RandomVariable,
 {
     fn cp_predict(&self, xs: &T) -> Result<StudentTParams, DistributionError> {
-        let fs = self.predict_multivariate(ref_to_slice(xs))?;
+        let fs = self.cp_predict_multivariate(ref_to_slice(xs))?;
 
-        Ok(StudentTParams::new(fs.nu(), fs.mu()[0], fs.lsigma()[0][0]))
+        Ok(StudentTParams::new(fs.nu(), fs.mu()[0], fs.lsigma()[0][0])?)
     }
 
     fn cp_predict_multivariate(
@@ -36,10 +36,10 @@ where
 
         let (mu, lsigma) = self.gp_predict_multivariate(xs)?.eject();
 
-        Ok(ExactMultivariateStudentTParams::new(
-            1 + n,
+        ExactMultivariateStudentTParams::new(
+            (1 + n) as f64,
             mu,
             ((1.0 + mahalanobis_squared) / (1 + n) as f64).sqrt() * lsigma,
-        ))
+        )
     }
 }

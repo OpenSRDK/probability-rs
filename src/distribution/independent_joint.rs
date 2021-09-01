@@ -92,12 +92,12 @@ mod tests {
     use rand::prelude::*;
     #[test]
     fn it_works() {
-        let model = Cauchy * Cauchy;
+        let model = Normal * Normal;
 
         let mut rng = StdRng::from_seed([1; 32]);
 
         let x = model
-            .sample(&CauchyParams::new(0.0, 1.0).unwrap(), &mut rng)
+            .sample(&NormalParams::new(0.0, 1.0).unwrap(), &mut rng)
             .unwrap();
 
         println!("{:#?}", x);

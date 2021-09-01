@@ -1,7 +1,8 @@
 pub mod exact;
 
-use crate::{DistributionError, EllipticalError, RandomVariable};
 pub use exact::*;
+
+use crate::{DistributionError, EllipticalError, RandomVariable};
 use opensrdk_linear_algebra::*;
 use rayon::prelude::*;
 
@@ -22,10 +23,9 @@ pub trait EllipticalParams: RandomVariable {
             .par_iter()
             .zip(mu.par_iter())
             .map(|(&xi, &mui)| xi - mui)
-            .collect::<Vec<_>>()
-            .col_mat();
+            .collect::<Vec<_>>();
 
-        x_mu
+        Ok(x_mu)
     }
 
     fn sigma_inv_mul(&self, v: Matrix) -> Result<Matrix, DistributionError>;

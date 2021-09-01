@@ -2,6 +2,7 @@ use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use crate::{DistributionError, NormalError};
 use rand::prelude::*;
 use rand_distr::Normal as RandNormal;
+use std::fmt::Debug;
 use std::{f64::consts::PI, ops::BitAnd, ops::Mul};
 
 /// # Normal
@@ -90,19 +91,19 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{Cauchy, CauchyParams, Distribution};
+    use crate::{Distribution, Normal, NormalParams};
     use rand::prelude::*;
 
     #[test]
     fn it_works() {
-        let n = Cauchy;
+        let n = Normal;
         let mut rng = StdRng::from_seed([1; 32]);
 
         let mu = 2.0;
         let sigma = 3.0;
 
         let x = n
-            .sample(&CauchyParams::new(mu, sigma).unwrap(), &mut rng)
+            .sample(&NormalParams::new(mu, sigma).unwrap(), &mut rng)
             .unwrap();
 
         println!("{}", x);

@@ -100,12 +100,12 @@ mod tests {
     use rand::prelude::*;
     #[test]
     fn it_works() {
-        let model = vec![Cauchy; 3].into_iter().joint();
+        let model = vec![Normal; 3].into_iter().joint();
 
         let mut rng = StdRng::from_seed([1; 32]);
 
         let x = model
-            .sample(&CauchyParams::new(0.0, 1.0).unwrap(), &mut rng)
+            .sample(&NormalParams::new(0.0, 1.0).unwrap(), &mut rng)
             .unwrap();
 
         println!("{:#?}", x);

@@ -1,13 +1,14 @@
 pub mod regressor;
 
+pub use rayon::prelude::*;
+pub use regressor::*;
+
 use super::{BaseEllipticalProcessParams, EllipticalProcessParams};
 use crate::nonparametric::{ey, kernel_matrix};
 use crate::{opensrdk_linear_algebra::*, RandomVariable};
 use crate::{DistributionError, EllipticalParams};
 use ey::y_ey;
 use opensrdk_kernel_method::*;
-pub use rayon::prelude::*;
-pub use regressor::*;
 use std::fmt::Debug;
 
 #[derive(Clone, Debug)]
@@ -33,10 +34,14 @@ where
     K: Kernel<T>,
     T: RandomVariable,
 {
-    fn new(base: BaseEllipticalProcessParams<K, T>, y: &[f64], u: Vec<T>) -> Self {
+    fn new(
+        base: BaseEllipticalProcessParams<K, T>,
+        y: &[f64],
+        u: Vec<T>,
+    ) -> Result<Self, DistributionError> {
         let n = base.x.len();
         let ey = ey(y);
-        let mu = vec![ey; n].col_mat();
+        let mu = vec![ey; n];
         let kuu = kernel_matrix(&base.kernel, &base.theta, &u, &u)?;
         let kux = kernel_matrix(&base.kernel, &base.theta, &u, &base.x)?;
 
@@ -52,9 +57,9 @@ where
         let y_ey = y_ey(y, ey).col_mat();
         let s_inv_kux_omega_y = ls.potrs(&kux * omega.clone().col_mat().hadamard_prod(&y_ey))?;
 
-        let mahalanobis_squared = Self::sigma_inv_mul(&kux, &omega, &ls, y_ey);
+        let mahalanobis_squared = (y_ey.t() * Self::sigma_inv_mul(&kux, &omega, &ls, y_ey)?)[0][0];
 
-        Self {
+        Ok(Self {
             base,
             mu,
             lkxx,
@@ -65,7 +70,7 @@ where
             ls,
             s_inv_kux_omega_y,
             mahalanobis_squared,
-        }
+        })
     }
 
     fn sigma_inv_mul(
@@ -76,7 +81,7 @@ where
     ) -> Result<Matrix, DistributionError> {
         let omega_inv = Matrix::diag(omega).diinv();
 
-        Ok(&omega_inv * v.clone() - &omega_inv * kux.t() * ls.potrs(&kux * &omega_inv * v)?)
+        Ok(&omega_inv * v.clone() - &omega_inv * kux.t() * ls.potrs(kux * &omega_inv * v)?)
     }
 }
 
@@ -85,7 +90,11 @@ where
     K: Kernel<T>,
     T: RandomVariable,
 {
-    pub fn sparse(self, y: &[f64], u: Vec<T>) -> SparseEllipticalProcessParams<K, T> {
+    pub fn sparse(
+        self,
+        y: &[f64],
+        u: Vec<T>,
+    ) -> Result<SparseEllipticalProcessParams<K, T>, DistributionError> {
         SparseEllipticalProcessParams::new(self, y, u)
     }
 }
@@ -112,7 +121,7 @@ where
     }
 
     fn sample(&self, z: Vec<f64>) -> Result<Vec<f64>, DistributionError> {
-        Ok(self.mu.col_mat() + self.lkxx * z.col_mat())
+        Ok((self.mu.col_mat() + self.lkxx * z.col_mat()).vec())
     }
 }
 

@@ -1,8 +1,9 @@
 pub mod chi_squared;
 
+pub use chi_squared::*;
+
 use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
-pub use chi_squared::*;
 use rand::prelude::*;
 use rand_distr::Gamma as RandGamma;
 use special::Gamma as GammaFunc;

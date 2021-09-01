@@ -5,14 +5,15 @@ pub mod kiss_love;
 pub mod regressor;
 pub mod sparse;
 
-use crate::{DistributionError, EllipticalParams, RandomVariable};
 pub use exact::*;
 pub use ey::*;
 pub use kernel_matrix::*;
 pub use kiss_love::*;
-use opensrdk_kernel_method::Kernel;
 pub use regressor::*;
 pub use sparse::*;
+
+use crate::{DistributionError, EllipticalParams, RandomVariable};
+use opensrdk_kernel_method::Kernel;
 use std::fmt::Debug;
 
 #[derive(thiserror::Error, Debug)]
@@ -49,7 +50,9 @@ where
         sigma: f64,
     ) -> Result<Self, DistributionError> {
         if kernel.params_len() != theta.len() {
-            return Err(EllipticalProcessError::DimensionMismatch);
+            return Err(DistributionError::InvalidParameters(
+                EllipticalProcessError::DimensionMismatch.into(),
+            ));
         }
 
         Ok(Self {

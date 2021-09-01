@@ -1,7 +1,6 @@
 use crate::DistributionError;
-use rand::prelude::StdRng;
-
 use crate::{Distribution, IndependentJoint, RandomVariable};
+use rand::prelude::StdRng;
 use std::{ops::BitAnd, ops::Mul};
 
 /// # DependentJoint
@@ -95,11 +94,11 @@ mod tests {
     #[test]
     fn it_works() {
         let model =
-            Cauchy & Cauchy.convert(&|x| CauchyParams::new(1.0, x), &|theta| Ok(theta.sigma()));
+            Normal & Normal.convert(&|x| NormalParams::new(1.0, x), &|theta| Ok(theta.sigma()));
         let mut rng = StdRng::from_seed([1; 32]);
 
         let x = model
-            .sample(&CauchyParams::new(0.0, 1.0).unwrap(), &mut rng)
+            .sample(&NormalParams::new(0.0, 1.0).unwrap(), &mut rng)
             .unwrap();
 
         println!("{:#?}", x);

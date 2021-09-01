@@ -4,6 +4,7 @@ use rand::prelude::*;
 use rand_distr::StudentT as RandStudentT;
 use special::Gamma;
 use std::f64::consts::PI;
+use std::fmt::Debug;
 use std::{ops::BitAnd, ops::Mul};
 
 /// # StudentT
@@ -65,14 +66,6 @@ impl StudentTParams {
 
     pub fn sigma(&self) -> f64 {
         self.sigma
-    }
-}
-
-pub struct CauchyParams;
-
-impl CauchyParams {
-    pub fn new(mu: f64, sigma: f64) -> Result<StudentTParams, DistributionError> {
-        StudentTParams::new(1.0, mu, sigma)
     }
 }
 
