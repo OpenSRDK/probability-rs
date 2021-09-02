@@ -29,7 +29,7 @@ pub trait EllipticalParams: RandomVariable {
     }
 
     fn sigma_inv_mul(&self, v: Matrix) -> Result<Matrix, DistributionError>;
-    fn sigma_det_sqrt(&self) -> Result<f64, DistributionError>;
+    fn sigma_det_sqrt(&self) -> f64;
 
     fn lsigma_cols(&self) -> usize;
     fn sample(&self, z: Vec<f64>) -> Result<Vec<f64>, DistributionError>;

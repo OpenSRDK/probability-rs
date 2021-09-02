@@ -4,7 +4,6 @@ use crate::{
 };
 use crate::{DistributionError, EllipticalParams};
 use rand::prelude::*;
-use std::fmt::Debug;
 use std::marker::PhantomData;
 use std::{ops::BitAnd, ops::Mul};
 

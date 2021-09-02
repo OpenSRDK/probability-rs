@@ -4,7 +4,6 @@ use rand::prelude::*;
 use rand_distr::Dirichlet as RandDirichlet;
 use rayon::{iter::IntoParallelIterator, prelude::*};
 use special::Gamma;
-use std::fmt::Debug;
 use std::{ops::BitAnd, ops::Mul};
 
 /// # Dirichlet

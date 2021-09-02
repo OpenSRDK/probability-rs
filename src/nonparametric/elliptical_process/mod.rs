@@ -14,7 +14,6 @@ pub use sparse::*;
 
 use crate::{DistributionError, EllipticalParams, RandomVariable};
 use opensrdk_kernel_method::Kernel;
-use std::fmt::Debug;
 
 #[derive(thiserror::Error, Debug)]
 pub enum EllipticalProcessError {

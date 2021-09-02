@@ -1,9 +1,10 @@
 use super::SparseEllipticalProcessParams;
+use crate::nonparametric::EllipticalProcessError;
+use crate::DistributionError;
 use crate::{
     nonparametric::{kernel_matrix, regressor::GaussianProcessRegressor},
     ExactEllipticalParams, RandomVariable,
 };
-use crate::{DistributionError, EllipticalParams};
 use opensrdk_kernel_method::Kernel;
 
 impl<K, T> GaussianProcessRegressor<K, T> for SparseEllipticalProcessParams<K, T>
@@ -15,14 +16,21 @@ where
         &self,
         xs: &[T],
     ) -> Result<ExactEllipticalParams, DistributionError> {
-        let kxxs = kernel_matrix(&self.base.kernel, &self.base.theta, &self.base.x, xs)?;
-        let kxsx = kxxs.t();
-        let kxsxs = kernel_matrix(&self.base.kernel, &self.base.theta, xs, xs)?;
-        let kxx_inv_kxxs = self.sigma_inv_mul(kxxs)?;
+        let len = xs.len();
+        if len == 0 {
+            return Err(DistributionError::InvalidParameters(
+                EllipticalProcessError::Empty.into(),
+            ));
+        }
 
-        todo!();
-        let mean = self.mu[0] + &kxsx * &self.kxx_inv_y;
-        let covariance = kxsxs - &kxsx * kxx_inv_kxxs;
+        let kuxs = kernel_matrix(&self.base.kernel, &self.base.theta, &self.u, xs)?;
+        let kxsu = kuxs.t();
+        let kxsxs = kernel_matrix(&self.base.kernel, &self.base.theta, xs, xs)?;
+        let qxsxs = &kxsu * self.lkuu.potrs(kuxs.clone())?;
+        let kxsu_s_inv_kuxs = &kxsu * self.ls.potrs(kuxs)?;
+
+        let mean = self.mu[0] + &kxsu * &self.s_inv_kux_omega_y;
+        let covariance = kxsxs - qxsxs + kxsu_s_inv_kuxs;
 
         ExactEllipticalParams::new(mean.vec(), covariance.potrf()?)
     }

@@ -2,7 +2,6 @@ use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use crate::{DistributionError, NormalError};
 use rand::prelude::*;
 use rand_distr::Normal as RandNormal;
-use std::fmt::Debug;
 use std::{f64::consts::PI, ops::BitAnd, ops::Mul};
 
 /// # Normal

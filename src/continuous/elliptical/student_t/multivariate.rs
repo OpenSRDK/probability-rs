@@ -7,7 +7,6 @@ use rand::prelude::*;
 use rand_distr::StudentT as RandStudentT;
 use special::Gamma;
 use std::f64::consts::PI;
-use std::fmt::Debug;
 use std::marker::PhantomData;
 use std::{ops::BitAnd, ops::Mul};
 
@@ -58,7 +57,7 @@ where
             / (Gamma::gamma(nu / 2.0)
                 * nu.powf(n / 2.0)
                 * PI.powf(n / 2.0)
-                * elliptical.sigma_det_sqrt()?))
+                * elliptical.sigma_det_sqrt()))
             * (1.0 + (x_mu.t() * elliptical.sigma_inv_mul(x_mu)?)[0][0] / nu).powf(-(nu + n) / 2.0))
     }
 

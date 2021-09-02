@@ -3,7 +3,6 @@ use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::Beta as RandBeta;
 use special::Beta as BetaFunc;
-use std::fmt::Debug;
 use std::{ops::BitAnd, ops::Mul};
 
 /// # Beta

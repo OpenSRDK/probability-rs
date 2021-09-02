@@ -1,6 +1,5 @@
 use crate::{DistributionError, EllipticalError, EllipticalParams};
 use opensrdk_linear_algebra::*;
-use std::fmt::Debug;
 
 #[derive(Clone, Debug)]
 pub struct ExactEllipticalParams {
@@ -45,8 +44,8 @@ impl EllipticalParams for ExactEllipticalParams {
         Ok(self.lsigma.potrs(v)?)
     }
 
-    fn sigma_det_sqrt(&self) -> Result<f64, DistributionError> {
-        Ok(self.lsigma.trdet())
+    fn sigma_det_sqrt(&self) -> f64 {
+        self.lsigma.trdet()
     }
 
     fn lsigma_cols(&self) -> usize {

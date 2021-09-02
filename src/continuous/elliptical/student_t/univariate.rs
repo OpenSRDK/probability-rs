@@ -4,7 +4,6 @@ use rand::prelude::*;
 use rand_distr::StudentT as RandStudentT;
 use special::Gamma;
 use std::f64::consts::PI;
-use std::fmt::Debug;
 use std::{ops::BitAnd, ops::Mul};
 
 /// # StudentT

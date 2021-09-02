@@ -1,7 +1,6 @@
 use crate::{CauchyError, DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use crate::{DistributionError, StudentT, StudentTParams};
 use rand::prelude::*;
-use std::fmt::Debug;
 use std::{ops::BitAnd, ops::Mul};
 
 /// # Cauchy

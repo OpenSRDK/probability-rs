@@ -5,7 +5,6 @@ use crate::{DistributionError, EllipticalParams};
 use opensrdk_linear_algebra::Vector;
 use rand::prelude::*;
 use rand_distr::StandardNormal;
-use std::fmt::Debug;
 use std::marker::PhantomData;
 use std::{f64::consts::PI, ops::BitAnd, ops::Mul};
 
@@ -44,7 +43,7 @@ where
         let x_mu = theta.x_mu(x)?.col_mat();
         let n = x_mu.rows() as f64;
 
-        Ok(1.0 / ((2.0 * PI).powf(n / 2.0) * theta.sigma_det_sqrt()?)
+        Ok(1.0 / ((2.0 * PI).powf(n / 2.0) * theta.sigma_det_sqrt())
             * (-1.0 / 2.0 * (x_mu.t() * theta.sigma_inv_mul(x_mu)?)[0][0]).exp())
     }
 
