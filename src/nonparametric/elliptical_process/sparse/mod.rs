@@ -60,22 +60,21 @@ where
 
         let lkuu = kuu.clone().potrf()?;
 
-        let omega = DiagonalMatrix::new(
-            (0..n)
-                .into_par_iter()
-                .map(|i| {
-                    (
-                        base.kernel
-                            .value(&base.theta, &base.x[i], &base.x[i])
-                            .unwrap(),
-                        kux[i].to_vec().col_mat(),
-                    )
-                })
-                .map(|(kxixi, kuxi)| {
-                    Ok(kxixi - (kuxi.t() * lkuu.potrs(kuxi)?)[0][0] + base.sigma.powi(2))
-                })
-                .collect::<Result<Vec<_>, MatrixError>>()?,
-        );
+        let omega = (0..n)
+            .into_par_iter()
+            .map(|i| {
+                (
+                    base.kernel
+                        .value(&base.theta, &base.x[i], &base.x[i])
+                        .unwrap(),
+                    kux[i].to_vec().col_mat(),
+                )
+            })
+            .map(|(kxixi, kuxi)| {
+                Ok(kxixi - (kuxi.t() * lkuu.potrs(kuxi)?)[0][0] + base.sigma.powi(2))
+            })
+            .collect::<Result<Vec<_>, MatrixError>>()?
+            .diag();
         let y_ey = y_ey(y, ey).col_mat();
         let omega_y = &omega * y_ey.slice().to_vec();
 
@@ -104,7 +103,7 @@ where
 
         let s_inv_kux_omega_y = ls.potrs(&kux * omega_y.col_mat())?;
 
-        let kxx_det_sqrt = 0.0;
+        let kxx_det_sqrt = 0.0; // todo
         let mahalanobis_squared =
             (y_ey.t() * Self::sigma_inv_mul(&kux, omega_inv_ref, &ls, y_ey)?)[0][0];
 

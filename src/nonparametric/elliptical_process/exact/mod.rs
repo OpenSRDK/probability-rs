@@ -56,7 +56,7 @@ where
         let ey = ey(y);
         let mu = vec![ey; base.x.len()];
         let kxx = kernel_matrix(&base.kernel, &base.theta, &base.x, &base.x)?;
-        let sigma = kxx + base.sigma.powi(2) * DiagonalMatrix::identity(n);
+        let sigma = kxx + vec![base.sigma.powi(2); n].diag();
         let lsigma = sigma.potrf()?;
         let y_ey = y_ey(y, ey).col_mat();
         let y_ey_t = y_ey.t();

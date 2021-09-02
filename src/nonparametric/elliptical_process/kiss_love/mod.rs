@@ -12,6 +12,7 @@ use crate::{DistributionError, EllipticalParams};
 use ey::y_ey;
 use opensrdk_kernel_method::*;
 use std::cmp::Ordering;
+use std::error::Error;
 
 const K: usize = 100;
 
@@ -75,17 +76,9 @@ where
 
         let y_ey = y_ey(y, ey).col_mat();
 
-        let wx_ref = &wx;
-        let kuu_ref = &kuu;
         let sigma2 = base.sigma.powi(2);
-        let sigma_mul = move |v: Vec<f64>| match Self::wxt_kuu_wx_mul(&v, wx_ref, kuu_ref) {
-            Ok(v) => Ok((v.clone().col_mat()
-                + (sigma2 * DiagonalMatrix::identity(n) * v).col_mat())
-            .vec()),
-            Err(e) => Err(e.into()),
-        };
 
-        let sigma_inv_y = Matrix::posv_cgm(&sigma_mul, y_ey.clone().vec(), K)?.col_mat();
+        let sigma_inv_y = Self::sigma_inv_mul_with_params(n, sigma2, &wx, &kuu, &y_ey)?;
 
         let a = (0..p)
             .into_iter()
@@ -101,7 +94,7 @@ where
         // (wxt * kuu * wx)^{-1} = q * t^{-1} * qt
         // q: n×k
         // t: k×k
-        let (q, t) = Matrix::sytrd_k(n, k, &sigma_mul, None)?;
+        let (q, t) = Matrix::sytrd_k(n, k, &|v| Self::sigma_mul(n, sigma2, &wx, &kuu, &v), None)?;
 
         // t = l * d * lt
         let (l, d) = t.pttrf()?;
@@ -150,7 +143,7 @@ where
             })
             .collect::<Result<Vec<_>, DistributionError>>()?;
 
-        let kxx_det_sqrt = Self::det_kxx(&kuu, &wx, sigma2)?.sqrt();
+        let kxx_det_sqrt = Self::det_kxx(&wx, &kuu, sigma2)?.sqrt();
         let mahalanobis_squared = (y_ey.t() * &sigma_inv_y)[0][0];
 
         Ok(Self {
@@ -205,8 +198,8 @@ where
 
     /// See Andrew Gordon Wilson
     fn det_kxx(
-        kuu: &KroneckerMatrices,
         wx: &Vec<SparseMatrix>,
+        kuu: &KroneckerMatrices,
         sigma2: f64,
     ) -> Result<f64, DistributionError> {
         let m = wx[0].rows;
@@ -251,6 +244,40 @@ where
 
         Ok(det)
     }
+
+    fn sigma_mul(
+        n: usize,
+        sigma2: f64,
+        wx: &Vec<SparseMatrix>,
+        kuu: &KroneckerMatrices,
+        v: &Vec<f64>,
+    ) -> Result<Vec<f64>, Box<dyn Error + Send + Sync>> {
+        match Self::wxt_kuu_wx_mul(v, wx, kuu) {
+            Ok(v) => Ok((v.clone().col_mat() + (vec![sigma2; n].diag() * v).col_mat()).vec()),
+            Err(e) => Err(e.into()),
+        }
+    }
+
+    fn sigma_inv_mul_with_params(
+        n: usize,
+        sigma2: f64,
+        wx: &Vec<SparseMatrix>,
+        kuu: &KroneckerMatrices,
+        v: &Matrix,
+    ) -> Result<Matrix, DistributionError> {
+        let sigma_mul = move |ve: Vec<f64>| Self::sigma_mul(n, sigma2, wx, kuu, &ve);
+
+        let sigma_inv_v = Matrix::from(
+            v.rows(),
+            (0..v.cols())
+                .into_par_iter()
+                .map(|i| Matrix::posv_cgm(&sigma_mul, v[i].to_vec(), K))
+                .collect::<Result<Vec<_>, _>>()?
+                .concat(),
+        );
+
+        Ok(sigma_inv_v)
+    }
 }
 
 impl<K, T> BaseEllipticalProcessParams<Convolutional<K>, T>
@@ -278,23 +305,8 @@ where
     fn sigma_inv_mul(&self, v: Matrix) -> Result<Matrix, DistributionError> {
         let n = self.mu().len();
         let sigma2 = self.base.sigma.powi(2);
-        let sigma_mul = move |v: Vec<f64>| match Self::wxt_kuu_wx_mul(&v, &self.wx, &self.kuu) {
-            Ok(v) => Ok((v.clone().col_mat()
-                + (sigma2 * DiagonalMatrix::identity(n) * v).col_mat())
-            .vec()),
-            Err(e) => Err(e.into()),
-        };
 
-        let sigma_inv_v = Matrix::from(
-            v.rows(),
-            (0..v.cols())
-                .into_par_iter()
-                .map(|i| Matrix::posv_cgm(&sigma_mul, v[i].to_vec(), K))
-                .collect::<Result<Vec<_>, _>>()?
-                .concat(),
-        );
-
-        Ok(sigma_inv_v)
+        Self::sigma_inv_mul_with_params(n, sigma2, &self.wx, &self.kuu, &v)
     }
 
     fn sigma_det_sqrt(&self) -> f64 {

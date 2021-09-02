@@ -4,7 +4,7 @@
 
 ```toml
 [dependencies]
-opensrdk-probability = "0.3.0"
+opensrdk-probability = "0.3.1"
 blas-src = { version = "0.7", features = ["openblas"] }
 lapack-src = { version = "0.6", features = ["openblas"] }
 ```
