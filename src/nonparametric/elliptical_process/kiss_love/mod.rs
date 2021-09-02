@@ -15,7 +15,7 @@ use std::cmp::Ordering;
 
 const K: usize = 100;
 
-/// todo: add sigma.powi(2) I
+/// # Lanczos Variance Estimate Kernel Interpolation for Scalable Structured Gaussian Process
 #[derive(Clone, Debug)]
 pub struct KissLoveEllipticalProcessParams<K, T>
 where
@@ -77,12 +77,15 @@ where
 
         let wx_ref = &wx;
         let kuu_ref = &kuu;
-        let wxt_kuu_wx_mul = move |v: Vec<f64>| match Self::wxt_kuu_wx_mul(&v, wx_ref, kuu_ref) {
-            Ok(v) => Ok(v),
+        let sigma2 = base.sigma.powi(2);
+        let sigma_mul = move |v: Vec<f64>| match Self::wxt_kuu_wx_mul(&v, wx_ref, kuu_ref) {
+            Ok(v) => Ok((v.clone().col_mat()
+                + (sigma2 * DiagonalMatrix::identity(n) * v).col_mat())
+            .vec()),
             Err(e) => Err(e.into()),
         };
 
-        let wxt_kuu_wx_inv_y = Matrix::posv_cgm(&wxt_kuu_wx_mul, y_ey.clone().vec(), K)?.col_mat();
+        let sigma_inv_y = Matrix::posv_cgm(&sigma_mul, y_ey.clone().vec(), K)?.col_mat();
 
         let a = (0..p)
             .into_iter()
@@ -90,7 +93,7 @@ where
                 let wxpi = &wx[pi];
 
                 // a = kuu * wx * (wxt * kuu *wx)^{-1} * y
-                let a = kuu.vec_mul((wxpi * &wxt_kuu_wx_inv_y).vec())?.col_mat();
+                let a = kuu.vec_mul((wxpi * &sigma_inv_y).vec())?.col_mat();
                 Ok(a)
             })
             .collect::<Result<Vec<_>, DistributionError>>()?;
@@ -98,7 +101,7 @@ where
         // (wxt * kuu * wx)^{-1} = q * t^{-1} * qt
         // q: n×k
         // t: k×k
-        let (q, t) = Matrix::sytrd_k(n, k, &wxt_kuu_wx_mul, None)?;
+        let (q, t) = Matrix::sytrd_k(n, k, &sigma_mul, None)?;
 
         // t = l * d * lt
         let (l, d) = t.pttrf()?;
@@ -147,8 +150,8 @@ where
             })
             .collect::<Result<Vec<_>, DistributionError>>()?;
 
-        let kxx_det_sqrt = Self::det_kxx(&kuu, &wx)?.sqrt();
-        let mahalanobis_squared = (y_ey.t() * &wxt_kuu_wx_inv_y)[0][0];
+        let kxx_det_sqrt = Self::det_kxx(&kuu, &wx, sigma2)?.sqrt();
+        let mahalanobis_squared = (y_ey.t() * &sigma_inv_y)[0][0];
 
         Ok(Self {
             base,
@@ -201,7 +204,11 @@ where
     }
 
     /// See Andrew Gordon Wilson
-    fn det_kxx(kuu: &KroneckerMatrices, wx: &Vec<SparseMatrix>) -> Result<f64, DistributionError> {
+    fn det_kxx(
+        kuu: &KroneckerMatrices,
+        wx: &Vec<SparseMatrix>,
+        sigma2: f64,
+    ) -> Result<f64, DistributionError> {
         let m = wx[0].rows;
         let n = wx[0].cols;
 
@@ -239,7 +246,7 @@ where
 
         let det = lambda
             .par_iter()
-            .map(|lmd| ((n as f64 / m as f64) * lmd.re))
+            .map(|lmd| ((n as f64 / m as f64) * lmd.re + sigma2))
             .product::<f64>();
 
         Ok(det)
@@ -269,22 +276,25 @@ where
     }
 
     fn sigma_inv_mul(&self, v: Matrix) -> Result<Matrix, DistributionError> {
-        let wxt_kuu_wx_vec_mul =
-            move |v: Vec<f64>| match Self::wxt_kuu_wx_mul(&v, &self.wx, &self.kuu) {
-                Ok(v) => Ok(v),
-                Err(e) => Err(e.into()),
-            };
+        let n = self.mu().len();
+        let sigma2 = self.base.sigma.powi(2);
+        let sigma_mul = move |v: Vec<f64>| match Self::wxt_kuu_wx_mul(&v, &self.wx, &self.kuu) {
+            Ok(v) => Ok((v.clone().col_mat()
+                + (sigma2 * DiagonalMatrix::identity(n) * v).col_mat())
+            .vec()),
+            Err(e) => Err(e.into()),
+        };
 
-        let wxt_kuu_wx_inv_v = Matrix::from(
+        let sigma_inv_v = Matrix::from(
             v.rows(),
             (0..v.cols())
                 .into_par_iter()
-                .map(|i| Matrix::posv_cgm(&wxt_kuu_wx_vec_mul, v[i].to_vec(), K))
+                .map(|i| Matrix::posv_cgm(&sigma_mul, v[i].to_vec(), K))
                 .collect::<Result<Vec<_>, _>>()?
                 .concat(),
         );
 
-        Ok(wxt_kuu_wx_inv_v)
+        Ok(sigma_inv_v)
     }
 
     fn sigma_det_sqrt(&self) -> f64 {
