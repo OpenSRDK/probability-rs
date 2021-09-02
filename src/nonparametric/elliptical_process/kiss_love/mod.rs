@@ -16,7 +16,6 @@ use std::error::Error;
 
 const K: usize = 100;
 
-/// # Lanczos Variance Estimate Kernel Interpolation for Scalable Structured Gaussian Process
 #[derive(Clone, Debug)]
 pub struct KissLoveEllipticalProcessParams<K, T>
 where
@@ -285,6 +284,12 @@ where
     K: Kernel<Vec<f64>>,
     T: RandomVariable + Convolutable,
 {
+    /// Lanczos Variance Estimate Kernel Interpolation for Scalable Structured Gaussian Process
+    ///
+    /// - Pre-computation time: O(k(n + m log m))
+    /// - Pre-computation storage: O(km)
+    /// - Prediction time: O(k)
+    /// with k = 100
     pub fn kiss_love(
         self,
         y: &[f64],

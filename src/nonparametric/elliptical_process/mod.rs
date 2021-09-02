@@ -25,6 +25,10 @@ pub enum EllipticalProcessError {
     NaNContamination,
 }
 
+/// You can use these methods:
+/// - `exact`
+/// - `sparse`
+/// - `kiss_love`
 #[derive(Clone, Debug)]
 pub struct BaseEllipticalProcessParams<K, T>
 where
@@ -42,6 +46,10 @@ where
     K: Kernel<T>,
     T: RandomVariable,
 {
+    /// - `kernel`: Kernel function
+    /// - `x`: Input value
+    /// - `theta`: Params of kernel function
+    /// - `sigma`: White noise variance for a regularization likes Ridge regression
     pub fn new(
         kernel: K,
         x: Vec<T>,

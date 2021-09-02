@@ -4,8 +4,7 @@ use rand::prelude::StdRng;
 use std::iter::Iterator;
 use std::{ops::BitAnd, ops::Mul};
 
-/// # IndependentArrayJoint
-/// ![tex](https://latex.codecogs.com/svg.latex?p%28\mathbf%7Ba%7D%7Cb%29%3D\prod_%7Bi\in%20I%7Dp%28a_i%7Cb%29)
+/// p(x1, …, xn) = Π p(xi)
 #[derive(Clone, Debug)]
 pub struct IndependentArrayJoint<D, T, U>
 where

@@ -5,8 +5,7 @@ use rand_distr::ChiSquared as RandChiSquared;
 use special::Gamma;
 use std::{ops::BitAnd, ops::Mul};
 
-/// # ChiSquared
-/// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
+/// Chi squared distribution
 #[derive(Clone, Debug)]
 pub struct ChiSquared;
 

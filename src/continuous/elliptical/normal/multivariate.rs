@@ -8,8 +8,7 @@ use rand_distr::StandardNormal;
 use std::marker::PhantomData;
 use std::{f64::consts::PI, ops::BitAnd, ops::Mul};
 
-/// # MultivariateNormal
-/// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\Sigma%29)
+/// Multivariate normal distribution
 #[derive(Clone, Debug)]
 pub struct MultivariateNormal<T = ExactEllipticalParams>
 where

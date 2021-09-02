@@ -7,7 +7,7 @@ use rand::prelude::*;
 use std::marker::PhantomData;
 use std::{ops::BitAnd, ops::Mul};
 
-/// # MultivariateCauchy
+/// Multivariate cauchy distribution
 #[derive(Clone, Debug)]
 pub struct MultivariateCauchy<T = ExactEllipticalParams>
 where

@@ -6,8 +6,7 @@ use special::Gamma;
 use std::f64::consts::PI;
 use std::{ops::BitAnd, ops::Mul};
 
-/// # StudentT
-/// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
+/// Student-t distribution
 #[derive(Clone, Debug)]
 pub struct StudentT;
 

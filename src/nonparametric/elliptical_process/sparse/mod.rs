@@ -139,6 +139,11 @@ where
     K: Kernel<T>,
     T: RandomVariable,
 {
+    /// Elliptical Process with approximation called the Fully Independent Training Conditional (FITC) for scalability.
+    ///
+    /// - Pre-computation time: O(nm^2)
+    /// - Pre-computation storage: O(m^2)
+    /// - Prediction time: O(m^2)
     pub fn sparse(
         self,
         y: &[f64],

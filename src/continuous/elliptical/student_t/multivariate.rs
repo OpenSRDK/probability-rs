@@ -10,7 +10,7 @@ use std::f64::consts::PI;
 use std::marker::PhantomData;
 use std::{ops::BitAnd, ops::Mul};
 
-/// # MultivariateStudentT
+/// Multivariate Student-t distribution
 #[derive(Clone, Debug)]
 pub struct MultivariateStudentT<T = ExactMultivariateStudentTParams, U = ExactEllipticalParams>
 where

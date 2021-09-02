@@ -7,7 +7,7 @@ use special::Gamma;
 use std::f64::consts::PI;
 use std::{ops::BitAnd, ops::Mul};
 
-/// # Wishart
+/// Wishart distribution
 #[derive(Clone, Debug)]
 pub struct Wishart;
 

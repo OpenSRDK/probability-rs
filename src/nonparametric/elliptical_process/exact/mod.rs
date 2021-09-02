@@ -10,18 +10,6 @@ use crate::{DistributionError, EllipticalParams};
 use ey::y_ey;
 use opensrdk_kernel_method::*;
 
-/// Elliptical Process without approximation for scalability.
-///
-///
-/// |                 | order                                                   |
-/// | --------------- | ------------------------------------------------------- |
-/// | pre-computation | $O(n^3)$ |
-/// | prediction      | $O(n^2)$ |
-///
-/// | type args | mathematical expression                                 |
-/// | --------- | ------------------------------------------------------- |
-/// | `T`       | ![tex](https://latex.codecogs.com/svg.latex?\mathbb{D}) |
-///
 #[derive(Clone, Debug)]
 pub struct ExactEllipticalProcessParams<K, T>
 where
@@ -78,6 +66,11 @@ where
     K: Kernel<T>,
     T: RandomVariable,
 {
+    /// Elliptical Process without approximation for scalability.
+    ///
+    /// - Pre-computation time: O(n^3)
+    /// - Pre-computation storage: O(n^2)
+    /// - Prediction time: O(n^2)
     pub fn exact(self, y: &[f64]) -> Result<ExactEllipticalProcessParams<K, T>, DistributionError> {
         ExactEllipticalProcessParams::new(self, y)
     }

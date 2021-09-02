@@ -4,8 +4,7 @@ use rand::prelude::*;
 use rand_distr::Exp as RandExp;
 use std::{ops::BitAnd, ops::Mul};
 
-/// # Exp
-/// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
+/// Exponential distribution
 #[derive(Clone, Debug)]
 pub struct Exp;
 

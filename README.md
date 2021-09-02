@@ -4,9 +4,9 @@
 
 ```toml
 [dependencies]
-opensrdk-probability = "0.3.1"
-blas-src = { version = "0.7", features = ["openblas"] }
-lapack-src = { version = "0.6", features = ["openblas"] }
+opensrdk-probability = "0.3.2"
+blas-src = { version = "0.8", features = ["openblas"] }
+lapack-src = { version = "0.8", features = ["openblas"] }
 ```
 
 ```rust

@@ -3,8 +3,7 @@ use crate::{DistributionError, StudentT, StudentTParams};
 use rand::prelude::*;
 use std::{ops::BitAnd, ops::Mul};
 
-/// # Cauchy
-/// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
+/// Cauchy distribution
 #[derive(Clone, Debug)]
 pub struct Cauchy;
 

@@ -3,8 +3,7 @@ use crate::{DependentJoint, Distribution, RandomVariable};
 use rand::prelude::StdRng;
 use std::{ops::BitAnd, ops::Mul};
 
-/// # IndependentJoint
-/// ![tex](https://latex.codecogs.com/svg.latex?p%28a,b%7Cc%29%3Dp%28a%7Cc%29p%28b%7Cc%29)
+/// p(x, y) = p(x) p(y)
 #[derive(Clone, Debug)]
 pub struct IndependentJoint<L, R, TL, TR, U>
 where

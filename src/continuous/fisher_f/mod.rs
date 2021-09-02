@@ -5,8 +5,7 @@ use rand_distr::FisherF as RandFisherF;
 use special::Beta;
 use std::{ops::BitAnd, ops::Mul};
 
-/// # FisherF
-/// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
+/// Fisher-F distribution
 #[derive(Clone, Debug)]
 pub struct FisherF;
 

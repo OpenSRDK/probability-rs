@@ -4,8 +4,7 @@ use rand::prelude::*;
 use rand_distr::Normal as RandNormal;
 use std::{f64::consts::PI, ops::BitAnd, ops::Mul};
 
-/// # Normal
-/// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
+/// Normal distribution
 #[derive(Clone, Debug)]
 pub struct Normal;
 

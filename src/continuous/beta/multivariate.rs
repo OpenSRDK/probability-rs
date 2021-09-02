@@ -6,8 +6,7 @@ use rayon::{iter::IntoParallelIterator, prelude::*};
 use special::Gamma;
 use std::{ops::BitAnd, ops::Mul};
 
-/// # Dirichlet
-/// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
+/// Dirichlet distribution
 #[derive(Clone, Debug)]
 pub struct Dirichlet;
 

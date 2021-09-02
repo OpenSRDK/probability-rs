@@ -7,7 +7,7 @@ use opensrdk_linear_algebra::*;
 use rand::prelude::*;
 use std::{ops::BitAnd, ops::Mul};
 
-/// # NormalInverseWishart
+/// Normal inverse Wishart distribution
 #[derive(Clone, Debug)]
 pub struct NormalInverseWishart;
 

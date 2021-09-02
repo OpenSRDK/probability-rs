@@ -9,8 +9,7 @@ use rand_distr::Gamma as RandGamma;
 use special::Gamma as GammaFunc;
 use std::{ops::BitAnd, ops::Mul};
 
-/// # Gamma
-/// ![tex](https://latex.codecogs.com/svg.latex?\mathcal%7BN%7D%28\mu%2C%20\sigma%5E2%29)
+/// Gamma distribution
 #[derive(Clone, Debug)]
 pub struct Gamma;
 

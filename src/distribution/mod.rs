@@ -50,8 +50,7 @@ impl From<Box<dyn Error + Send + Sync>> for DistributionError {
     }
 }
 
-/// # Distribution
-/// ![tex](https://latex.codecogs.com/svg.latex?p%28x%7C\mathbf{\theta}%29)
+/// The trait which all structs of distribution must implement.
 pub trait Distribution: Clone + Debug + Send + Sync {
     type T: RandomVariable;
     type U: RandomVariable;
