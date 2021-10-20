@@ -94,8 +94,7 @@ mod tests {
         let normal = MultivariateNormal::new();
         let mut rng = StdRng::from_seed([1; 32]);
 
-        let p = 6usize;
-        let mu = vec![p as f64, 1.0, 2.0, 3.0, 4.0, 5.0];
+        let mu = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
         let lsigma = mat!(
            1.0,  0.0,  0.0,  0.0,  0.0,  0.0;
            2.0,  3.0,  0.0,  0.0,  0.0,  0.0;
