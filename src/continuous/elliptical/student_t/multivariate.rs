@@ -152,8 +152,32 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::{Distribution, ExactMultivariateStudentTParams, MultivariateStudentT};
+    use opensrdk_linear_algebra::*;
+    use rand::prelude::*;
     #[test]
     fn it_works() {
-        assert_eq!(2 + 2, 4);
+        let student_t = MultivariateStudentT::new();
+        let mut rng = StdRng::from_seed([1; 32]);
+
+        let mu = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
+        let lsigma = mat!(
+           1.0,  0.0,  0.0,  0.0,  0.0,  0.0;
+           2.0,  3.0,  0.0,  0.0,  0.0,  0.0;
+           4.0,  5.0,  6.0,  0.0,  0.0,  0.0;
+           7.0,  8.0,  9.0, 10.0,  0.0,  0.0;
+          11.0, 12.0, 13.0, 14.0, 15.0,  0.0;
+          16.0, 17.0, 18.0, 19.0, 20.0, 21.0
+        );
+        println!("{:#?}", lsigma);
+
+        let x = student_t
+            .sample(
+                &ExactMultivariateStudentTParams::new(1.0, mu, lsigma).unwrap(),
+                &mut rng,
+            )
+            .unwrap();
+
+        println!("{:#?}", x);
     }
 }
