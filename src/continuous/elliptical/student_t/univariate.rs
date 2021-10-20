@@ -93,8 +93,21 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::{Distribution, StudentT, StudentTParams};
+    use rand::prelude::*;
+
     #[test]
     fn it_works() {
-        assert_eq!(2 + 2, 4);
+        let n = StudentT;
+        let mut rng = StdRng::from_seed([1; 32]);
+
+        let mu = 2.0;
+        let sigma = 3.0;
+
+        let x = n
+            .sample(&StudentTParams::new(1.0, mu, sigma).unwrap(), &mut rng)
+            .unwrap();
+
+        println!("{}", x);
     }
 }
