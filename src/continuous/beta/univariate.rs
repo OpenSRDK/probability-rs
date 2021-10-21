@@ -99,8 +99,21 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::{Beta, BetaParams, Distribution};
+    use rand::prelude::*;
+
     #[test]
     fn it_works() {
-        assert_eq!(2 + 2, 4);
+        let n = Beta;
+        let mut rng = StdRng::from_seed([1; 32]);
+
+        let alpha = 2.0;
+        let beta = 3.0;
+
+        let x = n
+            .sample(&BetaParams::new(alpha, beta).unwrap(), &mut rng)
+            .unwrap();
+
+        println!("{}", x);
     }
 }
