@@ -80,7 +80,7 @@ where
 
         let omega_inv = omega.diinv();
         let omega_inv_mat = omega_inv.mat();
-        let s = &kuu + kux.t() * &omega_inv_mat * &kux;
+        let s = &kuu + &kux * &omega_inv_mat * kux.t();
         let ls = s.potrf()?;
 
         let kux_ref = &kux;
@@ -99,7 +99,7 @@ where
         let k = n.min(K);
         let (q, t) = Matrix::sytrd_k(n, k, &sigma_inv_mul, None)?;
         let (bd, d) = t.pttrf()?;
-        let lkxx = kux.t() * (q * (bd.mat(false) * d.mat()));
+        let lkxx = q * (bd.mat(false) * d.mat());
 
         let s_inv_kux_omega_y = ls.potrs(&kux * omega_y.col_mat())?;
 

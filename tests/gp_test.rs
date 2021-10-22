@@ -15,11 +15,16 @@ use rand_distr::StandardNormal;
 
 #[test]
 fn test_main() {
+    let is_not_ci = false;
     let is_gif = true;
-    if is_gif {
-        draw_gif(true).unwrap();
-    } else {
-        draw_png(true).unwrap();
+    let exact = true;
+
+    if is_not_ci {
+        if is_gif {
+            draw_gif(exact).unwrap();
+        } else {
+            draw_png(exact).unwrap();
+        }
     }
 }
 
@@ -54,7 +59,6 @@ fn draw(
     let theta = vec![1.0; kernel.params_len()]; //hyper parameterがtheta
     let sigma = 1.0;
     let base = BaseEllipticalProcessParams::new(kernel, x, theta, sigma)?;
-    let params = base.exact(&y)?;
 
     let x_axis = (-8.0..8.0).step(0.1);
 
@@ -85,7 +89,8 @@ fn draw(
         &|&coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
     ))?;
 
-    let gp = if exact {
+    let result = if exact {
+        let params = base.exact(&y)?;
         x_axis
             .values()
             .map(|xs: f64| {
@@ -97,10 +102,17 @@ fn draw(
             })
             .collect::<Vec<_>>()
     } else {
+        let params = base.sparse(
+            &y,
+            (0..=20)
+                .into_iter()
+                .map(|v| vec![v as f64 * 16.0 / 20.0 - 8.0])
+                .collect::<Vec<_>>(),
+        )?;
         x_axis
             .values()
             .map(|xs: f64| {
-                let np = params.gp_predict(&vec![xs]).unwrap();
+                let np = params.cp_predict(&vec![xs]).unwrap();
                 let mu = np.mu();
                 let sigma = np.sigma();
 
@@ -119,15 +131,15 @@ fn draw(
     //     &BLUE.mix(0.5),
     // ))?;
     chart.draw_series(LineSeries::new(
-        gp.iter().map(|&(xs, mu, sigma)| (xs, mu + 3.0 * sigma)),
+        result.iter().map(|&(xs, mu, sigma)| (xs, mu + 3.0 * sigma)),
         &RED.mix(0.5),
     ))?;
     chart.draw_series(LineSeries::new(
-        gp.iter().map(|&(xs, mu, _)| (xs, mu)),
+        result.iter().map(|&(xs, mu, _)| (xs, mu)),
         &RGBColor(255, 0, 255).mix(0.5),
     ))?;
     chart.draw_series(LineSeries::new(
-        gp.iter().map(|&(xs, mu, sigma)| (xs, mu - 3.0 * sigma)),
+        result.iter().map(|&(xs, mu, sigma)| (xs, mu - 3.0 * sigma)),
         &BLUE.mix(0.5),
     ))?;
 
