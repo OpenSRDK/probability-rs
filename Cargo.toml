@@ -25,3 +25,4 @@ opensrdk-optimization = "0.1.4"
 [dev-dependencies]
 blas-src = { version = "0.8", features = ["intel-mkl"] } 
 lapack-src = { version = "0.8", features = ["intel-mkl"] }
+plotters = "0.3.1"
