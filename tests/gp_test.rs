@@ -12,19 +12,23 @@ use opensrdk_probability::nonparametric::*;
 use plotters::{coord::Shift, prelude::*};
 use rand::prelude::*;
 use rand_distr::StandardNormal;
+use std::time::Instant;
 
 #[test]
 fn test_main() {
     let is_not_ci = false;
     let is_gif = true;
-    let exact = true;
+    let exact = false;
 
     if is_not_ci {
+        let start = Instant::now();
         if is_gif {
             draw_gif(exact).unwrap();
         } else {
             draw_png(exact).unwrap();
         }
+        let end = start.elapsed();
+        println!("{}.{:03}sec", end.as_secs(), end.subsec_nanos() / 1_000_000);
     }
 }
 
@@ -48,15 +52,15 @@ fn samples(size: usize) -> Vec<(f64, f64)> {
 }
 
 fn draw(
-    exact: bool, //Trueが入っていた
-    size: usize, //2^(3+k)
+    exact: bool,
+    size: usize,
     root: &DrawingArea<BitMapBackend, Shift>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let samples = samples(size);
     let x = samples.par_iter().map(|v| vec![v.0]).collect::<Vec<_>>();
     let y = samples.par_iter().map(|v| v.1).collect::<Vec<_>>();
     let kernel = RBF + Periodic;
-    let theta = vec![1.0; kernel.params_len()]; //hyper parameterがtheta
+    let theta = vec![1.0; kernel.params_len()];
     let sigma = 1.0;
     let base = BaseEllipticalProcessParams::new(kernel, x, theta, sigma)?;
 
@@ -104,9 +108,9 @@ fn draw(
     } else {
         let params = base.sparse(
             &y,
-            (0..=20)
+            (0..=30)
                 .into_iter()
-                .map(|v| vec![v as f64 * 16.0 / 20.0 - 8.0])
+                .map(|v| vec![v as f64 * 16.0 / 30.0 - 8.0])
                 .collect::<Vec<_>>(),
         )?;
         x_axis
@@ -153,13 +157,13 @@ fn draw_png(exact: bool) -> Result<(), Box<dyn std::error::Error>> {
         if exact {
             "exact_gp.png"
         } else {
-            "approx_gp.png"
+            "sparse_cp.png"
         },
         (1600, 900),
     )
     .into_drawing_area();
 
-    draw(exact, 1024, &root)?;
+    draw(exact, 2usize.pow(10 + 3), &root)?;
 
     Ok(())
 }
@@ -169,7 +173,7 @@ fn draw_gif(exact: bool) -> Result<(), Box<dyn std::error::Error>> {
         if exact {
             "exact_gp.gif"
         } else {
-            "approx_gp.gif"
+            "sparse_cp.gif"
         },
         (1600, 900),
         1_000,

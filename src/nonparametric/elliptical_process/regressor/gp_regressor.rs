@@ -12,7 +12,7 @@ where
     fn gp_predict(&self, xs: &T) -> Result<NormalParams, DistributionError> {
         let fs = self.gp_predict_multivariate(ref_to_slice(xs))?;
 
-        NormalParams::new(fs.mu()[0], fs.lsigma()[0][0])
+        NormalParams::new(fs.mu()[0], fs.lsigma()[(0, 0)])
     }
 
     fn gp_predict_multivariate(&self, xs: &[T])
