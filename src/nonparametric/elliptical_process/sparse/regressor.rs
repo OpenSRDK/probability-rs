@@ -6,7 +6,6 @@ use crate::{
     ExactEllipticalParams, RandomVariable,
 };
 use opensrdk_kernel_method::Kernel;
-use opensrdk_linear_algebra::matrix::ge::sy_he::po::trf::POTRF;
 
 impl<K, T> GaussianProcessRegressor<K, T> for SparseEllipticalProcessParams<K, T>
 where
@@ -27,7 +26,7 @@ where
         let kuxs = kernel_matrix(&self.base.kernel, &self.base.theta, &self.u, xs)?;
         let kxsu = kuxs.t();
         let kxsxs = kernel_matrix(&self.base.kernel, &self.base.theta, xs, xs)?;
-        let qxsxs = &kxsu * POTRF(self.lkuu).potrs(kuxs.clone())?;
+        let qxsxs = &kxsu * self.lkuu.potrs(kuxs.clone())?;
         let kxsu_s_inv_kuxs = &kxsu * self.ls.potrs(kuxs)?;
 
         let mean = self.mu[0] + &kxsu * &self.s_inv_kux_omega_y;

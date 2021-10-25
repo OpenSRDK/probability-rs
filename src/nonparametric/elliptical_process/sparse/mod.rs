@@ -21,7 +21,7 @@ where
     mu: Vec<f64>,
     lsigma: Matrix,
     u: Vec<T>,
-    lkuu: Matrix,
+    lkuu: POTRF,
     kux: Matrix,
     omega_inv: DiagonalMatrix,
     ls: POTRF,
@@ -102,8 +102,6 @@ where
             (y_ey.t() * Self::sigma_inv_mul(&kux, omega_inv_ref, &ls, y_ey)?)[(0, 0)];
 
         base.x = vec![];
-
-        let lkuu = lkuu.0;
 
         Ok(Self {
             base,

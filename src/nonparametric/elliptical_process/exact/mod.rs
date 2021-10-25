@@ -19,7 +19,7 @@ where
 {
     base: BaseEllipticalProcessParams<K, T>,
     mu: Vec<f64>,
-    lsigma: Matrix,
+    lsigma: POTRF,
     sigma_inv_y: Matrix,
     mahalanobis_squared: f64,
 }
@@ -46,10 +46,10 @@ where
         let mu = vec![ey; base.x.len()];
         let kxx = kernel_matrix(&base.kernel, &base.theta, &base.x, &base.x)?;
         let sigma = kxx + vec![base.sigma.powi(2); n].diag();
-        let lsigma = sigma.potrf()?.0;
+        let lsigma = sigma.potrf()?;
         let y_ey = y_ey(y, ey).col_mat();
         let y_ey_t = y_ey.t();
-        let sigma_inv_y = POTRF(lsigma).potrs(y_ey)?;
+        let sigma_inv_y = lsigma.potrs(y_ey)?;
         let mahalanobis_squared = (y_ey_t * &sigma_inv_y)[(0, 0)];
 
         Ok(Self {
@@ -87,19 +87,19 @@ where
     }
 
     fn sigma_inv_mul(&self, v: Matrix) -> Result<Matrix, DistributionError> {
-        Ok(POTRF(self.lsigma).potrs(v)?)
+        Ok(self.lsigma.potrs(v)?)
     }
 
     fn sigma_det_sqrt(&self) -> f64 {
-        self.lsigma.trdet()
+        self.lsigma.0.trdet()
     }
 
     fn lsigma_cols(&self) -> usize {
-        self.lsigma.cols()
+        self.lsigma.0.cols()
     }
 
     fn sample(&self, z: Vec<f64>) -> Result<Vec<f64>, DistributionError> {
-        Ok((self.mu[0] + &self.lsigma * z.col_mat()).vec())
+        Ok((self.mu[0] + &self.lsigma.0 * z.col_mat()).vec())
     }
 }
 

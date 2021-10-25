@@ -222,7 +222,7 @@ where
         let mut lambda = lambda.prod().vec();
 
         lambda.sort_by(|a, b| {
-            a.partial_cmp(&b.re).unwrap_or(if !a.re.is_finite() {
+            a.re.partial_cmp(&b.re).unwrap_or(if !a.re.is_finite() {
                 Ordering::Less
             } else {
                 Ordering::Greater

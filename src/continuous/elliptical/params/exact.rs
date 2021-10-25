@@ -4,7 +4,7 @@ use opensrdk_linear_algebra::{matrix::ge::sy_he::po::trf::POTRF, *};
 #[derive(Clone, Debug)]
 pub struct ExactEllipticalParams {
     mu: Vec<f64>,
-    lsigma: Matrix,
+    lsigma: POTRF,
 }
 
 impl ExactEllipticalParams {
@@ -18,6 +18,7 @@ impl ExactEllipticalParams {
                 EllipticalError::DimensionMismatch.into(),
             ));
         }
+        let lsigma = POTRF(lsigma);
 
         Ok(Self { mu, lsigma })
     }
@@ -27,11 +28,11 @@ impl ExactEllipticalParams {
     }
 
     pub fn lsigma(&self) -> &Matrix {
-        &self.lsigma
+        &self.lsigma.0
     }
 
     pub fn eject(self) -> (Vec<f64>, Matrix) {
-        (self.mu, self.lsigma)
+        (self.mu, self.lsigma.0)
     }
 }
 
@@ -41,15 +42,15 @@ impl EllipticalParams for ExactEllipticalParams {
     }
 
     fn sigma_inv_mul(&self, v: Matrix) -> Result<Matrix, DistributionError> {
-        Ok(POTRF(self.lsigma).potrs(v)?)
+        Ok(self.lsigma.potrs(v)?)
     }
 
     fn sigma_det_sqrt(&self) -> f64 {
-        self.lsigma.trdet()
+        self.lsigma.0.trdet()
     }
 
     fn lsigma_cols(&self) -> usize {
-        self.lsigma.cols()
+        self.lsigma.0.cols()
     }
 
     fn sample(&self, z: Vec<f64>) -> Result<Vec<f64>, DistributionError> {
@@ -57,7 +58,7 @@ impl EllipticalParams for ExactEllipticalParams {
             .mu
             .clone()
             .col_mat()
-            .gemm(&self.lsigma, &z.col_mat(), 1.0, 1.0)?
+            .gemm(&self.lsigma.0, &z.col_mat(), 1.0, 1.0)?
             .vec())
     }
 }
