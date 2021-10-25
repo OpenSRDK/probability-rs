@@ -23,9 +23,9 @@ pub enum Type {
 
 #[test]
 fn test_main() {
-    let is_not_ci = false;
-    let is_gif = false;
-    let tp = Type::Sparse;
+    let is_not_ci = true;
+    let is_gif = true;
+    let tp = Type::KissLove;
 
     if is_not_ci {
         let start = Instant::now();
