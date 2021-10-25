@@ -43,7 +43,7 @@ where
         let n = x_mu.rows() as f64;
 
         Ok(1.0 / ((2.0 * PI).powf(n / 2.0) * theta.sigma_det_sqrt())
-            * (-1.0 / 2.0 * (x_mu.t() * theta.sigma_inv_mul(x_mu)?)[0][0]).exp())
+            * (-1.0 / 2.0 * (x_mu.t() * theta.sigma_inv_mul(x_mu)?)[(0, 0)]).exp())
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {

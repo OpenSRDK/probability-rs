@@ -12,7 +12,11 @@ where
     fn cp_predict(&self, xs: &T) -> Result<StudentTParams, DistributionError> {
         let fs = self.cp_predict_multivariate(ref_to_slice(xs))?;
 
-        Ok(StudentTParams::new(fs.nu(), fs.mu()[0], fs.lsigma()[0][0])?)
+        Ok(StudentTParams::new(
+            fs.nu(),
+            fs.mu()[0],
+            fs.lsigma()[(0, 0)],
+        )?)
     }
 
     fn cp_predict_multivariate(

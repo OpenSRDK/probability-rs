@@ -49,7 +49,7 @@ where
         let y_ey = y_ey(y, ey).col_mat();
         let y_ey_t = y_ey.t();
         let sigma_inv_y = lsigma.potrs(y_ey)?;
-        let mahalanobis_squared = (y_ey_t * &sigma_inv_y)[0][0];
+        let mahalanobis_squared = (y_ey_t * &sigma_inv_y)[(0, 0)];
 
         Ok(Self {
             base,

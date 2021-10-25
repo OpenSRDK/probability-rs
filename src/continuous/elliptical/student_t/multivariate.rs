@@ -58,7 +58,8 @@ where
                 * nu.powf(n / 2.0)
                 * PI.powf(n / 2.0)
                 * elliptical.sigma_det_sqrt()))
-            * (1.0 + (x_mu.t() * elliptical.sigma_inv_mul(x_mu)?)[0][0] / nu).powf(-(nu + n) / 2.0))
+            * (1.0 + (x_mu.t() * elliptical.sigma_inv_mul(x_mu)?)[(0, 0)] / nu)
+                .powf(-(nu + n) / 2.0))
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {

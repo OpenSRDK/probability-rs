@@ -10,8 +10,6 @@ use crate::{DistributionError, EllipticalParams};
 use ey::y_ey;
 use opensrdk_kernel_method::*;
 
-const K: usize = 100;
-
 #[derive(Clone, Debug)]
 pub struct SparseEllipticalProcessParams<K, T>
 where
@@ -71,7 +69,7 @@ where
                 )
             })
             .map(|(kxixi, kuxi)| {
-                Ok(kxixi - (kuxi.t() * lkuu.potrs(kuxi)?)[0][0] + base.sigma.powi(2))
+                Ok(kxixi - (kuxi.t() * lkuu.potrs(kuxi)?)[(0, 0)] + base.sigma.powi(2))
             })
             .collect::<Result<Vec<_>, MatrixError>>()?
             .diag();
@@ -80,39 +78,34 @@ where
 
         let omega_inv = omega.diinv();
         let omega_inv_mat = omega_inv.mat();
-        let s = &kuu + kux.t() * &omega_inv_mat * &kux;
+        let s = &kuu + &kux * &omega_inv_mat * kux.t();
         let ls = s.potrf()?;
 
-        let kux_ref = &kux;
         let omega_inv_ref = &omega_inv_mat;
-        let ls_ref = &ls;
-        let sigma_inv_mul = move |v: Vec<f64>| match Self::sigma_inv_mul(
-            kux_ref,
-            omega_inv_ref,
-            ls_ref,
-            v.col_mat(),
-        ) {
-            Ok(v) => Ok(v.vec()),
-            Err(e) => Err(e.into()),
-        };
+        // let sigma_inv_mul = move |v: Vec<f64>| match Self::sigma_inv_mul(
+        //     kux_ref,
+        //     omega_inv_ref,
+        //     ls_ref,
+        //     v.col_mat(),
+        // ) {
+        //     Ok(v) => Ok(v.vec()),
+        //     Err(e) => Err(e.into()),
+        // };
 
-        let k = n.min(K);
-        let (q, t) = Matrix::sytrd_k(n, k, &sigma_inv_mul, None)?;
-        let (bd, d) = t.pttrf()?;
-        let lkxx = kux.t() * (q * (bd.mat(false) * d.mat()));
+        let lsigma = Matrix::new(1, 1); // todo
 
         let s_inv_kux_omega_y = ls.potrs(&kux * omega_y.col_mat())?;
 
         let kxx_det_sqrt = 0.0; // todo
         let mahalanobis_squared =
-            (y_ey.t() * Self::sigma_inv_mul(&kux, omega_inv_ref, &ls, y_ey)?)[0][0];
+            (y_ey.t() * Self::sigma_inv_mul(&kux, omega_inv_ref, &ls, y_ey)?)[(0, 0)];
 
         base.x = vec![];
 
         Ok(Self {
             base,
             mu,
-            lsigma: lkxx,
+            lsigma,
             u,
             lkuu,
             kux,

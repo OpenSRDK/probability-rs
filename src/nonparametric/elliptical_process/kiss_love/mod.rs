@@ -143,7 +143,7 @@ where
             .collect::<Result<Vec<_>, DistributionError>>()?;
 
         let kxx_det_sqrt = Self::det_kxx(&wx, &kuu, sigma2)?.sqrt();
-        let mahalanobis_squared = (y_ey.t() * &sigma_inv_y)[0][0];
+        let mahalanobis_squared = (y_ey.t() * &sigma_inv_y)[(0, 0)];
 
         Ok(Self {
             base,
