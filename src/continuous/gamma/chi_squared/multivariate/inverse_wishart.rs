@@ -1,7 +1,7 @@
 use super::wishart::{Wishart, WishartParams};
 use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
-use opensrdk_linear_algebra::*;
+use opensrdk_linear_algebra::{matrix::ge::sy_he::po::trf::POTRF, *};
 use rand::prelude::*;
 use special::Gamma;
 use std::f64::consts::PI;
@@ -43,7 +43,7 @@ impl Distribution for InverseWishart {
         Ok(lpsi.trdet().powf(nu / 2.0)
             / (2f64.powf(nu * p / 2.0) * multivariate_gamma(p as u64, nu / 2.0))
             * x.trdet().powf(-(nu + p + 1.0) / 2.0)
-            * (-0.5 * x.clone().potrs(lpsi * lpsi.t())?.tr()).exp())
+            * (-0.5 * POTRF(x.clone()).potrs(lpsi * lpsi.t())?.tr()).exp())
     }
 
     /// output is cholesky decomposed
@@ -51,12 +51,12 @@ impl Distribution for InverseWishart {
         let lpsi = theta.lpsi();
         let nu = theta.nu();
 
-        let lpsi_inv = lpsi.clone().potri()?;
+        let lpsi_inv = POTRF(lpsi.clone()).potri()?;
         let w = Wishart;
         let w_params = WishartParams::new(lpsi_inv, nu)?;
 
         let x = w.sample(&w_params, rng)?;
-        let x_inv = x.potri()?;
+        let x_inv = POTRF(x).potri()?;
 
         Ok(x_inv)
     }

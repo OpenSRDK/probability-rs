@@ -65,7 +65,7 @@ where
             kuu.clone()
                 .eject()
                 .into_iter()
-                .map(|kpi| kpi.potrf())
+                .map(|kpi| -> Result<_, DistributionError> { Ok(kpi.potrf()?.0) })
                 .collect::<Result<Vec<_>, _>>()?,
         );
 
@@ -96,7 +96,7 @@ where
         let (q, t) = Matrix::sytrd_k(n, k, &|v| Self::sigma_mul(n, sigma2, &wx, &kuu, &v), None)?;
 
         // t = l * d * lt
-        let (l, d) = t.pttrf()?;
+        let pttrf_result = t.pttrf()?;
 
         let s = (0..p)
             .into_iter()
@@ -114,7 +114,7 @@ where
                     .map(|wx_q_col| Ok(kuu.vec_mul(wx_q_col.to_owned())?))
                     .collect::<Result<Vec<_>, DistributionError>>()?;
                 // r = qt * wxt * kuu
-                let r = Matrix::from(m, kuu_wx_r_cols.concat());
+                let r = Matrix::from(m, kuu_wx_r_cols.concat())?;
 
                 // kuu - rt * (l * d * lt)^{-1} * r = q2 * t2 * q2t
                 let (q2, t2) = Matrix::sytrd_k(
@@ -122,18 +122,18 @@ where
                     100,
                     &|v| {
                         Ok((kuu.vec_mul(v.clone())?.col_mat()
-                            - r.t() * l.pttrs(&d, &r * v.col_mat())?.vec().col_mat())
+                            - r.t() * pttrf_result.pttrs(&r * v.col_mat())?.vec().col_mat())
                         .vec())
                     },
                     None,
                 )?;
 
                 // t2 = l2 * d2 * l2t
-                let (l2, d2) = t2.pttrf()?;
-                let d2_sqrt = d2.dipowf(0.5);
+                let pttrf_result2 = t2.pttrf()?;
+                let d2_sqrt = pttrf_result2.1.powf(0.5);
                 // l2' = l2 * \sqrt{d2}
                 // kuu - rt * l * d * lt * r = q2 * l2' * l2't * q2t
-                let l2_prime = l2.mat(false) * d2_sqrt.mat();
+                let l2_prime = pttrf_result2.0.mat(false) * d2_sqrt.mat();
 
                 // s = q2 * l2'
                 let s = q2 * l2_prime;
@@ -207,13 +207,13 @@ where
         let kuu_toeplitz = kuu
             .matrices()
             .iter()
-            .map(|kp| Ok(ToeplitzMatrix::new(kp[0].to_vec(), kp[0][1..].to_vec())?))
+            .map(|kp| Ok(ToeplitzMatrix::from(kp[0].to_vec(), kp[0][1..].to_vec())?))
             .collect::<Result<Vec<_>, DistributionError>>()?;
 
         let lambda = kuu_toeplitz
             .par_iter()
             .map(|kp| {
-                kp.embedded_circulant().cigv().1[..kp.dim()]
+                kp.embedded_circulant().cievd().1[..kp.dim()]
                     .to_owned()
                     .col_mat()
             })
@@ -222,7 +222,7 @@ where
         let mut lambda = lambda.prod().vec();
 
         lambda.sort_by(|a, b| {
-            a.re.partial_cmp(&b.re).unwrap_or(if !a.re.is_finite() {
+            a.partial_cmp(&b.re).unwrap_or(if !a.re.is_finite() {
                 Ordering::Less
             } else {
                 Ordering::Greater
@@ -275,7 +275,7 @@ where
                 .concat(),
         );
 
-        Ok(sigma_inv_v)
+        Ok(sigma_inv_v?)
     }
 }
 

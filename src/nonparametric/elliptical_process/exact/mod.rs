@@ -9,6 +9,7 @@ use crate::{opensrdk_linear_algebra::*, RandomVariable};
 use crate::{DistributionError, EllipticalParams};
 use ey::y_ey;
 use opensrdk_kernel_method::*;
+use opensrdk_linear_algebra::matrix::ge::sy_he::po::trf::POTRF;
 
 #[derive(Clone, Debug)]
 pub struct ExactEllipticalProcessParams<K, T>
@@ -45,10 +46,10 @@ where
         let mu = vec![ey; base.x.len()];
         let kxx = kernel_matrix(&base.kernel, &base.theta, &base.x, &base.x)?;
         let sigma = kxx + vec![base.sigma.powi(2); n].diag();
-        let lsigma = sigma.potrf()?;
+        let lsigma = sigma.potrf()?.0;
         let y_ey = y_ey(y, ey).col_mat();
         let y_ey_t = y_ey.t();
-        let sigma_inv_y = lsigma.potrs(y_ey)?;
+        let sigma_inv_y = POTRF(lsigma).potrs(y_ey)?;
         let mahalanobis_squared = (y_ey_t * &sigma_inv_y)[(0, 0)];
 
         Ok(Self {
@@ -86,7 +87,7 @@ where
     }
 
     fn sigma_inv_mul(&self, v: Matrix) -> Result<Matrix, DistributionError> {
-        Ok(self.lsigma.potrs(v)?)
+        Ok(POTRF(self.lsigma).potrs(v)?)
     }
 
     fn sigma_det_sqrt(&self) -> f64 {

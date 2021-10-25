@@ -1,5 +1,5 @@
 use crate::{DistributionError, EllipticalError, EllipticalParams};
-use opensrdk_linear_algebra::*;
+use opensrdk_linear_algebra::{matrix::ge::sy_he::po::trf::POTRF, *};
 
 #[derive(Clone, Debug)]
 pub struct ExactEllipticalParams {
@@ -41,7 +41,7 @@ impl EllipticalParams for ExactEllipticalParams {
     }
 
     fn sigma_inv_mul(&self, v: Matrix) -> Result<Matrix, DistributionError> {
-        Ok(self.lsigma.potrs(v)?)
+        Ok(POTRF(self.lsigma).potrs(v)?)
     }
 
     fn sigma_det_sqrt(&self) -> f64 {
