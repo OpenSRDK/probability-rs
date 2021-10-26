@@ -1,4 +1,4 @@
-use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable, VectorSampleable};
 use crate::{DistributionError, StudentTError};
 use rand::prelude::*;
 use rand_distr::StudentT as RandStudentT;
@@ -88,6 +88,16 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl VectorSampleable for StudentTParams {
+    type T = ();
+    fn transform_vec(self) -> (Vec<f64>, Self::T) {
+        (vec![self.nu, self.mu, self.sigma], ())
+    }
+    fn restore(v: (Vec<f64>, Self::T)) -> Self {
+        Self::new(v.0[0], v.0[1], v.0[2]).unwrap()
     }
 }
 
