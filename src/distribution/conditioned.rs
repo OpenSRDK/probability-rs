@@ -7,7 +7,7 @@ where
     U: RandomVariable,
     D: Distribution<T = T, U = U>,
 {
-    original: D,
+    original: &'a D,
     condition: &'a U,
 }
 
@@ -17,7 +17,7 @@ where
     U: RandomVariable,
     D: Distribution<T = T, U = U>,
 {
-    pub fn new(original: D, condition: &'a U) -> Self {
+    pub fn new(original: &'a D, condition: &'a U) -> Self {
         Self {
             original,
             condition,

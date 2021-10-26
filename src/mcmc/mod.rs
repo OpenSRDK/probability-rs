@@ -1,6 +1,8 @@
-pub mod elliptical_slice;
+pub mod elliptical_slice_sampling;
+pub mod gibbs_sampling;
 
-pub use elliptical_slice::*;
+pub use elliptical_slice_sampling::*;
+pub use gibbs_sampling::*;
 
 use crate::RandomVariable;
 use opensrdk_linear_algebra::Matrix;

@@ -4,7 +4,7 @@ use rand::prelude::*;
 use rayon::prelude::*;
 use std::{error::Error, f64::consts::PI};
 
-/// Sample from posterior p(b|a,c) with likelihood p(a|b,c) and prior p(b|c)
+/// Sample from posterior p(b|a) with likelihood p(a|b) and prior p(b)
 pub struct EllipticalSliceSampler<'a, L, P, A, B>
 where
     L: Distribution<T = A, U = B>,
