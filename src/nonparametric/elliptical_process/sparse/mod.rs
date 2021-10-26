@@ -9,6 +9,7 @@ use crate::{opensrdk_linear_algebra::*, RandomVariable};
 use crate::{DistributionError, EllipticalParams};
 use ey::y_ey;
 use opensrdk_kernel_method::*;
+use opensrdk_linear_algebra::matrix::ge::sy_he::po::trf::POTRF;
 
 #[derive(Clone, Debug)]
 pub struct SparseEllipticalProcessParams<K, T>
@@ -20,10 +21,10 @@ where
     mu: Vec<f64>,
     lsigma: Matrix,
     u: Vec<T>,
-    lkuu: Matrix,
+    lkuu: POTRF,
     kux: Matrix,
     omega_inv: DiagonalMatrix,
-    ls: Matrix,
+    ls: POTRF,
     s_inv_kux_omega_y: Matrix,
     kxx_det_sqrt: f64,
     mahalanobis_squared: f64,
@@ -74,9 +75,9 @@ where
             .collect::<Result<Vec<_>, MatrixError>>()?
             .diag();
         let y_ey = y_ey(y, ey).col_mat();
-        let omega_y = &omega * y_ey.slice().to_vec();
+        let omega_y = &omega * y_ey.elems().to_vec();
 
-        let omega_inv = omega.diinv();
+        let omega_inv = omega.powi(-1);
         let omega_inv_mat = omega_inv.mat();
         let s = &kuu + &kux * &omega_inv_mat * kux.t();
         let ls = s.potrf()?;
@@ -120,7 +121,7 @@ where
     fn sigma_inv_mul(
         kux: &Matrix,
         omega_inv: &Matrix,
-        ls: &Matrix,
+        ls: &POTRF,
         v: Matrix,
     ) -> Result<Matrix, DistributionError> {
         Ok(omega_inv * v.clone() - omega_inv * kux.t() * ls.potrs(kux * omega_inv * v)?)

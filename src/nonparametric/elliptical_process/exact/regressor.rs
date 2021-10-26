@@ -30,6 +30,6 @@ where
         let mean = self.mu[0] + &kxsx * &self.sigma_inv_y;
         let covariance = kxsxs - &kxsx * kxx_inv_kxxs;
 
-        ExactEllipticalParams::new(mean.vec(), covariance.potrf()?)
+        ExactEllipticalParams::new(mean.vec(), covariance.potrf()?.0)
     }
 }

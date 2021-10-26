@@ -1,7 +1,7 @@
 use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use crate::{ExactMultivariateNormalParams, MultivariateNormal};
-use opensrdk_linear_algebra::*;
+use opensrdk_linear_algebra::{matrix::ge::sy_he::po::trf::POTRF, *};
 use rand::prelude::*;
 use special::Gamma;
 use std::f64::consts::PI;
@@ -38,12 +38,11 @@ impl Distribution for Wishart {
 
         let p = x.rows() as f64;
 
-        Ok(
-            x.trdet().powf((n + p + 1.0) / 2.0) * (-0.5 * lv.clone().potrs(x * x.t())?.tr()).exp()
-                / (2f64.powf(n * p / 2.0)
-                    * lv.trdet().powf(n / 2.0)
-                    * multivariate_gamma(p as u64, n / 2.0)),
-        )
+        Ok(x.trdet().powf((n + p + 1.0) / 2.0)
+            * (-0.5 * POTRF(lv.clone()).potrs(x * x.t())?.tr()).exp()
+            / (2f64.powf(n * p / 2.0)
+                * lv.trdet().powf(n / 2.0)
+                * multivariate_gamma(p as u64, n / 2.0)))
     }
 
     /// output is cholesky decomposed
