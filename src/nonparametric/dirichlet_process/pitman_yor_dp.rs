@@ -102,7 +102,7 @@ impl PitmanYorDPParams {
     }
 
     pub fn clusters_len(&self) -> usize {
-        self.z.iter().fold(0usize, |max, &zi| zi.max(max))
+        self.z.iter().fold(0usize, |max, &zi| zi.max(max)) + 1
     }
 
     pub fn clusters(&self) -> Vec<usize> {
