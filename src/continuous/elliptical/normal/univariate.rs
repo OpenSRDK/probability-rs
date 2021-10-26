@@ -1,3 +1,4 @@
+use crate::VectorSampleable;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use crate::{DistributionError, NormalError};
 use rand::prelude::*;
@@ -84,6 +85,18 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl VectorSampleable for NormalParams {
+    type T = ();
+
+    fn transform_vec(self) -> (Vec<f64>, Self::T) {
+        (vec![self.mu, self.sigma], ())
+    }
+
+    fn restore(v: (Vec<f64>, Self::T)) -> Self {
+        Self::new(v.0[0], v.0[1]).unwrap()
     }
 }
 
