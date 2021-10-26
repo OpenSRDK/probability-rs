@@ -18,3 +18,4 @@ pub mod nonparametric;
 pub use continuous::*;
 pub use discrete::*;
 pub use distribution::*;
+pub use mcmc::*;

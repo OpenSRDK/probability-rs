@@ -1,9 +1,9 @@
 pub mod elliptical_slice;
 
 pub use elliptical_slice::*;
-use opensrdk_linear_algebra::Matrix;
 
 use crate::RandomVariable;
+use opensrdk_linear_algebra::Matrix;
 
 pub trait VectorSampleable: RandomVariable {
     type T;

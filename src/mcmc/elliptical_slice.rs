@@ -79,7 +79,6 @@ where
 #[cfg(test)]
 mod tests {
     use crate::distribution::Distribution;
-    use crate::mcmc::EllipticalSliceSampler;
     use crate::*;
     use core::f64::consts::PI;
     use rand::prelude::*;
