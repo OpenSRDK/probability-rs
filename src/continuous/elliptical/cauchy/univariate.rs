@@ -1,4 +1,6 @@
-use crate::{CauchyError, DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{
+    CauchyError, DependentJoint, Distribution, IndependentJoint, RandomVariable, VectorSampleable,
+};
 use crate::{DistributionError, StudentT, StudentTParams};
 use rand::prelude::*;
 use std::{ops::BitAnd, ops::Mul};
@@ -71,6 +73,16 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl VectorSampleable for CauchyParams {
+    type T = ();
+    fn transform_vec(self) -> (Vec<f64>, Self::T) {
+        (vec![self.mu, self.sigma], ())
+    }
+    fn restore(v: (Vec<f64>, Self::T)) -> Self {
+        Self::new(v.0[0], v.0[1]).unwrap()
     }
 }
 
