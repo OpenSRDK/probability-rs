@@ -23,7 +23,6 @@ See
 
 ```rust
 use opensrdk_probability::*;
-use opensrdk_probability::mcmc::*;
 use opensrdk_probability::nonparametric::*;
 ```
 

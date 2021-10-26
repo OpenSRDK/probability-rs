@@ -1,37 +1,16 @@
+use super::VectorSampleable;
 use crate::{Distribution, RandomVariable};
 use rand::prelude::*;
 use rayon::prelude::*;
 use std::{error::Error, f64::consts::PI};
 
-pub trait EllipticalSliceable: RandomVariable {
-    fn ellipse(self, theta: f64, nu: &Self) -> Self;
-}
-
-impl EllipticalSliceable for f64 {
-    fn ellipse(self, theta: f64, nu: &Self) -> Self {
-        self * theta.cos() + nu * theta.sin()
-    }
-}
-
-impl EllipticalSliceable for Vec<f64> {
-    fn ellipse(mut self, theta: f64, nu: &Self) -> Self {
-        let cos = theta.cos();
-        let sin = theta.sin();
-        self.par_iter_mut()
-            .zip(nu.par_iter())
-            .for_each(|(bi, &nui)| *bi = *bi * cos + nui * sin);
-
-        self
-    }
-}
-
-/// Sample from posterior p(b|a,c) with likelihood p(a|b,c) and prior p(b|c)
+/// Sample from posterior p(b|a) with likelihood p(a|b) and prior p(b)
 pub struct EllipticalSliceSampler<'a, L, P, A, B>
 where
     L: Distribution<T = A, U = B>,
     P: Distribution<T = B, U = ()>,
     A: RandomVariable,
-    B: EllipticalSliceable,
+    B: VectorSampleable,
 {
     value: &'a A,
     likelihood: &'a L,
@@ -43,7 +22,7 @@ where
     L: Distribution<T = A, U = B>,
     P: Distribution<T = B, U = ()>,
     A: RandomVariable,
-    B: EllipticalSliceable,
+    B: VectorSampleable,
 {
     pub fn new(value: &'a A, likelihood: &'a L, prior: &'a P) -> Self {
         Self {
@@ -51,6 +30,16 @@ where
             likelihood,
             prior,
         }
+    }
+
+    fn step(mut v: Vec<f64>, theta: f64, nu: &Vec<f64>) -> Vec<f64> {
+        let cos = theta.cos();
+        let sin = theta.sin();
+        v.par_iter_mut()
+            .zip(nu.par_iter())
+            .for_each(|(bi, &nui)| *bi = *bi * cos + nui * sin);
+
+        v
     }
 
     pub fn sample(&self, rng: &mut StdRng) -> Result<B, Box<dyn Error>> {
@@ -64,9 +53,13 @@ where
         let mut start = theta - 2.0 * PI;
         let mut end = theta;
 
-        loop {
-            b = b.ellipse(theta, &nu);
+        let nu = nu.transform_vec();
 
+        loop {
+            let mut buf = b.transform_vec();
+            buf.0 = Self::step(buf.0, theta, &nu.0);
+
+            b = B::restore(buf);
             if rho < self.likelihood.p(self.value, &b)? {
                 break;
             }
@@ -86,7 +79,6 @@ where
 #[cfg(test)]
 mod tests {
     use crate::distribution::Distribution;
-    use crate::mcmc::EllipticalSliceSampler;
     use crate::*;
     use core::f64::consts::PI;
     use rand::prelude::*;
