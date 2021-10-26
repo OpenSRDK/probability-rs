@@ -1,9 +1,9 @@
 use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
-use std::{error::Error, ops::BitAnd, ops::Mul};
+use std::{ops::BitAnd, ops::Mul};
 
-/// # ChineseRestaurantDP
+/// # Pitman-Yor dirichlet process
 #[derive(Clone, Debug)]
 pub struct PitmanYorDP;
 
@@ -15,17 +15,6 @@ pub enum PitmanYorDPError {
     DMustBeGTE0AndLT1,
     #[error("Unknown error")]
     Unknown,
-}
-
-impl PitmanYorDP {
-    pub fn gibbs_sampler<D, G0, T, U>(&self, params: &[U])
-    where
-        D: Distribution<T = T, U = U>,
-        G0: Distribution<T = U, U = ()>,
-        T: RandomVariable,
-        U: RandomVariable,
-    {
-    }
 }
 
 impl Distribution for PitmanYorDP {
@@ -40,17 +29,14 @@ impl Distribution for PitmanYorDP {
         let n_vec = theta.clusters();
         let max_k = n_vec.len();
 
-        if k <= max_k {
-            Ok(n_vec[k] as f64 / (n as f64 + alpha))
+        if k < max_k {
+            Ok((n_vec[k] as f64 - theta.d) / (n as f64 + alpha))
         } else {
-            Ok(alpha / (n as f64 + alpha))
+            Ok((alpha + theta.d) / (n as f64 + alpha))
         }
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
-        let alpha = theta.alpha();
-        let n = theta.data_len();
-
         let n_vec = theta.clusters();
         let max_k = n_vec.len();
 
@@ -58,7 +44,7 @@ impl Distribution for PitmanYorDP {
         let mut p_sum = 0.0;
 
         for k in 0..max_k {
-            p_sum += n_vec[k] as f64 / (n as f64 + alpha);
+            p_sum += self.p(&k, theta)?;
             if p < p_sum {
                 return Ok(k);
             }
@@ -79,12 +65,17 @@ impl PitmanYorDPParams {
     /// - `alpha`: A strength parameter.
     /// - `d`: 0 ≦ d < 1. If it is zero, Pitman-Yor process means Chinese restaurant process.
     /// - `z`: `z[i]` means the index of clusters which the `i`th data belongs to.
-    pub fn new(alpha: f64, d: f64, z: Vec<usize>) -> Result<Self, Box<dyn Error>> {
+    /// - `theta`: `theta[j]` means the parameters of the `j`th cluster.
+    pub fn new(alpha: f64, d: f64, z: Vec<usize>) -> Result<Self, DistributionError> {
         if alpha <= 0.0 {
-            return Err(PitmanYorDPError::AlphaMustBePositive.into());
+            return Err(DistributionError::InvalidParameters(
+                PitmanYorDPError::AlphaMustBePositive.into(),
+            ));
         }
         if d < 0.0 || 1.0 <= d {
-            return Err(PitmanYorDPError::DMustBeGTE0AndLT1.into());
+            return Err(DistributionError::InvalidParameters(
+                PitmanYorDPError::DMustBeGTE0AndLT1.into(),
+            ));
         }
 
         Ok(Self { alpha, d, z })
