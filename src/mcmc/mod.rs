@@ -46,6 +46,6 @@ impl VectorSampleable for Matrix {
     }
 
     fn restore(v: (Vec<f64>, Self::T)) -> Self {
-        Matrix::from(v.1, v.0)
+        Matrix::from(v.1, v.0).unwrap()
     }
 }
