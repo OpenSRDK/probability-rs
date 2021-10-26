@@ -5,19 +5,32 @@ use std::{error::Error, ops::BitAnd, ops::Mul};
 
 /// # ChineseRestaurantDP
 #[derive(Clone, Debug)]
-pub struct ChineseRestaurantDP;
+pub struct PitmanYorDP;
 
 #[derive(thiserror::Error, Debug)]
-pub enum ChineseRestaurantDPError {
+pub enum PitmanYorDPError {
     #[error("'α' must be positibe")]
     AlphaMustBePositive,
+    #[error("'d' must be greater than or equal to 0 and less than 1")]
+    DMustBeGTE0AndLT1,
     #[error("Unknown error")]
     Unknown,
 }
 
-impl Distribution for ChineseRestaurantDP {
+impl PitmanYorDP {
+    pub fn gibbs_sampler<D, G0, T, U>(&self, params: &[U])
+    where
+        D: Distribution<T = T, U = U>,
+        G0: Distribution<T = U, U = ()>,
+        T: RandomVariable,
+        U: RandomVariable,
+    {
+    }
+}
+
+impl Distribution for PitmanYorDP {
     type T = usize;
-    type U = ChineseRestaurantDPParams;
+    type U = PitmanYorDPParams;
 
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let alpha = theta.alpha();
@@ -56,23 +69,33 @@ impl Distribution for ChineseRestaurantDP {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct ChineseRestaurantDPParams {
+pub struct PitmanYorDPParams {
     alpha: f64,
+    d: f64,
     z: Vec<usize>,
 }
 
-impl ChineseRestaurantDPParams {
+impl PitmanYorDPParams {
+    /// - `alpha`: A strength parameter.
+    /// - `d`: 0 ≦ d < 1. If it is zero, Pitman-Yor process means Chinese restaurant process.
     /// - `z`: `z[i]` means the index of clusters which the `i`th data belongs to.
-    pub fn new(alpha: f64, z: Vec<usize>) -> Result<Self, Box<dyn Error>> {
+    pub fn new(alpha: f64, d: f64, z: Vec<usize>) -> Result<Self, Box<dyn Error>> {
         if alpha <= 0.0 {
-            return Err(ChineseRestaurantDPError::AlphaMustBePositive.into());
+            return Err(PitmanYorDPError::AlphaMustBePositive.into());
+        }
+        if d < 0.0 || 1.0 <= d {
+            return Err(PitmanYorDPError::DMustBeGTE0AndLT1.into());
         }
 
-        Ok(Self { alpha, z })
+        Ok(Self { alpha, d, z })
     }
 
     pub fn alpha(&self) -> f64 {
         self.alpha
+    }
+
+    pub fn d(&self) -> f64 {
+        self.d
     }
 
     pub fn z(&self) -> &Vec<usize> {
@@ -102,24 +125,24 @@ impl ChineseRestaurantDPParams {
     }
 }
 
-impl<Rhs, TRhs> Mul<Rhs> for ChineseRestaurantDP
+impl<Rhs, TRhs> Mul<Rhs> for PitmanYorDP
 where
-    Rhs: Distribution<T = TRhs, U = ChineseRestaurantDPParams>,
+    Rhs: Distribution<T = TRhs, U = PitmanYorDPParams>,
     TRhs: RandomVariable,
 {
-    type Output = IndependentJoint<Self, Rhs, usize, TRhs, ChineseRestaurantDPParams>;
+    type Output = IndependentJoint<Self, Rhs, usize, TRhs, PitmanYorDPParams>;
 
     fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
     }
 }
 
-impl<Rhs, URhs> BitAnd<Rhs> for ChineseRestaurantDP
+impl<Rhs, URhs> BitAnd<Rhs> for PitmanYorDP
 where
-    Rhs: Distribution<T = ChineseRestaurantDPParams, U = URhs>,
+    Rhs: Distribution<T = PitmanYorDPParams, U = URhs>,
     URhs: RandomVariable,
 {
-    type Output = DependentJoint<Self, Rhs, usize, ChineseRestaurantDPParams, URhs>;
+    type Output = DependentJoint<Self, Rhs, usize, PitmanYorDPParams, URhs>;
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
