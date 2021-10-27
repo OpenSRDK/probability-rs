@@ -125,7 +125,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use crate::distribution::Distribution;
+    use crate::{nonparametric::*, *};
+    use pitman_yor_dp::PitmanYorDP;
     use rand::prelude::*;
 
     use super::PitmanYorDPGibbs;
@@ -138,34 +140,62 @@ mod tests {
         let alpha = 0.5;
         let d = 0.5;
 
-        let mut z = (0..n).into_iter().collect::<Vec<_>>();
         let theta = vec![NormalParams::new(0.0, 1.0).unwrap(); n];
-
+        let distr = Normal;
+        let g0 = InstantDistribution::new(&|x: &NormalParams, _| Ok(x.mu()), &|_, rng| {
+            let mu = rng.gen_range(0.0..=1.0);
+            NormalParams::new(mu, 10.0 * mu)
+        });
         let sampler = GibbsSampler::new(
             (0..n)
                 .into_iter()
-                .map(|i| {
-                    PitmanYorDPGibbs::new(
-                        alpha,
-                        d,
-                        i,
-                        &x,
-                        &theta,
-                        Normal,
-                        InstantDistribution::new(&|x: &NormalParams, _| Ok(x.mu()), &|_, rng| {
-                            let mu = rng.gen_range(0.0..=1.0);
-                            NormalParams::new(mu, 10.0 * mu)
-                        }),
-                    )
-                })
+                .map(|i| PitmanYorDPGibbs::new(alpha, d, i, &x, &theta, distr.clone(), g0.clone()))
                 .collect(),
         );
 
         let iter = 10;
         let mut rng = StdRng::from_seed([1; 32]);
+        let mut p0 = 0.0;
+        let mut i0 = 0usize;
+        let mut z0 = vec![];
+        let mut theta0 = vec![];
 
-        for _ in 0..iter {
-            z = sampler.step_sample(z, &mut rng).unwrap();
+        for pattern in 0..3 {
+            let mut z = (0..n).into_iter().collect::<Vec<_>>();
+            for _ in 0..iter {
+                z = sampler.step_sample(z, &mut rng).unwrap();
+                //クラスタごとに、パラメータθを微調整する処理をここに書く
+            }
+            //3パターンのうち最も尤度が高いzを選ぶ処理をここに書く
+            let params = PitmanYorDPParams::new(alpha, d, z.clone()).unwrap();
+            let c = params.clusters_len();
+
+            let p = (0..n)
+                .into_iter()
+                .map(|i| {
+                    PitmanYorDP
+                        .p(
+                            &z[i],
+                            &PitmanYorDPParams::new(alpha, d, z[0..i].to_vec()).unwrap(),
+                        )
+                        .unwrap()
+                })
+                .product::<f64>()
+                * (0..c)
+                    .into_iter()
+                    .map(|j| g0.p(&theta[j], &()).unwrap())
+                    .product::<f64>()
+                * (0..n)
+                    .into_iter()
+                    .map(|i| distr.p(&x[i], &theta[z[i]]).unwrap())
+                    .product::<f64>();
+            if p0 < p {
+                p0 = p;
+                i0 = pattern;
+                z0 = z;
+                theta0 = theta.clone();
+            }
         }
+        println!("一番良いのは{}番目です！", i0);
     }
 }
