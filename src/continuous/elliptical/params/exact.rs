@@ -1,3 +1,4 @@
+use crate::VectorSampleable;
 use crate::{DistributionError, EllipticalError, EllipticalParams};
 use opensrdk_linear_algebra::{matrix::ge::sy_he::po::trf::POTRF, *};
 
@@ -60,5 +61,21 @@ impl EllipticalParams for ExactEllipticalParams {
             .col_mat()
             .gemm(&self.lsigma.0, &z.col_mat(), 1.0, 1.0)?
             .vec())
+    }
+}
+
+impl VectorSampleable for ExactEllipticalParams {
+    type T = usize;
+
+    fn transform_vec(self) -> (Vec<f64>, Self::T) {
+        let n = self.mu.len();
+        ([self.mu, self.lsigma.0.vec()].concat(), n)
+    }
+
+    fn restore(v: (Vec<f64>, Self::T)) -> Self {
+        let n = v.1;
+        let mu = v.0[0..n].to_vec();
+        let lsigma = Matrix::from(n, v.0[n..n * n].to_vec()).unwrap();
+        Self::new(mu, lsigma).unwrap()
     }
 }
