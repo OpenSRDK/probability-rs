@@ -75,7 +75,7 @@ impl VectorSampleable for ExactEllipticalParams {
     fn restore(v: (Vec<f64>, Self::T)) -> Self {
         let n = v.1;
         let mu = v.0[0..n].to_vec();
-        let lsigma = Matrix::from(n, v.0[n..n * n].to_vec()).unwrap();
+        let lsigma = Matrix::from(n, v.0[n..n + n * n].to_vec()).unwrap();
         Self::new(mu, lsigma).unwrap()
     }
 }
