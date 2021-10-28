@@ -140,32 +140,68 @@ mod tests {
         let alpha = 0.5;
         let d = 0.5;
 
-        let theta = vec![NormalParams::new(0.0, 1.0).unwrap(); n];
         let distr = Normal;
         let g0 = InstantDistribution::new(&|x: &NormalParams, _| Ok(x.mu()), &|_, rng| {
             let mu = rng.gen_range(0.0..=1.0);
             NormalParams::new(mu, 10.0 * mu)
         });
-        let sampler = GibbsSampler::new(
-            (0..n)
-                .into_iter()
-                .map(|i| PitmanYorDPGibbs::new(alpha, d, i, &x, &theta, distr.clone(), g0.clone()))
-                .collect(),
-        );
 
-        let iter = 10;
+        const PATTERNS: usize = 5;
+        let iter = 4;
         let mut rng = StdRng::from_seed([1; 32]);
         let mut p0 = 0.0;
         let mut i0 = 0usize;
         let mut z0 = vec![];
         let mut theta0 = vec![];
 
-        for pattern in 0..3 {
+        for pattern in 0..PATTERNS {
             let mut z = (0..n).into_iter().collect::<Vec<_>>();
+            let mut theta = vec![NormalParams::new(0.0, 1.0).unwrap(); n];
+
             for _ in 0..iter {
-                z = sampler.step_sample(z, &mut rng).unwrap();
-                //クラスタごとに、パラメータθを微調整する処理をここに書く
+                for i in 0..n {
+                    let zi = {
+                        GibbsSampler
+                            .step_sample(
+                                i,
+                                &z,
+                                PitmanYorDPGibbs::new(
+                                    alpha,
+                                    d,
+                                    i,
+                                    &x,
+                                    &theta,
+                                    distr.clone(),
+                                    g0.clone(),
+                                ),
+                                &mut rng,
+                            )
+                            .unwrap()
+                    };
+
+                    let theta_star = if zi == theta.len() {
+                        g0.sample(&(), &mut rng).unwrap()
+                    } else {
+                        theta[zi].clone()
+                    };
+
+                    // Metropolis-Hastings
+                    if rng.gen_range(0.0..1.0)
+                        < 1f64.min(
+                            distr.p(&x[i], &theta_star).unwrap()
+                                / distr.p(&x[i], &theta[z[i]]).unwrap(),
+                        )
+                    {
+                        // acceptance rateを上回ったとき、受容
+                        z[i] = zi;
+                        theta[zi] = theta_star;
+                    }
+                }
+
+                // p(x|θ) G0(θ)をもとにp(θ|x)からサンプリングする処理をここに書く
+                // 楕円スライスサンプリングで良さそう
             }
+
             //3パターンのうち最も尤度が高いzを選ぶ処理をここに書く
             let params = PitmanYorDPParams::new(alpha, d, z.clone()).unwrap();
             let c = params.clusters_len();

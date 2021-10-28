@@ -1,39 +1,25 @@
 use crate::{Distribution, DistributionError, RandomVariable};
 use rand::prelude::*;
 
-pub struct GibbsSampler<T, D>
-where
-    T: RandomVariable,
-    D: Distribution<T = T, U = Vec<T>>,
-{
-    distributions: Vec<D>,
-}
+pub struct GibbsSampler;
 
-impl<T, D> GibbsSampler<T, D>
-where
-    T: RandomVariable,
-    D: Distribution<T = T, U = Vec<T>>,
-{
-    pub fn new(distributions: Vec<D>) -> Self {
-        Self { distributions }
-    }
-
-    pub fn step_sample(
+impl GibbsSampler {
+    /// https://qiita.com/masasora/items/5469638d93d9c834724b
+    pub fn step_sample<D, T>(
         &self,
-        mut data: Vec<T>,
+        index: usize,
+        data: &[T],
+        distr: D,
         rng: &mut StdRng,
-    ) -> Result<Vec<T>, DistributionError> {
-        let n = self.distributions.len();
+    ) -> Result<T, DistributionError>
+    where
+        D: Distribution<T = T, U = Vec<T>>,
+        T: RandomVariable,
+    {
+        let mut condition = data.to_vec();
+        condition.remove(index);
 
-        let mut shuffled = (0..n).into_iter().collect::<Vec<_>>();
-        shuffled.shuffle(rng);
-
-        for i in shuffled {
-            let mut condition = data.clone();
-            condition.remove(i);
-
-            data[i] = self.distributions[i].sample(&condition, rng)?;
-        }
+        let data = distr.sample(&condition, rng)?;
 
         Ok(data)
     }
