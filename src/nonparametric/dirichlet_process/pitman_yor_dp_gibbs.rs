@@ -197,10 +197,10 @@ mod tests {
                         theta[zi] = theta_star;
                     }
                 }
-            }
 
-            // p(x|θ) G0(θ)をもとにp(θ|x)からサンプリングする処理をここに書く
-            // 楕円スライスサンプリングで良さそう
+                // p(x|θ) G0(θ)をもとにp(θ|x)からサンプリングする処理をここに書く
+                // 楕円スライスサンプリングで良さそう
+            }
 
             //3パターンのうち最も尤度が高いzを選ぶ処理をここに書く
             let params = PitmanYorDPParams::new(alpha, d, z.clone()).unwrap();
