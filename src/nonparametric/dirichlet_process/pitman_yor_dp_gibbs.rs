@@ -129,11 +129,29 @@ mod tests {
     use crate::{nonparametric::*, *};
     use pitman_yor_dp::PitmanYorDP;
     use rand::prelude::*;
+    use rand::seq::index::sample;
 
     use super::PitmanYorDPGibbs;
 
     #[test]
     fn it_works() {
+        let n = Normal;
+        let mut rng = StdRng::from_seed([1; 32]);
+
+        let mu1 = 1.0;
+        let sigma1 = 3.0;
+        let x1 = (0..100)
+            .into_iter()
+            .map(|i| sample(Normal, &NormalParams::new(mu1, sigma1).unwrap(), &mut rng).unwrap())
+            .collect::<Vec<_>>();
+
+        let mu2 = 1.0;
+        let sigma2 = 3.0;
+        let x2 = (0..100)
+            .into_iter()
+            .map(|i| sample(Normal, &NormalParams::new(mu1, sigma1).unwrap(), &mut rng).unwrap())
+            .collect::<Vec<_>>();
+
         let x = vec![];
         let n = x.len();
 
