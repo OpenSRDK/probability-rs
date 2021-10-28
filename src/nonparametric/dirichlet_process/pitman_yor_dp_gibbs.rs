@@ -64,14 +64,14 @@ where
 
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let mut params = PitmanYorDPParams::new(self.alpha, self.d, vec![])?;
-        params.z_mut().copy_from_slice(theta);
+        *params.z_mut() = theta.clone();
 
         PitmanYorDP.p(x, &params)
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
         let mut params = PitmanYorDPParams::new(self.alpha, self.d, vec![])?;
-        params.z_mut().copy_from_slice(theta);
+        *params.z_mut() = theta.clone(); //この辺が悪さしてる
 
         let n_vec = params.clusters();
         let max_k = n_vec.len();
@@ -129,7 +129,6 @@ mod tests {
     use crate::{nonparametric::*, *};
     use pitman_yor_dp::PitmanYorDP;
     use rand::prelude::*;
-    use rand::seq::index::sample;
 
     use super::PitmanYorDPGibbs;
 
@@ -142,17 +141,25 @@ mod tests {
         let sigma1 = 3.0;
         let x1 = (0..100)
             .into_iter()
-            .map(|i| sample(Normal, &NormalParams::new(mu1, sigma1).unwrap(), &mut rng).unwrap())
+            .map(|_| {
+                Normal
+                    .sample(&NormalParams::new(mu1, sigma1).unwrap(), &mut rng)
+                    .unwrap()
+            })
             .collect::<Vec<_>>();
 
-        let mu2 = 1.0;
+        let mu2 = 5.0;
         let sigma2 = 3.0;
         let x2 = (0..100)
             .into_iter()
-            .map(|i| sample(Normal, &NormalParams::new(mu1, sigma1).unwrap(), &mut rng).unwrap())
+            .map(|_| {
+                Normal
+                    .sample(&NormalParams::new(mu2, sigma2).unwrap(), &mut rng)
+                    .unwrap()
+            })
             .collect::<Vec<_>>();
 
-        let x = vec![];
+        let x = [x1, x2].concat();
         let n = x.len();
 
         let alpha = 0.5;
@@ -161,7 +168,7 @@ mod tests {
         let distr = Normal;
         let g0 = InstantDistribution::new(&|x: &NormalParams, _| Ok(x.mu()), &|_, rng| {
             let mu = rng.gen_range(0.0..=1.0);
-            NormalParams::new(mu, 10.0 * mu)
+            NormalParams::new(mu, 10.0 * mu + 1f64) //ここがエラーの原因か？
         });
 
         const PATTERNS: usize = 5;
@@ -212,12 +219,35 @@ mod tests {
                     {
                         // acceptance rateを上回ったとき、受容
                         z[i] = zi;
-                        theta[zi] = theta_star;
+                        if zi == theta.len() {
+                            theta.push(theta_star);
+                        } else {
+                            theta[zi] = theta_star;
+                        }
                     }
                 }
 
                 // p(x|θ) G0(θ)をもとにp(θ|x)からサンプリングする処理をここに書く
                 // 楕円スライスサンプリングで良さそう
+                let len = PitmanYorDPParams::new(alpha, d, z.clone())
+                    .unwrap()
+                    .clusters_len();
+                (0..len)
+                    .into_iter()
+                    .map(|j| {
+                        x.iter()
+                            .enumerate()
+                            .filter(|&(i, _)| z[i] == j)
+                            .map(|(_, &xi)| xi)
+                            .collect::<Vec<_>>()
+                    })
+                    .enumerate()
+                    .for_each(|(j, cluster_j_x_list)| {
+                        let con_distr = vec![Normal; cluster_j_x_list.len()].into_iter().joint();
+                        let elliptical_sampler =
+                            EllipticalSliceSampler::new(&cluster_j_x_list, &con_distr, &g0);
+                        theta[z[j]] = elliptical_sampler.sample(&mut rng).unwrap();
+                    });
             }
 
             //3パターンのうち最も尤度が高いzを選ぶ処理をここに書く
