@@ -8,6 +8,16 @@ use super::{BaselineMeasure, DiscreteMeasurableSpace, DiscreteMeasure};
 use crate::{Distribution, DistributionError, RandomVariable};
 use std::fmt::Debug;
 
+pub(crate) fn clusters_len(z: &[usize]) -> usize {
+    z.iter().fold(0usize, |max, &zi| zi.max(max)) + 1
+}
+pub(crate) fn clusters(z: &[usize]) -> Vec<usize> {
+    let clusters_len = clusters_len(z);
+    z.iter().fold(vec![0usize; clusters_len], |mut n_vec, &zi| {
+        n_vec[zi] += 1;
+        n_vec
+    })
+}
 pub trait DirichletProcess<T, G0, TH>:
     Clone + Debug + Distribution<T = DirichletRandomMeasure<TH>, U = T>
 where
