@@ -1,48 +1,71 @@
-use crate::{Distribution, RandomVariable};
+use crate::{Distribution, DistributionError, RandomVariable};
+use std::fmt::Debug;
 
-#[derive(Clone, Debug)]
-pub struct Conditioned<'a, T, U, D>
+#[derive(Clone)]
+pub struct ConditionedDistribution<'a, D, T, U1, U2>
 where
+    D: Distribution<T = T, U = U1>,
     T: RandomVariable,
-    U: RandomVariable,
-    D: Distribution<T = T, U = U>,
+    U1: RandomVariable,
+    U2: RandomVariable,
 {
-    original: &'a D,
-    condition: &'a U,
+    distribution: &'a D,
+    condition: &'a (dyn Fn(&U2) -> Result<U1, DistributionError> + Send + Sync),
 }
 
-impl<'a, T, U, D> Conditioned<'a, T, U, D>
+impl<'a, D, T, U1, U2> ConditionedDistribution<'a, D, T, U1, U2>
 where
+    D: Distribution<T = T, U = U1>,
     T: RandomVariable,
-    U: RandomVariable,
-    D: Distribution<T = T, U = U>,
+    U1: RandomVariable,
+    U2: RandomVariable,
 {
-    pub fn new(original: &'a D, condition: &'a U) -> Self {
+    pub fn new(
+        distribution: &'a D,
+        condition: &'a (dyn Fn(&U2) -> Result<U1, DistributionError> + Send + Sync),
+    ) -> Self {
         Self {
-            original,
+            distribution,
             condition,
         }
     }
 }
 
-impl<'a, T, U, D> Distribution for Conditioned<'a, T, U, D>
+impl<'a, D, T, U1, U2> Debug for ConditionedDistribution<'a, D, T, U1, U2>
 where
+    D: Distribution<T = T, U = U1>,
     T: RandomVariable,
-    U: RandomVariable,
-    D: Distribution<T = T, U = U>,
+    U1: RandomVariable,
+    U2: RandomVariable,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "ConditionedDistribution {{ distribution: {:#?} }}",
+            self.distribution
+        )
+    }
+}
+
+impl<'a, D, T, U1, U2> Distribution for ConditionedDistribution<'a, D, T, U1, U2>
+where
+    D: Distribution<T = T, U = U1>,
+    T: RandomVariable,
+    U1: RandomVariable,
+    U2: RandomVariable,
 {
     type T = T;
-    type U = ();
+    type U = U2;
 
-    fn p(&self, x: &Self::T, _: &Self::U) -> Result<f64, crate::DistributionError> {
-        self.original.p(x, self.condition)
+    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, crate::DistributionError> {
+        self.distribution.p(x, &(self.condition)(theta)?)
     }
 
     fn sample(
         &self,
-        _: &Self::U,
+        theta: &Self::U,
         rng: &mut rand::prelude::StdRng,
     ) -> Result<Self::T, crate::DistributionError> {
-        self.original.sample(self.condition, rng)
+        self.distribution.sample(&(self.condition)(theta)?, rng)
     }
 }
