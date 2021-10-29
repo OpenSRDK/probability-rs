@@ -51,7 +51,7 @@ where
 
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let alpha = theta.alpha();
-        let n = x.denominator as f64;
+        let n = x.z.len() as f64;
 
         let p = x
             .w_theta()
@@ -73,15 +73,16 @@ where
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
         let n = self.max_len;
-        let mut z = (0..n).into_iter().collect::<Vec<_>>();
-        let mut n_vec = Self::clusters(&z);
-        let mut empty_cluster_minimum_index = n;
+        let mut z = vec![0usize; n];
+        let mut n_vec = vec![n; 1];
+        let mut empty_cluster_minimum_index = n_vec.len();
 
-        for _ in 0..self.gibbs_iter {
-            let index = rng.gen_range(0..n);
-            n_vec[z[index]] -= 1;
-            if n_vec[z[index]] == 0 && z[index] < empty_cluster_minimum_index {
-                empty_cluster_minimum_index = z[index];
+        for _ in 0..self.gibbs_iter * n {
+            let i = rng.gen_range(0..n);
+
+            n_vec[z[i]] -= 1;
+            if n_vec[z[i]] == 0 && z[i] < empty_cluster_minimum_index {
+                empty_cluster_minimum_index = z[i];
             }
 
             let p = rng.gen_range(0.0..=1.0);
@@ -96,7 +97,13 @@ where
                     break;
                 }
             }
-            z[index] = result_j;
+            z[i] = result_j;
+
+            if n_vec.len() == z[i] {
+                n_vec.push(1);
+            } else {
+                n_vec[z[i]] += 1;
+            }
         }
 
         let w_theta = n_vec
@@ -109,7 +116,9 @@ where
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        Ok(DirichletRandomMeasure::new(w_theta, n))
+        Self::z_compaction(&mut z, &n_vec);
+
+        Ok(DirichletRandomMeasure::new(w_theta, z))
     }
 }
 
@@ -201,8 +210,92 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::distribution::Distribution;
+    use crate::nonparametric::*;
+    use crate::*;
+    use rand::prelude::*;
     #[test]
     fn it_works() {
-        assert_eq!(2 + 2, 4);
+        let mut rng = StdRng::from_seed([1; 32]);
+
+        let mu1 = 1.0;
+        let sigma1 = 103.0;
+        let x1 = (0..100)
+            .into_iter()
+            .map(|_| {
+                Normal
+                    .sample(&NormalParams::new(mu1, sigma1).unwrap(), &mut rng)
+                    .unwrap()
+            })
+            .collect::<Vec<_>>();
+
+        let mu2 = 5.0;
+        let sigma2 = 10.0;
+        let x2 = (0..100)
+            .into_iter()
+            .map(|_| {
+                Normal
+                    .sample(&NormalParams::new(mu2, sigma2).unwrap(), &mut rng)
+                    .unwrap()
+            })
+            .collect::<Vec<_>>();
+
+        let x = [x1, x2].concat();
+        let n = x.len();
+
+        let alpha = 0.5;
+        let d = 0.5;
+
+        let distr = InstantDistribution::new(
+            &|x: &Vec<f64>, theta: &DirichletRandomMeasure<NormalParams>| {
+                x.iter()
+                    .enumerate()
+                    .map(|(i, xi)| Normal.p(xi, &theta.w_theta[theta.z[i]].1))
+                    .product::<Result<f64, _>>()
+            },
+            &|theta, rng| {
+                (0..theta.z.len())
+                    .into_iter()
+                    .map(|i| Normal.sample(&theta.w_theta[theta.z[i]].1, rng))
+                    .collect::<Result<Vec<_>, _>>()
+            },
+        );
+
+        let g0 = BaselineMeasure::new(InstantDistribution::new(
+            &|_: &NormalParams, _: &()| Ok(0.1),
+            &|_, rng| {
+                NormalParams::new(
+                    10.0 * rng.gen_range(0.0..=1.0),
+                    10.0 * rng.gen_range(0.0..=1.0) + 10.0,
+                )
+            },
+        ));
+        let pyp = PitmanYorProcess::<InstantDistribution<_, ()>, NormalParams>::new(4, n);
+        let pyp_params =
+            PitmanYorProcessParams::new(BaseDirichletProcessParams::new(alpha, g0).unwrap(), d)
+                .unwrap();
+        let condition = |_: &()| Ok(pyp_params.clone());
+
+        let pyp_conditioned = pyp.condition(&condition);
+
+        let mh_sampler = MetropolisHastingsSampler::new(&x, &distr, &pyp_conditioned, ());
+
+        let mut most_likely_result = (
+            0.0,
+            DirichletRandomMeasure::<NormalParams>::new(vec![], vec![]),
+        );
+
+        for _ in 0..20 {
+            let g = mh_sampler
+                .sample(5, pyp_conditioned.sample(&(), &mut rng).unwrap(), &mut rng)
+                .unwrap();
+            let p = distr.p(&x, &g).unwrap() * pyp_conditioned.p(&g, &()).unwrap();
+
+            if most_likely_result.0 < p {
+                most_likely_result = (p, g);
+            }
+        }
+
+        println!("クラスタ数:{}", most_likely_result.1.z().len());
     }
 }

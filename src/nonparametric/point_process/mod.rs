@@ -14,6 +14,16 @@ where
     pub distr: D,
 }
 
+impl<D, T> BaselineMeasure<D, T>
+where
+    D: Distribution<T = T, U = ()>,
+    T: RandomVariable,
+{
+    pub fn new(distr: D) -> Self {
+        Self { distr }
+    }
+}
+
 pub type DiscreteMeasurableSpace = HashMap<usize, ()>;
 
 pub trait DiscreteMeasure {

@@ -1,5 +1,7 @@
+pub mod pitman_yor_gibbs;
 pub mod pitman_yor_process;
 
+pub use pitman_yor_gibbs::*;
 pub use pitman_yor_process::*;
 
 use super::{BaselineMeasure, DiscreteMeasurableSpace, DiscreteMeasure};
@@ -13,16 +15,16 @@ where
     G0: Distribution<T = TH, U = ()>,
     TH: RandomVariable,
 {
-    fn clusters_len(z: &[usize]) -> usize {
-        z.iter().fold(0usize, |max, &zi| zi.max(max)) + 1
-    }
+    fn z_compaction(z: &mut Vec<usize>, n_vec: &Vec<usize>) {
+        for (j, &nj) in n_vec.iter().enumerate() {
+            if nj != 0 {
+                continue;
+            }
 
-    fn clusters(z: &[usize]) -> Vec<usize> {
-        let clusters_len = Self::clusters_len(z);
-        z.iter().fold(vec![0usize; clusters_len], |mut n_vec, &zi| {
-            n_vec[zi] += 1;
-            n_vec
-        })
+            for zi in z.iter_mut().filter(|zi| **zi >= j) {
+                *zi -= 1;
+            }
+        }
     }
 }
 
@@ -40,7 +42,7 @@ where
     T: RandomVariable,
 {
     w_theta: Vec<(usize, T)>,
-    denominator: usize,
+    z: Vec<usize>,
 }
 
 impl<T> DiscreteMeasure for DirichletRandomMeasure<T>
@@ -51,7 +53,7 @@ where
         a.iter()
             .map(|(&i, ())| self.w_theta[i].0 as f64)
             .sum::<f64>()
-            / self.denominator as f64
+            / self.z.len() as f64
     }
 }
 
@@ -59,19 +61,16 @@ impl<T> DirichletRandomMeasure<T>
 where
     T: RandomVariable,
 {
-    pub fn new(w_theta: Vec<(usize, T)>, denominator: usize) -> Self {
-        Self {
-            w_theta,
-            denominator,
-        }
+    pub fn new(w_theta: Vec<(usize, T)>, z: Vec<usize>) -> Self {
+        Self { w_theta, z }
     }
 
     pub fn w_theta(&self) -> &Vec<(usize, T)> {
         &self.w_theta
     }
 
-    pub fn denominator(&self) -> usize {
-        self.denominator
+    pub fn z(&self) -> &Vec<usize> {
+        &self.z
     }
 }
 
