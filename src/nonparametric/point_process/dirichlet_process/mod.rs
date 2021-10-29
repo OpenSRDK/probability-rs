@@ -1,25 +1,29 @@
-pub mod chinese_restaurant_process;
 pub mod pitman_yor_process;
 
-use std::marker::PhantomData;
-
-pub use chinese_restaurant_process::*;
 pub use pitman_yor_process::*;
 
 use super::{BaselineMeasure, DiscreteMeasurableSpace, DiscreteMeasure};
 use crate::{Distribution, DistributionError, RandomVariable};
+use std::fmt::Debug;
 
-#[derive(Clone, Debug)]
-pub struct DirichletProcess<D, T, U, G0, TH>
+pub trait DirichletProcess<T, G0, TH>:
+    Clone + Debug + Distribution<T = DirichletRandomMeasure<TH>, U = T>
 where
-    D: Distribution<T = T, U = U>,
-    T: RandomVariable,
-    U: RandomVariable,
+    T: DirichletProcessParams<G0, TH>,
     G0: Distribution<T = TH, U = ()>,
     TH: RandomVariable,
 {
-    distr: D,
-    phantom: PhantomData<(G0, TH)>,
+    fn clusters_len(z: &[usize]) -> usize {
+        z.iter().fold(0usize, |max, &zi| zi.max(max)) + 1
+    }
+
+    fn clusters(z: &[usize]) -> Vec<usize> {
+        let clusters_len = Self::clusters_len(z);
+        z.iter().fold(vec![0usize; clusters_len], |mut n_vec, &zi| {
+            n_vec[zi] += 1;
+            n_vec
+        })
+    }
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -30,28 +34,13 @@ pub enum DirichletProcessError {
     Unknown,
 }
 
-impl<D, T, U, G0, TH> DirichletProcess<D, T, U, G0, TH>
-where
-    D: Distribution<T = T, U = U>,
-    T: RandomVariable,
-    U: RandomVariable,
-    G0: Distribution<T = TH, U = ()>,
-    TH: RandomVariable,
-{
-    pub fn new(distr: D) -> Self {
-        Self {
-            distr,
-            phantom: PhantomData,
-        }
-    }
-}
-
 #[derive(Clone, Debug)]
 pub struct DirichletRandomMeasure<T>
 where
     T: RandomVariable,
 {
-    pi_theta: Vec<(f64, T)>,
+    w_theta: Vec<(usize, T)>,
+    denominator: usize,
 }
 
 impl<T> DiscreteMeasure for DirichletRandomMeasure<T>
@@ -59,7 +48,10 @@ where
     T: RandomVariable,
 {
     fn measure(&self, a: DiscreteMeasurableSpace) -> f64 {
-        a.iter().map(|(&i, ())| self.pi_theta[i].0).sum()
+        a.iter()
+            .map(|(&i, ())| self.w_theta[i].0 as f64)
+            .sum::<f64>()
+            / self.denominator as f64
     }
 }
 
@@ -67,55 +59,38 @@ impl<T> DirichletRandomMeasure<T>
 where
     T: RandomVariable,
 {
-    pub fn new(pi_theta: Vec<(f64, T)>) -> Self {
-        Self { pi_theta }
+    pub fn new(w_theta: Vec<(usize, T)>, denominator: usize) -> Self {
+        Self {
+            w_theta,
+            denominator,
+        }
     }
 
-    pub fn pi_theta(&self) -> &Vec<(f64, T)> {
-        &self.pi_theta
-    }
-}
-
-impl<D, T, U, G0, TH> Distribution for DirichletProcess<D, T, U, G0, TH>
-where
-    D: Distribution<T = T, U = U>,
-    T: RandomVariable,
-    U: RandomVariable,
-    G0: Distribution<T = TH, U = ()>,
-    TH: RandomVariable,
-{
-    type T = DirichletRandomMeasure<TH>;
-    type U = DirichletProcessParams<G0, TH>;
-
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
-        todo!("{:?}{:?}", x, theta)
+    pub fn w_theta(&self) -> &Vec<(usize, T)> {
+        &self.w_theta
     }
 
-    fn sample(
-        &self,
-        theta: &Self::U,
-        rng: &mut rand::prelude::StdRng,
-    ) -> Result<Self::T, DistributionError> {
-        self.distr.sample(theta, rng)
+    pub fn denominator(&self) -> usize {
+        self.denominator
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct DirichletProcessParams<D, T>
+pub struct BaseDirichletProcessParams<G0, T>
 where
-    D: Distribution<T = T, U = ()>,
+    G0: Distribution<T = T, U = ()>,
     T: RandomVariable,
 {
     alpha: f64,
-    g0: BaselineMeasure<D, T>,
+    g0: BaselineMeasure<G0, T>,
 }
 
-impl<D, T> DirichletProcessParams<D, T>
+impl<G0, T> BaseDirichletProcessParams<G0, T>
 where
-    D: Distribution<T = T, U = ()>,
+    G0: Distribution<T = T, U = ()>,
     T: RandomVariable,
 {
-    pub fn new(alpha: f64, g0: BaselineMeasure<D, T>) -> Result<Self, DistributionError> {
+    pub fn new(alpha: f64, g0: BaselineMeasure<G0, T>) -> Result<Self, DistributionError> {
         if alpha <= 0.0 {
             return Err(DistributionError::InvalidParameters(
                 DirichletProcessError::AlphaMustBePositive.into(),
@@ -124,4 +99,27 @@ where
 
         Ok(Self { alpha, g0 })
     }
+}
+
+impl<G0, T> DirichletProcessParams<G0, T> for BaseDirichletProcessParams<G0, T>
+where
+    G0: Distribution<T = T, U = ()>,
+    T: RandomVariable,
+{
+    fn alpha(&self) -> f64 {
+        self.alpha
+    }
+
+    fn g0(&self) -> &BaselineMeasure<G0, T> {
+        &self.g0
+    }
+}
+
+pub trait DirichletProcessParams<G0, T>: RandomVariable
+where
+    G0: Distribution<T = T, U = ()>,
+    T: RandomVariable,
+{
+    fn alpha(&self) -> f64;
+    fn g0(&self) -> &BaselineMeasure<G0, T>;
 }

@@ -1,13 +1,37 @@
+use super::{
+    BaseDirichletProcessParams, DirichletProcess, DirichletProcessParams, DirichletRandomMeasure,
+};
 use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
+use std::marker::PhantomData;
 use std::{ops::BitAnd, ops::Mul};
-
-use super::DirichletProcessParams;
 
 /// # Pitman-Yor process
 #[derive(Clone, Debug)]
-pub struct PitmanYorProcess;
+pub struct PitmanYorProcess<G0, T>
+where
+    G0: Distribution<T = T, U = ()>,
+    T: RandomVariable,
+{
+    gibbs_iter: usize,
+    max_len: usize,
+    phantom: PhantomData<(G0, T)>,
+}
+
+impl<G0, T> PitmanYorProcess<G0, T>
+where
+    G0: Distribution<T = T, U = ()>,
+    T: RandomVariable,
+{
+    pub fn new(gibbs_iter: usize, max_len: usize) -> Self {
+        Self {
+            gibbs_iter,
+            max_len,
+            phantom: PhantomData,
+        }
+    }
+}
 
 #[derive(thiserror::Error, Debug)]
 pub enum PitmanYorProcessError {
@@ -17,127 +41,158 @@ pub enum PitmanYorProcessError {
     Unknown,
 }
 
-impl Distribution for PitmanYorProcess {
-    type T = usize;
-    type U = PitmanYorProcessParams;
+impl<G0, T> Distribution for PitmanYorProcess<G0, T>
+where
+    G0: Distribution<T = T, U = ()>,
+    T: RandomVariable,
+{
+    type T = DirichletRandomMeasure<T>;
+    type U = PitmanYorProcessParams<G0, T>;
 
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let alpha = theta.alpha();
-        let n = theta.data_len();
-        let k = *x;
+        let n = x.denominator as f64;
 
-        let n_vec = theta.clusters();
-        let max_k = n_vec.len();
+        let p = x
+            .w_theta()
+            .iter()
+            .map(|(wj, thetaj)| -> Result<_, DistributionError> {
+                let init_p = (alpha + theta.d) / (n + alpha);
+                let additional_p = (1..*wj)
+                    .into_iter()
+                    .map(|ni| (ni as f64 - theta.d) / (n + alpha))
+                    .product::<f64>();
+                let thetaj_p = theta.g0().distr.p(&thetaj, &())?;
 
-        if k < max_k {
-            Ok((n_vec[k] as f64 - theta.d) / (n as f64 + alpha))
-        } else {
-            Ok((alpha + theta.d) / (n as f64 + alpha))
-        }
+                Ok(init_p * additional_p * thetaj_p)
+            })
+            .product::<Result<f64, _>>();
+
+        p
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
-        let n_vec = theta.clusters();
-        let max_k = n_vec.len();
+        let n = self.max_len;
+        let mut z = (0..n).into_iter().collect::<Vec<_>>();
+        let mut n_vec = Self::clusters(&z);
+        let mut empty_cluster_minimum_index = n;
 
-        let p = rng.gen_range(0.0..1.0);
-        let mut p_sum = 0.0;
-
-        for k in 0..max_k {
-            p_sum += self.p(&k, theta)?;
-            if p < p_sum {
-                return Ok(k);
+        for _ in 0..self.gibbs_iter {
+            let index = rng.gen_range(0..n);
+            n_vec[z[index]] -= 1;
+            if n_vec[z[index]] == 0 && z[index] < empty_cluster_minimum_index {
+                empty_cluster_minimum_index = z[index];
             }
+
+            let p = rng.gen_range(0.0..=1.0);
+            let mut p_sum = 0.0;
+
+            let mut result_j = empty_cluster_minimum_index;
+
+            for (j, &nj) in n_vec.iter().enumerate().filter(|(_, &nj)| nj != 0) {
+                p_sum += (nj as f64 - theta.d) / (n as f64 + theta.alpha());
+                if p < p_sum {
+                    result_j = j;
+                    break;
+                }
+            }
+            z[index] = result_j;
         }
 
-        Ok(max_k)
+        let w_theta = n_vec
+            .iter()
+            .filter(|&nj| *nj != 0)
+            .map(|&nj| -> Result<_, DistributionError> {
+                let w = nj;
+                let theta = theta.g0().distr.sample(&(), rng)?;
+                Ok((w, theta))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(DirichletRandomMeasure::new(w_theta, n))
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct PitmanYorProcessParams<D, T>
+impl<G0, T> DirichletProcess<PitmanYorProcessParams<G0, T>, G0, T> for PitmanYorProcess<G0, T>
 where
-    D: Distribution<T = T, U = ()>,
+    G0: Distribution<T = T, U = ()>,
     T: RandomVariable,
 {
-    dirichlet: DirichletProcessParams<D, T>,
-    d: f64,
-    z: Vec<usize>,
 }
 
-impl PitmanYorProcessParams {
-    /// - `alpha`: A strength parameter.
+#[derive(Clone, Debug)]
+pub struct PitmanYorProcessParams<G0, T>
+where
+    G0: Distribution<T = T, U = ()>,
+    T: RandomVariable,
+{
+    base: BaseDirichletProcessParams<G0, T>,
+    d: f64,
+}
+
+impl<G0, T> PitmanYorProcessParams<G0, T>
+where
+    G0: Distribution<T = T, U = ()>,
+    T: RandomVariable,
+{
     /// - `d`: 0 ≦ d < 1. If it is zero, Pitman-Yor process means Chinese restaurant process.
-    /// - `z`: `z[i]` means the index of clusters which the `i`th data belongs to.
-    /// - `theta`: `theta[j]` means the parameters of the `j`th cluster.
-    pub fn new(alpha: f64, d: f64, z: Vec<usize>) -> Result<Self, DistributionError> {
-        if alpha <= 0.0 {
-            return Err(DistributionError::InvalidParameters(
-                PitmanYorProcessError::AlphaMustBePositive.into(),
-            ));
-        }
+    pub fn new(base: BaseDirichletProcessParams<G0, T>, d: f64) -> Result<Self, DistributionError> {
         if d < 0.0 || 1.0 <= d {
             return Err(DistributionError::InvalidParameters(
                 PitmanYorProcessError::DMustBeGTE0AndLT1.into(),
             ));
         }
 
-        Ok(Self { alpha, d, z })
+        Ok(Self { base, d })
     }
 
-    pub fn alpha(&self) -> f64 {
-        self.alpha
+    pub fn base(&self) -> &BaseDirichletProcessParams<G0, T> {
+        &self.base
     }
 
     pub fn d(&self) -> f64 {
         self.d
     }
+}
 
-    pub fn z(&self) -> &Vec<usize> {
-        &self.z
+impl<G0, T> DirichletProcessParams<G0, T> for PitmanYorProcessParams<G0, T>
+where
+    G0: Distribution<T = T, U = ()>,
+    T: RandomVariable,
+{
+    fn alpha(&self) -> f64 {
+        self.base.alpha()
     }
 
-    pub fn z_mut(&mut self) -> &mut Vec<usize> {
-        &mut self.z
-    }
-
-    pub fn data_len(&self) -> usize {
-        self.z.len()
-    }
-
-    pub fn clusters_len(&self) -> usize {
-        self.z.iter().fold(0usize, |max, &zi| zi.max(max)) + 1
-    }
-
-    pub fn clusters(&self) -> Vec<usize> {
-        let clusters_len = self.clusters_len();
-        self.z
-            .iter()
-            .fold(vec![0usize; clusters_len], |mut n_vec, &zi| {
-                n_vec[zi] += 1;
-                n_vec
-            })
+    fn g0(&self) -> &crate::nonparametric::BaselineMeasure<G0, T> {
+        self.base.g0()
     }
 }
 
-impl<Rhs, TRhs> Mul<Rhs> for PitmanYorProcess
+impl<G0, T, Rhs, TRhs> Mul<Rhs> for PitmanYorProcess<G0, T>
 where
-    Rhs: Distribution<T = TRhs, U = PitmanYorProcessParams>,
+    G0: Distribution<T = T, U = ()>,
+    T: RandomVariable,
+    Rhs: Distribution<T = TRhs, U = PitmanYorProcessParams<G0, T>>,
     TRhs: RandomVariable,
 {
-    type Output = IndependentJoint<Self, Rhs, usize, TRhs, PitmanYorProcessParams>;
+    type Output =
+        IndependentJoint<Self, Rhs, DirichletRandomMeasure<T>, TRhs, PitmanYorProcessParams<G0, T>>;
 
     fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
     }
 }
 
-impl<Rhs, URhs> BitAnd<Rhs> for PitmanYorProcess
+impl<G0, T, Rhs, URhs> BitAnd<Rhs> for PitmanYorProcess<G0, T>
 where
-    Rhs: Distribution<T = PitmanYorProcessParams, U = URhs>,
+    G0: Distribution<T = T, U = ()>,
+    T: RandomVariable,
+    Rhs: Distribution<T = PitmanYorProcessParams<G0, T>, U = URhs>,
     URhs: RandomVariable,
 {
-    type Output = DependentJoint<Self, Rhs, usize, PitmanYorProcessParams, URhs>;
+    type Output =
+        DependentJoint<Self, Rhs, DirichletRandomMeasure<T>, PitmanYorProcessParams<G0, T>, URhs>;
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)

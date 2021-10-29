@@ -1,10 +1,9 @@
 pub mod dirichlet_process;
 
-use std::collections::HashMap;
-
 pub use dirichlet_process::*;
 
 use crate::{Distribution, RandomVariable};
+use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
 pub struct BaselineMeasure<D, T>
