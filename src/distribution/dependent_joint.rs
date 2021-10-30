@@ -90,12 +90,10 @@ mod tests {
     use crate::distribution::Distribution;
     use crate::*;
     use rand::prelude::*;
+
     #[test]
     fn it_works() {
-        let model = Normal
-            & Normal.convert(&|x| NormalParams::new(1.0, x.powi(2)), &|theta| {
-                Ok(theta.sigma())
-            });
+        let model = Normal.condition(&|x: &f64| NormalParams::new(1.0, x.powi(2) + 1.0)) & Normal;
         let mut rng = StdRng::from_seed([1; 32]);
 
         let x = model

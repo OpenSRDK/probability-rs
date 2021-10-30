@@ -1,18 +1,16 @@
 pub mod conditioned;
-pub mod converted;
 pub mod dependent_joint;
 pub mod independent_array_joint;
 pub mod independent_joint;
 pub mod instant;
-pub mod variational_inference;
+pub mod switch;
 
 pub use conditioned::*;
-pub use converted::*;
 pub use dependent_joint::*;
 pub use independent_array_joint::*;
 pub use independent_joint::*;
 pub use instant::*;
-pub use variational_inference::*;
+pub use switch::*;
 
 use opensrdk_kernel_method::KernelError;
 use opensrdk_linear_algebra::MatrixError;
