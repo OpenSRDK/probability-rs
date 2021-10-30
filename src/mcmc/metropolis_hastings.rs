@@ -40,8 +40,9 @@ where
         rng: &mut StdRng,
     ) -> Result<B, DistributionError> {
         let mut state = initial;
+        let mut count = 0;
 
-        for _ in 0..iter {
+        while count < iter {
             let candidate = self.proposal.sample(&state, rng)?;
             let r = (self.likelihood.p(self.value, &candidate)?
                 * self.prior.p(&candidate, &())?
@@ -54,6 +55,7 @@ where
 
             if p < r {
                 state = candidate;
+                count += 1;
             }
         }
 
