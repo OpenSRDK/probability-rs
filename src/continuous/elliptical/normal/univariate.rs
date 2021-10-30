@@ -88,6 +88,12 @@ where
     }
 }
 
+impl Default for NormalParams {
+    fn default() -> Self {
+        Self::new(0.0, 1.0).unwrap()
+    }
+}
+
 impl VectorSampleable for NormalParams {
     type T = ();
 
