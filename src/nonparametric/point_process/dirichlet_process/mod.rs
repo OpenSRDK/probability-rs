@@ -1,41 +1,33 @@
-pub mod pitman_yor_gibbs;
+pub mod measure;
 pub mod pitman_yor_process;
+pub mod stick_breaking_process;
 
-pub use pitman_yor_gibbs::*;
+pub use measure::*;
 pub use pitman_yor_process::*;
+pub use stick_breaking_process::*;
 
-use super::{BaselineMeasure, DiscreteMeasurableSpace, DiscreteMeasure};
+use super::BaselineMeasure;
 use crate::{Distribution, DistributionError, RandomVariable};
-use std::fmt::Debug;
+use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
-pub(crate) fn clusters_len(z: &[usize]) -> usize {
-    z.iter().fold(0usize, |max, &zi| zi.max(max)) + 1
-}
-pub(crate) fn clusters(z: &[usize]) -> Vec<usize> {
-    let clusters_len = clusters_len(z);
-    z.iter().fold(vec![0usize; clusters_len], |mut n_vec, &zi| {
-        n_vec[zi] += 1;
-        n_vec
-    })
-}
-pub trait DirichletProcess<T, G0, TH>:
-    Clone + Debug + Distribution<T = DirichletRandomMeasure<TH>, U = T>
-where
-    T: DirichletProcessParams<G0, TH>,
-    G0: Distribution<T = TH, U = ()>,
-    TH: RandomVariable,
-{
-    fn z_compaction(z: &mut Vec<usize>, n_vec: &Vec<usize>) {
-        for (j, &nj) in n_vec.iter().enumerate() {
-            if nj != 0 {
-                continue;
-            }
+pub(crate) fn clusters(s: &[u32]) -> HashMap<u32, usize> {
+    let mut clusters = HashMap::new();
 
-            for zi in z.iter_mut().filter(|zi| **zi >= j) {
-                *zi -= 1;
-            }
-        }
+    for &si in s.iter() {
+        *clusters.entry(si).or_insert(0) += 1usize;
     }
+
+    clusters
+}
+
+/// Using stick breaking process.
+#[derive(Clone, Debug)]
+pub struct DirichletProcess<G0, T>
+where
+    G0: Distribution<T = T, U = ()>,
+    T: RandomVariable,
+{
+    phantom: PhantomData<(G0, T)>,
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -46,46 +38,38 @@ pub enum DirichletProcessError {
     Unknown,
 }
 
-#[derive(Clone, Debug)]
-pub struct DirichletRandomMeasure<T>
+impl<G0, T> DirichletProcess<G0, T>
 where
+    G0: Distribution<T = T, U = ()>,
     T: RandomVariable,
 {
-    w_theta: Vec<(usize, T)>,
-    z: Vec<usize>,
-}
-
-impl<T> DiscreteMeasure for DirichletRandomMeasure<T>
-where
-    T: RandomVariable,
-{
-    fn measure(&self, a: DiscreteMeasurableSpace) -> f64 {
-        a.iter()
-            .map(|(&i, ())| self.w_theta[i].0 as f64)
-            .sum::<f64>()
-            / self.z.len() as f64
+    pub fn new() -> Self {
+        Self {
+            phantom: PhantomData,
+        }
     }
 }
 
-impl<T> DirichletRandomMeasure<T>
-where
-    T: RandomVariable,
-{
-    pub fn new(w_theta: Vec<(usize, T)>, z: Vec<usize>) -> Self {
-        Self { w_theta, z }
-    }
+// impl<G0, T> Distribution for DirichletProcess<G0, T>
+// where
+//     G0: Distribution<T = T, U = ()>,
+//     T: RandomVariable,
+// {
+//     type T = DirichletRandomMeasure<T>;
+//     type U = DirichletProcessParams<G0, T>;
 
-    pub fn w_theta(&self) -> &Vec<(usize, T)> {
-        &self.w_theta
-    }
+//     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {}
 
-    pub fn z(&self) -> &Vec<usize> {
-        &self.z
-    }
-}
+//     fn sample(
+//         &self,
+//         theta: &Self::U,
+//         rng: &mut rand::prelude::StdRng,
+//     ) -> Result<Self::T, DistributionError> {
+//     }
+// }
 
 #[derive(Clone, Debug)]
-pub struct BaseDirichletProcessParams<G0, T>
+pub struct DirichletProcessParams<G0, T>
 where
     G0: Distribution<T = T, U = ()>,
     T: RandomVariable,
@@ -94,7 +78,7 @@ where
     g0: BaselineMeasure<G0, T>,
 }
 
-impl<G0, T> BaseDirichletProcessParams<G0, T>
+impl<G0, T> DirichletProcessParams<G0, T>
 where
     G0: Distribution<T = T, U = ()>,
     T: RandomVariable,
@@ -108,27 +92,12 @@ where
 
         Ok(Self { alpha, g0 })
     }
-}
 
-impl<G0, T> DirichletProcessParams<G0, T> for BaseDirichletProcessParams<G0, T>
-where
-    G0: Distribution<T = T, U = ()>,
-    T: RandomVariable,
-{
-    fn alpha(&self) -> f64 {
+    pub fn alpha(&self) -> f64 {
         self.alpha
     }
 
-    fn g0(&self) -> &BaselineMeasure<G0, T> {
+    pub fn g0(&self) -> &BaselineMeasure<G0, T> {
         &self.g0
     }
-}
-
-pub trait DirichletProcessParams<G0, T>: RandomVariable
-where
-    G0: Distribution<T = T, U = ()>,
-    T: RandomVariable,
-{
-    fn alpha(&self) -> f64;
-    fn g0(&self) -> &BaselineMeasure<G0, T>;
 }

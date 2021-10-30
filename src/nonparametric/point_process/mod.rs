@@ -3,7 +3,7 @@ pub mod dirichlet_process;
 pub use dirichlet_process::*;
 
 use crate::{Distribution, RandomVariable};
-use std::collections::HashMap;
+use std::collections::HashSet;
 
 #[derive(Clone, Debug)]
 pub struct BaselineMeasure<D, T>
@@ -24,7 +24,7 @@ where
     }
 }
 
-pub type DiscreteMeasurableSpace = HashMap<usize, ()>;
+pub type DiscreteMeasurableSpace = HashSet<usize>;
 
 pub trait DiscreteMeasure {
     fn measure(&self, a: DiscreteMeasurableSpace) -> f64;

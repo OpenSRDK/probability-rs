@@ -52,22 +52,21 @@ where
         initial: Option<&B>,
         rng: &mut StdRng,
     ) -> Result<B, DistributionError> {
-        let mut u = match initial {
-            Some(initial) => {
-                let initial_f = match self.range.get(initial) {
-                    Some(&v) => Ok(v),
-                    None => Err(DistributionError::InvalidParameters(
-                        SliceSamplingError::OutOfRange.into(),
-                    )),
-                }?;
-                rng.gen_range(0.0..initial_f)
-            }
+        let initial_f = match initial {
+            Some(initial) => match self.range.get(initial) {
+                Some(&v) => Ok(v),
+                None => Err(DistributionError::InvalidParameters(
+                    SliceSamplingError::OutOfRange.into(),
+                )),
+            }?,
             None => 0.0,
         };
         let mut count = 0;
         let mut last: B;
+        let mut last_f = initial_f;
 
         loop {
+            let u = rng.gen_range(0.0..=last_f);
             let range = self
                 .range
                 .iter()
@@ -76,8 +75,7 @@ where
                 .collect::<HashSet<B>>();
 
             last = DiscreteUniform::new().sample(&range, rng)?;
-            let last_f = *self.range.get(&last).unwrap();
-            u = rng.gen_range(0.0..last_f);
+            last_f = *self.range.get(&last).unwrap();
 
             count += 1;
             if iter <= count {
