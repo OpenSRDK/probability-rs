@@ -190,7 +190,16 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
             .into_iter()
             .for_each(|(k, theta_k)| {
                 match theta_k {
-                    Some(v) => theta.insert(k, v),
+                    Some(v) => {
+                      let old_value = theta.get(&k).unwrap();
+                      let old_weight = iter as f64 / (iter + 1) as f64;
+                      let new_weight = 1.0 / (iter + 1) as f64;
+                      let new_value = ExactEllipticalParams::new(
+                        (old_weight * old_value.col_mat() + new_weight * v.col_mat()).vec(),
+                        v.lsigma
+                      ).unwrap();
+                      theta.insert(k, new_value)
+                    },
                     None => theta.remove(&k),
                 };
             });
