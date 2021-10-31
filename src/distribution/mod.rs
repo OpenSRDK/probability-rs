@@ -59,5 +59,5 @@ pub trait Distribution: Clone + Debug + Send + Sync {
     fn ln_p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         Ok(self.p(x, theta)?.ln())
     }
-    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError>;
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError>;
 }

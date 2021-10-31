@@ -43,7 +43,7 @@ where
         v
     }
 
-    pub fn sample(&self, rng: &mut StdRng) -> Result<B, Box<dyn Error>> {
+    pub fn sample(&self, rng: &mut dyn RngCore) -> Result<B, Box<dyn Error>> {
         let nu = self.prior.sample(&(), rng)?;
 
         let mut b = self.prior.sample(&(), rng)?;

@@ -62,7 +62,7 @@ where
                 .powf(-(nu + n) / 2.0))
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         let nu = theta.nu();
         let elliptical = theta.elliptical();
 

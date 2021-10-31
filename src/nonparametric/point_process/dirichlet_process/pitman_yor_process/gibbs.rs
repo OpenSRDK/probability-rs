@@ -27,13 +27,10 @@ impl<'a> Distribution for PitmanYorGibbs<'a> {
         let alpha = theta.base.alpha;
         let d = theta.base.d;
         let k = *x;
-        let s = theta.s;
-        let n = s.len() - 1;
-        let n_map = clusters(s);
-        let mut nk = match n_map.get(&k) {
-            Some(&v) => v,
-            None => 0,
-        };
+        let s = theta.s.s();
+        let n = s.len().max(1) - 1;
+        let clusters_len = theta.s.clusters_len();
+        let mut nk = theta.s.n(k);
 
         if s[theta.remove_index] == k {
             nk -= 1
@@ -43,22 +40,26 @@ impl<'a> Distribution for PitmanYorGibbs<'a> {
             return Ok((nk as f64 - d) / (n as f64 + alpha));
         }
 
-        Ok((alpha + d) / (n as f64 + alpha))
+        Ok((alpha + clusters_len as f64 * d) / (n as f64 + alpha))
     }
 
     /// 0 means new cluster. However, you can't use 0 for `s` so use another value which will not conflict.
-    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         let alpha = theta.base.alpha;
         let d = theta.base.d;
-        let s = theta.s;
-        let n = s.len();
-        let n_map = clusters(s);
+        let s = theta.s.s();
+        let n = s.len().max(1) - 1;
+        let n_map = theta.s.n_map();
 
         let p = rng.gen_range(0.0..1.0);
         let mut p_sum = 0.0;
 
         for (&k, &nk) in n_map.iter() {
-            if s[theta.remove_index] == k && nk == 1 {
+            let mut nk = nk;
+            if s[theta.remove_index] == k {
+                nk -= 1;
+            }
+            if nk == 0 {
                 continue;
             }
             p_sum += (nk as f64 - d) / (n as f64 + alpha);
@@ -74,7 +75,7 @@ impl<'a> Distribution for PitmanYorGibbs<'a> {
 #[derive(Clone, Debug)]
 pub struct PitmanYorGibbsParams<'a> {
     base: PitmanYorProcessParams,
-    s: &'a [u32],
+    s: &'a ClusterSwitch,
     remove_index: usize,
 }
 
@@ -82,18 +83,10 @@ impl<'a> PitmanYorGibbsParams<'a> {
     /// - `d`: 0 ≦ d < 1. If it is zero, Pitman-Yor process means Chinese restaurant process.
     pub fn new(
         base: PitmanYorProcessParams,
-        s: &'a [u32],
+        s: &'a ClusterSwitch,
         remove_index: usize,
     ) -> Result<Self, DistributionError> {
-        for &si in s.iter() {
-            if si == 0 {
-                return Err(DistributionError::InvalidParameters(
-                    PitmanYorProcessError::SMustBePositive.into(),
-                ));
-            }
-        }
-
-        if s.len() <= remove_index {
+        if s.s().len() <= remove_index {
             return Err(DistributionError::InvalidParameters(
                 PitmanYorProcessError::RemoveIndexOutOfRange.into(),
             ));

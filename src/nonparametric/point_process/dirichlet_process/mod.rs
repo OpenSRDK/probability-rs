@@ -8,17 +8,7 @@ pub use stick_breaking_process::*;
 
 use super::BaselineMeasure;
 use crate::{Distribution, DistributionError, RandomVariable};
-use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
-
-pub(crate) fn clusters(s: &[u32]) -> HashMap<u32, usize> {
-    let mut clusters = HashMap::new();
-
-    for &si in s.iter() {
-        *clusters.entry(si).or_insert(0) += 1usize;
-    }
-
-    clusters
-}
+use std::{fmt::Debug, marker::PhantomData};
 
 /// Using stick breaking process.
 #[derive(Clone, Debug)]
@@ -63,7 +53,7 @@ where
 //     fn sample(
 //         &self,
 //         theta: &Self::U,
-//         rng: &mut rand::prelude::StdRng,
+//         rng: &mut dyn RngCoreand::prelude::StdRng,
 //     ) -> Result<Self::T, DistributionError> {
 //     }
 // }

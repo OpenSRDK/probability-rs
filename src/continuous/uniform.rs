@@ -17,7 +17,7 @@ impl Distribution for ContinuousUniform {
     fn sample(
         &self,
         theta: &Self::U,
-        rng: &mut rand::prelude::StdRng,
+        rng: &mut dyn RngCore,
     ) -> Result<Self::T, crate::DistributionError> {
         Ok(rng.gen_range(theta.clone()))
     }

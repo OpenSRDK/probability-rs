@@ -34,7 +34,7 @@ impl Distribution for Gamma {
             * (-x / scale).exp())
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         let shape = theta.shape();
         let scale = theta.scale();
 

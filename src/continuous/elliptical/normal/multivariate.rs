@@ -46,7 +46,7 @@ where
             * (-1.0 / 2.0 * (x_mu.t() * theta.sigma_inv_mul(x_mu)?)[(0, 0)]).exp())
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         let z = (0..theta.lsigma_cols())
             .into_iter()
             .map(|_| rng.sample(StandardNormal))

@@ -1,5 +1,6 @@
 use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use rand::prelude::*;
 use std::{
     collections::HashMap,
     fmt::Debug,
@@ -51,11 +52,7 @@ where
         }
     }
 
-    fn sample(
-        &self,
-        theta: &Self::U,
-        rng: &mut rand::prelude::StdRng,
-    ) -> Result<Self::T, DistributionError> {
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         let s = theta;
 
         match self.map.get(s) {

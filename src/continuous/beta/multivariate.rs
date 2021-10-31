@@ -50,7 +50,7 @@ impl Distribution for Dirichlet {
                 .product::<f64>())
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         let alpha = theta.alpha();
 
         let dirichlet = match RandDirichlet::new(alpha) {

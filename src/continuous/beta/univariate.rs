@@ -29,7 +29,7 @@ impl Distribution for Beta {
             / BetaFunc::ln_beta(alpha, beta).exp())
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         let alpha = theta.alpha();
         let beta = theta.beta();
 

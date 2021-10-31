@@ -10,6 +10,14 @@ where
     phantom: PhantomData<T>,
 }
 
+#[derive(thiserror::Error, Debug)]
+pub enum DiscreteUniformError {
+    #[error("Range is empty.")]
+    RangeIsEmpty,
+    #[error("Unknown error")]
+    Unknown,
+}
+
 impl<T> DiscreteUniform<T>
 where
     T: RandomVariable + Eq + Hash,
@@ -32,12 +40,14 @@ where
         Ok(1.0 / theta.len() as f64)
     }
 
-    fn sample(
-        &self,
-        theta: &Self::U,
-        rng: &mut rand::prelude::StdRng,
-    ) -> Result<Self::T, DistributionError> {
-        let i = rng.gen_range(0..theta.len());
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+        let len = theta.len();
+        if len == 0 {
+            return Err(DistributionError::InvalidParameters(
+                DiscreteUniformError::RangeIsEmpty.into(),
+            ));
+        }
+        let i = rng.gen_range(0..len);
 
         for (j, x) in theta.iter().enumerate() {
             if i == j {
@@ -45,6 +55,8 @@ where
             }
         }
 
-        panic!("")
+        Err(DistributionError::InvalidParameters(
+            DiscreteUniformError::Unknown.into(),
+        ))
     }
 }

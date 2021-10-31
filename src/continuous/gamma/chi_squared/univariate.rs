@@ -26,7 +26,7 @@ impl Distribution for ChiSquared {
             * (x.powf(k / 2.0 - 1.0) * (-x / 2.0).exp()))
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         let k = theta.k();
 
         let chi_squared = match RandChiSquared::new(k) {

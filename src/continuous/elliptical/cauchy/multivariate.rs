@@ -43,7 +43,7 @@ where
         MultivariateStudentT::new().p(x, &studentt_params)
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         let studentt_params = MultivariateStudentTWrapper::new(theta);
 
         MultivariateStudentT::new().sample(&studentt_params, rng)

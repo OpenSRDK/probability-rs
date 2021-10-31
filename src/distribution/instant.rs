@@ -1,6 +1,6 @@
 use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
-use rand::prelude::StdRng;
+use rand::prelude::*;
 use std::{
     fmt::Debug,
     ops::{BitAnd, Mul},
@@ -13,7 +13,7 @@ where
     U: RandomVariable,
 {
     p: &'a (dyn Fn(&T, &U) -> Result<f64, DistributionError> + Send + Sync),
-    sample: &'a (dyn Fn(&U, &mut StdRng) -> Result<T, DistributionError> + Send + Sync),
+    sample: &'a (dyn Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Send + Sync),
 }
 
 impl<'a, T, U> InstantDistribution<'a, T, U>
@@ -23,7 +23,7 @@ where
 {
     pub fn new(
         p: &'a (dyn Fn(&T, &U) -> Result<f64, DistributionError> + Send + Sync),
-        sample: &'a (dyn Fn(&U, &mut StdRng) -> Result<T, DistributionError> + Send + Sync),
+        sample: &'a (dyn Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Send + Sync),
     ) -> Self {
         Self { p, sample }
     }
@@ -47,11 +47,11 @@ where
     type T = T;
     type U = U;
 
-    fn p(&self, x: &T, theta: &U) -> Result<f64, DistributionError> {
+    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         (self.p)(x, theta)
     }
 
-    fn sample(&self, theta: &U, rng: &mut StdRng) -> Result<T, DistributionError> {
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         (self.sample)(theta, rng)
     }
 }

@@ -21,7 +21,7 @@ impl Distribution for Normal {
             * (-(x - mu).powi(2) / (2.0 * sigma.powi(2))).exp())
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         let mu = theta.mu();
         let sigma = theta.sigma();
 

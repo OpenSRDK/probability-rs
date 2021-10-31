@@ -25,7 +25,7 @@ impl Distribution for StudentT {
         )
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         let nu = theta.nu();
 
         let student_t = match RandStudentT::new(nu) {

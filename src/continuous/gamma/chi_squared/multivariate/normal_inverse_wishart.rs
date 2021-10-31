@@ -45,7 +45,7 @@ impl Distribution for NormalInverseWishart {
         )? * w_inv.p(lsigma, &InverseWishartParams::new(lpsi, nu)?)?)
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         let mu0 = theta.mu0().clone();
         let lambda = theta.lambda();
         let lpsi = theta.lpsi().clone();

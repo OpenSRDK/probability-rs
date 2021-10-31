@@ -1,6 +1,6 @@
 use crate::DistributionError;
 use crate::{Distribution, IndependentJoint, RandomVariable};
-use rand::prelude::StdRng;
+use rand::prelude::*;
 use std::{ops::BitAnd, ops::Mul};
 
 /// p(x, y) = p(x | y) p(y)
@@ -45,7 +45,7 @@ where
         Ok(self.lhs.p(&x.0, &x.1)? * self.rhs.p(&x.1, theta)?)
     }
 
-    fn sample(&self, theta: &UR, rng: &mut StdRng) -> Result<(T, UL), DistributionError> {
+    fn sample(&self, theta: &UR, rng: &mut dyn RngCore) -> Result<(T, UL), DistributionError> {
         let rhs = self.rhs.sample(theta, rng)?;
         Ok((self.lhs.sample(&rhs, rng)?, rhs))
     }

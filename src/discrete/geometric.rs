@@ -24,7 +24,7 @@ impl Distribution for Geometric {
         Ok((1.0 - p).powi((x - 1) as i32) * p)
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         let p = theta.p();
 
         let geometric = match RandGeometric::new(p) {

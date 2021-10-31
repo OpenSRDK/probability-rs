@@ -24,7 +24,7 @@ impl Distribution for Exp {
         Ok(lambda * (-lambda * x).exp())
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         let lambda = theta.lambda();
 
         let exp = match RandExp::new(lambda) {

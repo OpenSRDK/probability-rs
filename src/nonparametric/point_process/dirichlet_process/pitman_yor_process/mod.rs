@@ -1,5 +1,7 @@
+pub mod cluster_switch;
 pub mod gibbs;
 
+pub use cluster_switch::*;
 pub use gibbs::*;
 
 use crate::nonparametric::*;
@@ -51,7 +53,7 @@ impl PitmanYorProcessParams {
 
     pub fn gibbs_condition<'a>(
         &'a self,
-        s: &'a [u32],
+        s: &'a ClusterSwitch,
         remove_index: usize,
     ) -> impl Fn(&()) -> Result<PitmanYorGibbsParams<'a>, DistributionError> {
         move |_| PitmanYorGibbsParams::new(self.clone(), s, remove_index)

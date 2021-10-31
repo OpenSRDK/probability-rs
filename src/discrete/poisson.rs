@@ -31,7 +31,7 @@ impl Distribution for Poisson {
         Ok(lambda.powi(*x as i32) / factorial(*x) as f64 * (-lambda).exp())
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         let lambda = theta.lambda();
 
         let poisson = match RandPoisson::new(lambda) {

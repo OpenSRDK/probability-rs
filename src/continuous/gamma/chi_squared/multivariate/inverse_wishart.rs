@@ -47,7 +47,7 @@ impl Distribution for InverseWishart {
     }
 
     /// output is cholesky decomposed
-    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         let lpsi = theta.lpsi();
         let nu = theta.nu();
 

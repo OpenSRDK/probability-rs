@@ -1,4 +1,5 @@
 use crate::{DependentJoint, Distribution, DistributionError, IndependentJoint, RandomVariable};
+use rand::prelude::*;
 use std::{
     fmt::Debug,
     ops::{BitAnd, Mul},
@@ -66,7 +67,7 @@ where
     fn sample(
         &self,
         theta: &Self::U,
-        rng: &mut rand::prelude::StdRng,
+        rng: &mut dyn RngCore,
     ) -> Result<Self::T, crate::DistributionError> {
         self.distribution.sample(&(self.condition)(theta)?, rng)
     }

@@ -31,7 +31,7 @@ impl Distribution for FisherF {
         )
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut StdRng) -> Result<Self::T, DistributionError> {
+    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         let m = theta.m();
         let n = theta.n();
 

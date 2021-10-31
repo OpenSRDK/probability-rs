@@ -37,7 +37,7 @@ where
         &self,
         iter: usize,
         initial: B,
-        rng: &mut StdRng,
+        rng: &mut dyn RngCore,
     ) -> Result<B, DistributionError> {
         let mut state = initial;
         let mut count = 0;
