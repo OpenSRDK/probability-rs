@@ -18,7 +18,7 @@ use std::time::Instant;
 
 #[test]
 fn test_main() {
-    let is_not_ci = true;
+    let is_not_ci = false;
 
     if is_not_ci {
         let start = Instant::now();
@@ -46,7 +46,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         .collect::<Vec<_>>();
     let x = np
         .iter()
-        .flat_map(|np| (0..30).into_iter().map(move |i| (np, i)))
+        .flat_map(|np| (0..12).into_iter().map(move |i| (np, i)))
         .map(|(np, _)| -> Result<Vec<f64>, DistributionError> {
             MultivariateNormal::new().sample(np, &mut rng)
         })

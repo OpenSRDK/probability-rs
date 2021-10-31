@@ -3,7 +3,7 @@ use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use num_integer::binomial;
 use rand::prelude::*;
 use rand_distr::Binomial as RandBinominal;
-use std::{error::Error, ops::BitAnd, ops::Mul};
+use std::{ops::BitAnd, ops::Mul};
 
 /// Binominal distribution
 #[derive(Clone, Debug)]
@@ -48,9 +48,11 @@ pub struct BinominalParams {
 }
 
 impl BinominalParams {
-    pub fn new(n: u64, p: f64) -> Result<Self, Box<dyn Error>> {
+    pub fn new(n: u64, p: f64) -> Result<Self, DistributionError> {
         if p < 0.0 || 1.0 < p {
-            return Err(BinominalError::PMustBeProbability.into());
+            return Err(DistributionError::InvalidParameters(
+                BinominalError::PMustBeProbability.into(),
+            ));
         }
 
         Ok(Self { n, p })

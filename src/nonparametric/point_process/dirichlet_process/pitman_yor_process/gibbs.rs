@@ -54,6 +54,7 @@ impl<'a> Distribution for PitmanYorGibbs<'a> {
         let p = rng.gen_range(0.0..1.0);
         let mut p_sum = 0.0;
 
+        //カテゴリ分布に変える
         for (&k, &nk) in n_map.iter() {
             let mut nk = nk;
             if s[theta.remove_index] == k {
