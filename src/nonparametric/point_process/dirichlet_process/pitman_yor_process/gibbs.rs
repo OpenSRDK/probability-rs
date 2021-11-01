@@ -7,11 +7,19 @@ use std::{ops::BitAnd, ops::Mul};
 
 /// # Pitman-Yor process
 #[derive(Clone, Debug)]
-pub struct PitmanYorGibbs<'a> {
-    phantom: &'a PhantomData<()>,
+pub struct PitmanYorGibbs<'a, G0, TH>
+where
+    G0: Distribution<T = TH, U = ()>,
+    TH: RandomVariable,
+{
+    phantom: &'a PhantomData<(G0, TH)>,
 }
 
-impl<'a> PitmanYorGibbs<'a> {
+impl<'a, G0, TH> PitmanYorGibbs<'a, G0, TH>
+where
+    G0: Distribution<T = TH, U = ()>,
+    TH: RandomVariable,
+{
     pub fn new() -> Self {
         Self {
             phantom: &PhantomData,
@@ -19,9 +27,13 @@ impl<'a> PitmanYorGibbs<'a> {
     }
 }
 
-impl<'a> Distribution for PitmanYorGibbs<'a> {
+impl<'a, G0, TH> Distribution for PitmanYorGibbs<'a, G0, TH>
+where
+    G0: Distribution<T = TH, U = ()>,
+    TH: RandomVariable,
+{
     type T = u32;
-    type U = PitmanYorGibbsParams<'a>;
+    type U = PitmanYorGibbsParams<'a, G0, TH>;
 
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let alpha = theta.base.alpha;
@@ -80,16 +92,24 @@ impl<'a> Distribution for PitmanYorGibbs<'a> {
 }
 
 #[derive(Clone, Debug)]
-pub struct PitmanYorGibbsParams<'a> {
-    base: &'a PitmanYorProcessParams,
+pub struct PitmanYorGibbsParams<'a, G0, TH>
+where
+    G0: Distribution<T = TH, U = ()>,
+    TH: RandomVariable,
+{
+    base: &'a PitmanYorProcessParams<G0, TH>,
     s: &'a ClusterSwitch,
     remove_index: usize,
 }
 
-impl<'a> PitmanYorGibbsParams<'a> {
+impl<'a, G0, TH> PitmanYorGibbsParams<'a, G0, TH>
+where
+    G0: Distribution<T = TH, U = ()>,
+    TH: RandomVariable,
+{
     /// - `d`: 0 ≦ d < 1. If it is zero, Pitman-Yor process means Chinese restaurant process.
     pub fn new(
-        base: &'a PitmanYorProcessParams,
+        base: &'a PitmanYorProcessParams<G0, TH>,
         s: &'a ClusterSwitch,
         remove_index: usize,
     ) -> Result<Self, DistributionError> {
@@ -107,24 +127,28 @@ impl<'a> PitmanYorGibbsParams<'a> {
     }
 }
 
-impl<'a, Rhs, TRhs> Mul<Rhs> for PitmanYorGibbs<'a>
+impl<'a, G0, TH, Rhs, TRhs> Mul<Rhs> for PitmanYorGibbs<'a, G0, TH>
 where
-    Rhs: Distribution<T = TRhs, U = PitmanYorGibbsParams<'a>>,
+    G0: Distribution<T = TH, U = ()>,
+    TH: RandomVariable,
+    Rhs: Distribution<T = TRhs, U = PitmanYorGibbsParams<'a, G0, TH>>,
     TRhs: RandomVariable,
 {
-    type Output = IndependentJoint<Self, Rhs, u32, TRhs, PitmanYorGibbsParams<'a>>;
+    type Output = IndependentJoint<Self, Rhs, u32, TRhs, PitmanYorGibbsParams<'a, G0, TH>>;
 
     fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
     }
 }
 
-impl<'a, Rhs, URhs> BitAnd<Rhs> for PitmanYorGibbs<'a>
+impl<'a, G0, TH, Rhs, URhs> BitAnd<Rhs> for PitmanYorGibbs<'a, G0, TH>
 where
-    Rhs: Distribution<T = PitmanYorGibbsParams<'a>, U = URhs>,
+    G0: Distribution<T = TH, U = ()>,
+    TH: RandomVariable,
+    Rhs: Distribution<T = PitmanYorGibbsParams<'a, G0, TH>, U = URhs>,
     URhs: RandomVariable,
 {
-    type Output = DependentJoint<Self, Rhs, u32, PitmanYorGibbsParams<'a>, URhs>;
+    type Output = DependentJoint<Self, Rhs, u32, PitmanYorGibbsParams<'a, G0, TH>, URhs>;
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)

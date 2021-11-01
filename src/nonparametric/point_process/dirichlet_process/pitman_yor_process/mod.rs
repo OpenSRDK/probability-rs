@@ -7,8 +7,8 @@ pub use gibbs::*;
 pub use gibbs_sampler::*;
 
 use crate::nonparametric::*;
-use crate::DistributionError;
 use crate::RandomVariable;
+use crate::*;
 
 #[derive(thiserror::Error, Debug)]
 pub enum PitmanYorProcessError {
@@ -23,14 +23,23 @@ pub enum PitmanYorProcessError {
 }
 
 #[derive(Clone, Debug)]
-pub struct PitmanYorProcessParams {
+pub struct PitmanYorProcessParams<G0, TH>
+where
+    G0: Distribution<T = TH, U = ()>,
+    TH: RandomVariable,
+{
     alpha: f64,
     d: f64,
+    g0: BaselineMeasure<G0, TH>,
 }
 
-impl PitmanYorProcessParams {
+impl<G0, TH> PitmanYorProcessParams<G0, TH>
+where
+    G0: Distribution<T = TH, U = ()>,
+    TH: RandomVariable,
+{
     /// - `d`: 0 ≦ d < 1. If it is zero, Pitman-Yor process means Chinese restaurant process.
-    pub fn new(alpha: f64, d: f64) -> Result<Self, DistributionError> {
+    pub fn new(alpha: f64, d: f64, g0: BaselineMeasure<G0, TH>) -> Result<Self, DistributionError> {
         if alpha <= 0.0 {
             return Err(DistributionError::InvalidParameters(
                 DirichletProcessError::AlphaMustBePositive.into(),
@@ -42,7 +51,7 @@ impl PitmanYorProcessParams {
             ));
         }
 
-        Ok(Self { alpha, d })
+        Ok(Self { alpha, d, g0 })
     }
 
     pub fn alpha(&self) -> f64 {

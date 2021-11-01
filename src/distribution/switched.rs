@@ -16,7 +16,14 @@ where
 {
     distribution: D,
     map: &'a HashMap<u32, U>,
-    default: U,
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum SwitchedError {
+    #[error("Key not found")]
+    KeyNotFound,
+    #[error("Unknown error")]
+    Unknown,
 }
 
 impl<'a, D, T, U> SwitchedDistribution<'a, D, T, U>
@@ -25,12 +32,8 @@ where
     T: RandomVariable,
     U: RandomVariable,
 {
-    pub fn new(distribution: D, map: &'a HashMap<u32, U>, default: U) -> Self {
-        Self {
-            distribution,
-            map,
-            default,
-        }
+    pub fn new(distribution: D, map: &'a HashMap<u32, U>) -> Self {
+        Self { distribution, map }
     }
 }
 
@@ -41,50 +44,61 @@ where
     U: RandomVariable,
 {
     type T = T;
-    type U = u32;
+    type U = SwitchedParams<U>;
 
     fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let s = theta;
 
-        match self.map.get(s) {
-            Some(theta) => self.distribution.p(x, &theta),
-            None => self.distribution.p(x, &self.default),
+        match s {
+            SwitchedParams::Key(k) => match self.map.get(k) {
+                Some(theta) => self.distribution.p(x, theta),
+                None => Err(DistributionError::InvalidParameters(
+                    SwitchedError::KeyNotFound.into(),
+                )),
+            },
+            SwitchedParams::Direct(theta) => self.distribution.p(x, theta),
         }
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         let s = theta;
 
-        match self.map.get(s) {
-            Some(theta) => self.distribution.sample(&theta, rng),
-            None => self.distribution.sample(&self.default, rng),
+        match s {
+            SwitchedParams::Key(k) => match self.map.get(k) {
+                Some(theta) => self.distribution.sample(theta, rng),
+                None => Err(DistributionError::InvalidParameters(
+                    SwitchedError::KeyNotFound.into(),
+                )),
+            },
+            SwitchedParams::Direct(theta) => self.distribution.sample(theta, rng),
         }
     }
 }
 
-pub trait SwitchableDistribution<U>: Distribution + Sized
+#[derive(Clone, Debug)]
+pub enum SwitchedParams<U>
 where
     U: RandomVariable,
 {
+    Key(u32),
+    Direct(U),
+}
+
+pub trait SwitchableDistribution: Distribution + Sized {
     fn switch<'a>(
         self,
-        map: &'a HashMap<u32, U>,
-        default: U,
+        map: &'a HashMap<u32, Self::U>,
     ) -> SwitchedDistribution<'a, Self, Self::T, Self::U>;
 }
 
-impl<D, T, U> SwitchableDistribution<U> for D
+impl<D, T, U> SwitchableDistribution for D
 where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,
     U: RandomVariable,
 {
-    fn switch<'a>(
-        self,
-        map: &'a HashMap<u32, U>,
-        default: U,
-    ) -> SwitchedDistribution<'a, Self, Self::T, Self::U> {
-        SwitchedDistribution::<Self, Self::T, Self::U>::new(self, map, default)
+    fn switch<'a>(self, map: &'a HashMap<u32, U>) -> SwitchedDistribution<'a, Self, Self::T, U> {
+        SwitchedDistribution::<Self, Self::T, U>::new(self, map)
     }
 }
 
@@ -93,10 +107,10 @@ where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,
     U: RandomVariable,
-    Rhs: Distribution<T = TRhs, U = u32>,
+    Rhs: Distribution<T = TRhs, U = SwitchedParams<U>>,
     TRhs: RandomVariable,
 {
-    type Output = IndependentJoint<Self, Rhs, T, TRhs, u32>;
+    type Output = IndependentJoint<Self, Rhs, T, TRhs, SwitchedParams<U>>;
 
     fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
@@ -108,10 +122,10 @@ where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,
     U: RandomVariable,
-    Rhs: Distribution<T = u32, U = URhs>,
+    Rhs: Distribution<T = SwitchedParams<U>, U = URhs>,
     URhs: RandomVariable,
 {
-    type Output = DependentJoint<Self, Rhs, T, u32, URhs>;
+    type Output = DependentJoint<Self, Rhs, T, SwitchedParams<U>, URhs>;
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)

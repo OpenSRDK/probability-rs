@@ -52,7 +52,6 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
 
     let alpha = 2.4;
     let d = 0.1;
-    let pyp_params = PitmanYorProcessParams::new(alpha, d)?;
 
     let g0 = BaselineMeasure::new(InstantDistribution::new(
         &|_: &ExactEllipticalParams, _: &()| Ok(0.1),
@@ -66,6 +65,8 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
             )
         },
     ));
+
+    let pyp_params = PitmanYorProcessParams::new(alpha, d, g0.clone())?;
 
     let mh_proposal = InstantDistribution::new(
         &|x: &ExactEllipticalParams, theta: &ExactEllipticalParams| {
@@ -120,13 +121,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         let (new_s, new_theta) = rayon::join(
             || -> Result<_, DistributionError> {
                 let new_s = {
-                    let likelihood = MultivariateNormal::new().switch(
-                        theta,
-                        ExactEllipticalParams::new(
-                            vec![0.0; 2],
-                            DiagonalMatrix::identity(2).mat(),
-                        )?,
-                    );
+                    let likelihood = MultivariateNormal::new().switch(theta);
 
                     let sampler = PitmanYorGibbsSampler::new(&pyp_params, s, &x, &likelihood);
 
@@ -140,7 +135,13 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
                 let new_theta = keys
                     .into_par_iter()
                     .map(|k| {
-                        let x_in_k = PitmanYorProcessParams::x_in_cluster(&x, s.s(), k);
+                        let x_in_k = s
+                            .s_inv()
+                            .get(&k)
+                            .unwrap()
+                            .iter()
+                            .map(|&i| x[i].clone())
+                            .collect::<Vec<_>>();
 
                         (k, x_in_k)
                     })
@@ -181,7 +182,8 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
     let mut accumulated_s = Vec::<SamplesDistribution<_>>::new();
     let mut e_theta = HashMap::<u32, (usize, ExactEllipticalParams)>::new();
 
-    for (s_t, theta_t) in s_list.into_iter().zip(theta_list.into_iter()) {
+    for (i, (s_t, theta_t)) in s_list.into_iter().zip(theta_list.into_iter()).enumerate() {
+        println!("gif {} writing...", i);
         accumulated_s
             .par_iter_mut()
             .zip(s_t.s().par_iter())
@@ -248,6 +250,8 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
 
         root.present()?;
     }
+
+    println!("png writing...");
 
     let root = BitMapBackend::new("dpmm.png", (1600, 900)).into_drawing_area();
 

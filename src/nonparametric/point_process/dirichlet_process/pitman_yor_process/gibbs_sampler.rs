@@ -6,27 +6,31 @@ use std::collections::HashSet;
 
 /// # Pitman-Yor process
 #[derive(Clone, Debug)]
-pub struct PitmanYorGibbsSampler<'a, T, L>
+pub struct PitmanYorGibbsSampler<'a, L, T, U, G0>
 where
+    L: Distribution<T = T, U = U>,
     T: RandomVariable,
-    L: Distribution<T = T, U = u32>,
+    U: RandomVariable,
+    G0: Distribution<T = U, U = ()>,
 {
-    base: &'a PitmanYorProcessParams,
+    base: &'a PitmanYorProcessParams<G0, U>,
     s: &'a ClusterSwitch,
     value: &'a [T],
-    likelihood: &'a L,
+    likelihood: &'a SwitchedDistribution<'a, L, T, U>,
 }
 
-impl<'a, T, L> PitmanYorGibbsSampler<'a, T, L>
+impl<'a, L, T, U, G0> PitmanYorGibbsSampler<'a, L, T, U, G0>
 where
+    L: Distribution<T = T, U = U>,
     T: RandomVariable,
-    L: Distribution<T = T, U = u32>,
+    U: RandomVariable,
+    G0: Distribution<T = U, U = ()>,
 {
     pub fn new(
-        base: &'a PitmanYorProcessParams,
+        base: &'a PitmanYorProcessParams<G0, U>,
         s: &'a ClusterSwitch,
         value: &'a [T],
-        likelihood: &'a L,
+        likelihood: &'a SwitchedDistribution<L, T, U>,
     ) -> Self {
         Self {
             base,
@@ -39,7 +43,7 @@ where
     fn gibbs_condition(
         &'a self,
         remove_index: usize,
-    ) -> impl Fn(&()) -> Result<PitmanYorGibbsParams<'a>, DistributionError> {
+    ) -> impl Fn(&()) -> Result<PitmanYorGibbsParams<'a, G0, U>, DistributionError> {
         move |_| PitmanYorGibbsParams::new(self.base, self.s, remove_index)
     }
 
@@ -50,15 +54,37 @@ where
     ) -> Result<ClusterSwitch, DistributionError> {
         let n = self.s.s().len();
 
+        let mut clusters = self.s.clone();
+
         let s = (0..n)
             .into_par_iter()
             .map(|i| -> Result<u32, DistributionError> {
-                let condition = self.gibbs_condition(i);
-                let prior = PitmanYorGibbs::new().condition(&condition);
+                let likelihood_condition = {
+                    let g0 = &self.base.g0.distr;
+                    move |s: &u32| {
+                        let mut rng2: Box<dyn RngCore> = match seed {
+                            Some(f) => Box::new(StdRng::from_seed(f(2 * i))),
+                            None => Box::new(thread_rng()),
+                        };
+                        if *s != 0 {
+                            Ok(SwitchedParams::Key(*s))
+                        } else {
+                            Ok(SwitchedParams::Direct(g0.sample(&(), &mut rng2)?))
+                        }
+                    }
+                };
+                let likelihood = self.likelihood.clone().condition(&likelihood_condition);
+                let prior_condition = self.gibbs_condition(i);
+                let prior = PitmanYorGibbs::new().condition(&prior_condition);
+
+                let mut rng: Box<dyn RngCore> = match seed {
+                    Some(f) => Box::new(StdRng::from_seed(f(i))),
+                    None => Box::new(thread_rng()),
+                };
 
                 let ds_sampler = DiscreteSliceSampler::new(
                     &self.value[i],
-                    self.likelihood,
+                    &likelihood,
                     &prior,
                     self.s
                         .s_inv()
@@ -68,17 +94,16 @@ where
                         .collect::<HashSet<u32>>(),
                 )?;
 
-                let mut rng: Box<dyn RngCore> = match seed {
-                    Some(f) => Box::new(StdRng::from_seed(f(i))),
-                    None => Box::new(thread_rng()),
-                };
-
                 let si = ds_sampler.sample(3, None, &mut rng)?;
 
                 Ok(si)
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        ClusterSwitch::new(s)
+        for (i, si) in s.into_iter().enumerate() {
+            clusters.set_s(i, si);
+        }
+
+        Ok(clusters)
     }
 }
