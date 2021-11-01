@@ -90,8 +90,8 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         },
     );
 
-    const ITER: usize = 150;
-    const BURNIN: usize = 50;
+    const ITER: usize = 50;
+    const BURNIN: usize = 0;
 
     let mut s_list = LinkedList::<ClusterSwitch>::new();
     s_list.push_back(ClusterSwitch::new(
@@ -118,65 +118,58 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         let s = s_list.back().unwrap();
         let theta = theta_list.back().unwrap();
 
-        let (new_s, new_theta) = rayon::join(
-            || -> Result<_, DistributionError> {
-                let new_s = {
-                    let likelihood = MultivariateNormal::new().switch(theta);
+        let new_s = {
+            let likelihood = MultivariateNormal::new().switch(theta);
 
-                    let sampler = PitmanYorGibbsSampler::new(&pyp_params, s, &x, &likelihood);
+            let sampler = PitmanYorGibbsSampler::new(&pyp_params, s, &x, &likelihood);
 
-                    sampler.sample(Some(&|i| [i as u8; 32]))?
-                };
-
-                Ok(new_s)
-            },
-            || -> Result<_, DistributionError> {
-                let keys = theta.keys().into_iter().map(|&k| k).collect::<Vec<_>>();
-                let new_theta = keys
-                    .into_par_iter()
-                    .map(|k| {
-                        let x_in_k = s
-                            .s_inv()
-                            .get(&k)
-                            .unwrap()
-                            .iter()
-                            .map(|&i| x[i].clone())
-                            .collect::<Vec<_>>();
-
-                        (k, x_in_k)
-                    })
-                    .filter(|(_, x_in_k)| x_in_k.len() != 0)
-                    .map(|(k, x_in_k)| {
-                        let x_likelihood = vec![MultivariateNormal::new(); x_in_k.len()]
-                            .into_iter()
-                            .joint();
-                        let mh_sampler = MetropolisHastingsSampler::new(
-                            &x_in_k,
-                            &x_likelihood,
-                            &g0.distr,
-                            &mh_proposal,
-                        );
-
-                        let mut rng = thread_rng();
-
-                        let theta_k = mh_sampler
-                            .sample(4, theta.get(&k).unwrap().clone(), &mut rng)
-                            .unwrap();
-
-                        (k, theta_k)
-                    })
-                    .collect::<HashMap<_, _>>();
-
-                Ok(new_theta)
-            },
-        );
+            sampler.sample(Some(&|i| [i as u8; 32]))?
+        };
 
         if iter <= BURNIN {
             s_list.clear();
+        }
+        s_list.push_back(new_s);
+
+        let s = s_list.back().unwrap();
+
+        let new_theta = s
+            .s_inv()
+            .into_par_iter()
+            .map(|(&k, indice)| {
+                let x_in_k = indice.iter().map(|&i| x[i].clone()).collect::<Vec<_>>();
+
+                (k, x_in_k)
+            })
+            .filter(|(_, x_in_k)| x_in_k.len() != 0)
+            .map(|(k, x_in_k)| {
+                let x_likelihood = vec![MultivariateNormal::new(); x_in_k.len()]
+                    .into_iter()
+                    .joint();
+                let mh_sampler =
+                    MetropolisHastingsSampler::new(&x_in_k, &x_likelihood, &g0.distr, &mh_proposal);
+
+                let mut rng = StdRng::from_seed([1; 32]);
+
+                let theta_k = mh_sampler
+                    .sample(
+                        4,
+                        theta
+                            .get(&k)
+                            .unwrap_or(&g0.distr.sample(&(), &mut rng).unwrap())
+                            .clone(),
+                        &mut rng,
+                    )
+                    .unwrap();
+
+                (k, theta_k)
+            })
+            .collect::<HashMap<_, _>>();
+
+        if iter <= BURNIN {
             theta_list.clear();
         }
-        s_list.push_back(new_s?);
-        theta_list.push_back(new_theta?);
+        theta_list.push_back(new_theta);
     }
 
     let mut accumulated_s = Vec::<SamplesDistribution<_>>::new();
@@ -197,6 +190,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
             let (new_mu, new_lsigma) = theta_tk.eject();
             let new_weight = (1.0 / (entry.0 + 1) as f64).max(0.05);
 
+            entry.0 += 1;
             entry.1 = ExactEllipticalParams::new(
                 ((1.0 - new_weight) * entry.1.mu().to_vec().col_mat()
                     + new_weight * new_mu.col_mat())
@@ -255,6 +249,13 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
 
     let root = BitMapBackend::new("dpmm.png", (1600, 900)).into_drawing_area();
 
+    let accumulated_clusters = ClusterSwitch::new(
+        accumulated_s
+            .iter()
+            .map(|asi| -> Result<_, DistributionError> { Ok(asi.mode()?.clone()) })
+            .collect::<Result<_, _>>()?,
+    )?;
+
     root.fill(&WHITE)?;
     let mut chart = ChartBuilder::on(&root)
         .margin(10)
@@ -277,13 +278,16 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
     ))?;
     chart.draw_series(PointSeries::of_element(
-        e_theta
+        accumulated_clusters
+            .s_inv()
             .iter()
-            .map(|(_, (_, theta_k))| (theta_k.mu()[0], theta_k.mu()[1])),
+            .map(|(k, _)| e_theta.get(k).unwrap())
+            .map(|(_, theta_k)| (theta_k.mu()[0], theta_k.mu()[1])),
         60,
         ShapeStyle::from(&BLUE.mix(0.5)).stroke_width(1),
         &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
     ))?;
+
     root.present()?;
 
     Ok(())

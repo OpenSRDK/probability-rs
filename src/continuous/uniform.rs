@@ -11,7 +11,7 @@ impl Distribution for ContinuousUniform {
     type U = Range<f64>;
 
     fn p(&self, _: &Self::T, theta: &Self::U) -> Result<f64, crate::DistributionError> {
-        Ok(1.0 / (theta.end - theta.start))
+        Ok(1.0)
     }
 
     fn sample(

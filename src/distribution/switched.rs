@@ -57,6 +57,7 @@ where
                 )),
             },
             SwitchedParams::Direct(theta) => self.distribution.p(x, theta),
+            SwitchedParams::None => Ok(1.0),
         }
     }
 
@@ -71,6 +72,7 @@ where
                 )),
             },
             SwitchedParams::Direct(theta) => self.distribution.sample(theta, rng),
+            SwitchedParams::None => todo!(),
         }
     }
 }
@@ -82,6 +84,7 @@ where
 {
     Key(u32),
     Direct(U),
+    None,
 }
 
 pub trait SwitchableDistribution: Distribution + Sized {

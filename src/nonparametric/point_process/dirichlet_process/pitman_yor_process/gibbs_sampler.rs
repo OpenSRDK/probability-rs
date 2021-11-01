@@ -60,16 +60,11 @@ where
             .into_par_iter()
             .map(|i| -> Result<u32, DistributionError> {
                 let likelihood_condition = {
-                    let g0 = &self.base.g0.distr;
                     move |s: &u32| {
-                        let mut rng2: Box<dyn RngCore> = match seed {
-                            Some(f) => Box::new(StdRng::from_seed(f(2 * i))),
-                            None => Box::new(thread_rng()),
-                        };
                         if *s != 0 {
                             Ok(SwitchedParams::Key(*s))
                         } else {
-                            Ok(SwitchedParams::Direct(g0.sample(&(), &mut rng2)?))
+                            Ok(SwitchedParams::None)
                         }
                     }
                 };

@@ -81,13 +81,7 @@ where
             }
         }
 
-        let ret = if s_inv[&s[theta.remove_index]].len() == 1 {
-            s[theta.remove_index]
-        } else {
-            0
-        };
-
-        Ok(ret)
+        Ok(0)
     }
 }
 
