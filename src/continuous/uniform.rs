@@ -10,7 +10,7 @@ impl Distribution for ContinuousUniform {
     type T = f64;
     type U = Range<f64>;
 
-    fn p(&self, _: &Self::T, theta: &Self::U) -> Result<f64, crate::DistributionError> {
+    fn p(&self, _: &Self::T, _theta: &Self::U) -> Result<f64, crate::DistributionError> {
         Ok(1.0)
     }
 
