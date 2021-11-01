@@ -7,18 +7,18 @@ extern crate plotters;
 extern crate rayon;
 
 use crate::distribution::Distribution;
-use opensrdk_linear_algebra::DiagonalMatrix;
+use opensrdk_linear_algebra::*;
 use opensrdk_probability::nonparametric::*;
 use opensrdk_probability::*;
 use plotters::prelude::*;
 use rand::prelude::*;
 // use rayon::prelude::*;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, LinkedList};
 use std::time::Instant;
 
 #[test]
 fn test_main() {
-    let is_not_ci = false;
+    let is_not_ci = true;
 
     if is_not_ci {
         let start = Instant::now();
@@ -31,22 +31,16 @@ fn test_main() {
 }
 
 fn it_works() -> Result<(), Box<dyn std::error::Error>> {
-    let root = BitMapBackend::gif("dpmm.gif", (1600, 900), 0_500)?.into_drawing_area();
-
     let mut rng = StdRng::from_seed([1; 32]);
 
-    let np = (0..3)
-        .into_iter()
-        .flat_map(|i| {
-            (0..3)
-                .into_iter()
-                .map(move |j| vec![20.0 * (i - 1) as f64, 20.0 * (j - 1) as f64])
-        })
-        .map(|mu| ExactEllipticalParams::new(mu, DiagonalMatrix::identity(2).mat()).unwrap())
-        .collect::<Vec<_>>();
+    let np = vec![
+        ExactEllipticalParams::new(vec![0.0, 20.0], DiagonalMatrix::identity(2).mat()).unwrap(),
+        ExactEllipticalParams::new(vec![-20.0, 0.0], DiagonalMatrix::identity(2).mat()).unwrap(),
+        ExactEllipticalParams::new(vec![20.0, -20.0], DiagonalMatrix::identity(2).mat()).unwrap(),
+    ];
     let x = np
         .iter()
-        .flat_map(|np| (0..12).into_iter().map(move |i| (np, i)))
+        .flat_map(|np| (0..20).into_iter().map(move |i| (np, i)))
         .map(|(np, _)| -> Result<Vec<f64>, DistributionError> {
             MultivariateNormal::new().sample(np, &mut rng)
         })
@@ -55,21 +49,9 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
     println!("x生成完了");
 
     let n = x.len();
-    let mut s = ClusterSwitch::new((1u32..=n as u32).into_iter().collect::<Vec<_>>())?;
-    let mut theta = (1..=n as u32)
-        .into_iter()
-        .map(|k| {
-            (
-                k,
-                ExactEllipticalParams::new(vec![0.0; 2], DiagonalMatrix::identity(2).mat())
-                    .unwrap(),
-            )
-        })
-        .collect::<HashMap<u32, ExactEllipticalParams>>();
 
-    let alpha = 0.5;
+    let alpha = 2.4;
     let d = 0.1;
-    let pyp_params = PitmanYorProcessParams::new(alpha, d)?;
 
     let g0 = BaselineMeasure::new(InstantDistribution::new(
         &|_: &ExactEllipticalParams, _: &()| Ok(0.1),
@@ -83,6 +65,8 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
             )
         },
     ));
+
+    let pyp_params = PitmanYorProcessParams::new(alpha, d, g0.clone())?;
 
     let mh_proposal = InstantDistribution::new(
         &|x: &ExactEllipticalParams, theta: &ExactEllipticalParams| {
@@ -106,10 +90,124 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         },
     );
 
-    const ITER: usize = 100;
+    const ITER: usize = 50;
+    const BURNIN: usize = 0;
+
+    let mut s_list = LinkedList::<ClusterSwitch>::new();
+    s_list.push_back(ClusterSwitch::new(
+        (1u32..=n as u32).into_iter().collect::<Vec<_>>(),
+    )?);
+
+    let mut theta_list = LinkedList::<HashMap<_, _>>::new();
+    theta_list.push_back(
+        (1..=n as u32)
+            .into_iter()
+            .map(|k| {
+                (
+                    k,
+                    ExactEllipticalParams::new(vec![0.0; 2], DiagonalMatrix::identity(2).mat())
+                        .unwrap(),
+                )
+            })
+            .collect::<HashMap<u32, ExactEllipticalParams>>(),
+    );
 
     for iter in 0..ITER {
         println!("iteration {}", iter);
+
+        let s = s_list.back().unwrap();
+        let theta = theta_list.back().unwrap();
+
+        let new_s = {
+            let likelihood = MultivariateNormal::new().switch(theta);
+
+            let sampler = PitmanYorGibbsSampler::new(&pyp_params, s, &x, &likelihood);
+
+            sampler.sample(Some(&|i| [i as u8; 32]))?
+        };
+
+        if iter <= BURNIN {
+            s_list.clear();
+        }
+        s_list.push_back(new_s);
+
+        let s = s_list.back().unwrap();
+
+        let new_theta = s
+            .s_inv()
+            .into_par_iter()
+            .map(|(&k, indice)| {
+                let x_in_k = indice.iter().map(|&i| x[i].clone()).collect::<Vec<_>>();
+
+                (k, x_in_k)
+            })
+            .filter(|(_, x_in_k)| x_in_k.len() != 0)
+            .map(|(k, x_in_k)| {
+                let x_likelihood = vec![MultivariateNormal::new(); x_in_k.len()]
+                    .into_iter()
+                    .joint();
+                let mh_sampler =
+                    MetropolisHastingsSampler::new(&x_in_k, &x_likelihood, &g0.distr, &mh_proposal);
+
+                let mut rng = StdRng::from_seed([1; 32]);
+
+                let theta_k = mh_sampler
+                    .sample(
+                        4,
+                        theta
+                            .get(&k)
+                            .unwrap_or(&g0.distr.sample(&(), &mut rng).unwrap())
+                            .clone(),
+                        &mut rng,
+                    )
+                    .unwrap();
+
+                (k, theta_k)
+            })
+            .collect::<HashMap<_, _>>();
+
+        if iter <= BURNIN {
+            theta_list.clear();
+        }
+        theta_list.push_back(new_theta);
+    }
+
+    let mut accumulated_s = Vec::<SamplesDistribution<_>>::new();
+    let mut e_theta = HashMap::<u32, (usize, ExactEllipticalParams)>::new();
+
+    for (i, (s_t, theta_t)) in s_list.into_iter().zip(theta_list.into_iter()).enumerate() {
+        println!("gif {} writing...", i);
+        accumulated_s
+            .par_iter_mut()
+            .zip(s_t.s().par_iter())
+            .for_each(|(asi, &sti)| asi.push(sti));
+
+        for (k, theta_tk) in theta_t {
+            let entry = e_theta.entry(k).or_insert((
+                0,
+                ExactEllipticalParams::new(vec![0.0, 0.0], DiagonalMatrix::identity(2).mat())?,
+            ));
+            let (new_mu, new_lsigma) = theta_tk.eject();
+            let new_weight = (1.0 / (entry.0 + 1) as f64).max(0.05);
+
+            entry.0 += 1;
+            entry.1 = ExactEllipticalParams::new(
+                ((1.0 - new_weight) * entry.1.mu().to_vec().col_mat()
+                    + new_weight * new_mu.col_mat())
+                .vec(),
+                new_lsigma,
+            )
+            .unwrap();
+        }
+
+        let accumulated_clusters = ClusterSwitch::new(
+            accumulated_s
+                .iter()
+                .map(|asi| -> Result<_, DistributionError> { Ok(asi.mode()?.clone()) })
+                .collect::<Result<_, _>>()?,
+        )?;
+
+        let root = BitMapBackend::gif("dpmm.gif", (1600, 900), 0_500)?.into_drawing_area();
 
         root.fill(&WHITE)?;
         let mut chart = ChartBuilder::on(&root)
@@ -133,73 +231,11 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
             &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
         ))?;
 
-        let mut shuffled = (0..n).into_iter().collect::<Vec<_>>();
-        shuffled.shuffle(&mut rng);
-
-        for (printi, i) in shuffled.into_iter().enumerate() {
-            println!("gibbs {}/{}", printi, n);
-            let new_k = {
-                let condition = pyp_params.gibbs_condition(&s, i);
-                let gibbs_likelihood = MultivariateNormal::new().switch(
-                    &theta,
-                    ExactEllipticalParams::new(vec![0.0; 2], DiagonalMatrix::identity(2).mat())?,
-                );
-                let gibbs_prior = PitmanYorGibbs::new().condition(&condition);
-
-                let ds_sampler = DiscreteSliceSampler::new(
-                    &x[i],
-                    &gibbs_likelihood,
-                    &gibbs_prior,
-                    s.n_map()
-                        .par_iter()
-                        .map(|(&si, _)| si)
-                        .chain(rayon::iter::once(0))
-                        .collect::<HashSet<u32>>(),
-                )?;
-                ds_sampler.sample(3, None, &mut rng)?
-            };
-            s.set_s(i, new_k);
-        }
-
-        println!("gibbs sampling完了");
-
-        let keys = theta.keys().into_iter().map(|&k| k).collect::<Vec<_>>();
-        keys.into_par_iter()
-            .map(|k| {
-                println!("mh: {}/{}", k, theta.len());
-                let x_in_k = PitmanYorProcessParams::x_in_cluster(&x, s.s(), k);
-
-                let len = x_in_k.len();
-                if len == 0 {
-                    return (k, None);
-                }
-
-                let x_likelihood = vec![MultivariateNormal::new(); len].into_iter().joint();
-                let mh_sampler =
-                    MetropolisHastingsSampler::new(&x_in_k, &x_likelihood, &g0.distr, &mh_proposal);
-
-                let mut rng = thread_rng();
-
-                let theta_k = mh_sampler
-                    .sample(4, theta.get(&k).unwrap().clone(), &mut rng)
-                    .unwrap();
-
-                (k, Some(theta_k))
-            })
-            .collect::<Vec<_>>()
-            .into_iter()
-            .for_each(|(k, theta_k)| {
-                match theta_k {
-                    Some(v) => theta.insert(k, v),
-                    None => theta.remove(&k),
-                };
-            });
-
-        println!("mh完了");
-
         chart.draw_series(PointSeries::of_element(
-            theta
+            accumulated_clusters
+                .s_inv()
                 .iter()
+                .map(|(k, _)| e_theta.get(k).unwrap())
                 .map(|(_, theta_k)| (theta_k.mu()[0], theta_k.mu()[1])),
             60,
             ShapeStyle::from(&BLUE.mix(0.5)).stroke_width(1),
@@ -207,11 +243,18 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         ))?;
 
         root.present()?;
-
-        println!("");
     }
 
+    println!("png writing...");
+
     let root = BitMapBackend::new("dpmm.png", (1600, 900)).into_drawing_area();
+
+    let accumulated_clusters = ClusterSwitch::new(
+        accumulated_s
+            .iter()
+            .map(|asi| -> Result<_, DistributionError> { Ok(asi.mode()?.clone()) })
+            .collect::<Result<_, _>>()?,
+    )?;
 
     root.fill(&WHITE)?;
     let mut chart = ChartBuilder::on(&root)
@@ -235,13 +278,16 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
     ))?;
     chart.draw_series(PointSeries::of_element(
-        theta
+        accumulated_clusters
+            .s_inv()
             .iter()
+            .map(|(k, _)| e_theta.get(k).unwrap())
             .map(|(_, theta_k)| (theta_k.mu()[0], theta_k.mu()[1])),
         60,
         ShapeStyle::from(&BLUE.mix(0.5)).stroke_width(1),
         &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
     ))?;
+
     root.present()?;
 
     Ok(())
