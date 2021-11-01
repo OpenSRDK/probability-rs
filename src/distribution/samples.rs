@@ -1,6 +1,7 @@
 use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
+use rayon::prelude::*;
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::{
@@ -50,7 +51,7 @@ where
         }
         Ok(self
             .n_map
-            .iter()
+            .par_iter()
             .max_by_key(|&(_, &count)| count)
             .map(|(val, _)| val)
             .unwrap_or(

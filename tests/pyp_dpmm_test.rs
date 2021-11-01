@@ -204,6 +204,13 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
             .unwrap();
         }
 
+        let accumulated_clusters = ClusterSwitch::new(
+            accumulated_s
+                .iter()
+                .map(|asi| -> Result<_, DistributionError> { Ok(asi.mode()?.clone()) })
+                .collect::<Result<_, _>>()?,
+        )?;
+
         let root = BitMapBackend::gif("dpmm.gif", (1600, 900), 0_500)?.into_drawing_area();
 
         root.fill(&WHITE)?;
@@ -229,9 +236,11 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         ))?;
 
         chart.draw_series(PointSeries::of_element(
-            e_theta
+            accumulated_clusters
+                .s_inv()
                 .iter()
-                .map(|(_, (_, theta_k))| (theta_k.mu()[0], theta_k.mu()[1])),
+                .map(|(k, _)| e_theta.get(k).unwrap())
+                .map(|(_, theta_k)| (theta_k.mu()[0], theta_k.mu()[1])),
             60,
             ShapeStyle::from(&BLUE.mix(0.5)).stroke_width(1),
             &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
