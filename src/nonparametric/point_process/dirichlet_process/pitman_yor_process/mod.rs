@@ -1,8 +1,10 @@
 pub mod cluster_switch;
 pub mod gibbs;
+pub mod gibbs_sampler;
 
 pub use cluster_switch::*;
 pub use gibbs::*;
+pub use gibbs_sampler::*;
 
 use crate::nonparametric::*;
 use crate::DistributionError;
@@ -49,14 +51,6 @@ impl PitmanYorProcessParams {
 
     pub fn d(&self) -> f64 {
         self.d
-    }
-
-    pub fn gibbs_condition<'a>(
-        &'a self,
-        s: &'a ClusterSwitch,
-        remove_index: usize,
-    ) -> impl Fn(&()) -> Result<PitmanYorGibbsParams<'a>, DistributionError> {
-        move |_| PitmanYorGibbsParams::new(self.clone(), s, remove_index)
     }
 
     pub fn x_in_cluster<T>(x: &[T], s: &[u32], k: u32) -> Vec<T>

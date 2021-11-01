@@ -8,7 +8,7 @@ use std::{
 };
 
 #[derive(Clone, Debug)]
-pub struct SwitchDistribution<'a, D, T, U>
+pub struct SwitchedDistribution<'a, D, T, U>
 where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,
@@ -19,7 +19,7 @@ where
     default: U,
 }
 
-impl<'a, D, T, U> SwitchDistribution<'a, D, T, U>
+impl<'a, D, T, U> SwitchedDistribution<'a, D, T, U>
 where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,
@@ -34,7 +34,7 @@ where
     }
 }
 
-impl<'a, D, T, U> Distribution for SwitchDistribution<'a, D, T, U>
+impl<'a, D, T, U> Distribution for SwitchedDistribution<'a, D, T, U>
 where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,
@@ -70,7 +70,7 @@ where
         self,
         map: &'a HashMap<u32, U>,
         default: U,
-    ) -> SwitchDistribution<'a, Self, Self::T, Self::U>;
+    ) -> SwitchedDistribution<'a, Self, Self::T, Self::U>;
 }
 
 impl<D, T, U> SwitchableDistribution<U> for D
@@ -83,12 +83,12 @@ where
         self,
         map: &'a HashMap<u32, U>,
         default: U,
-    ) -> SwitchDistribution<'a, Self, Self::T, Self::U> {
-        SwitchDistribution::<Self, Self::T, Self::U>::new(self, map, default)
+    ) -> SwitchedDistribution<'a, Self, Self::T, Self::U> {
+        SwitchedDistribution::<Self, Self::T, Self::U>::new(self, map, default)
     }
 }
 
-impl<'a, D, T, U, Rhs, TRhs> Mul<Rhs> for SwitchDistribution<'a, D, T, U>
+impl<'a, D, T, U, Rhs, TRhs> Mul<Rhs> for SwitchedDistribution<'a, D, T, U>
 where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,
@@ -103,7 +103,7 @@ where
     }
 }
 
-impl<'a, D, T, U, Rhs, URhs> BitAnd<Rhs> for SwitchDistribution<'a, D, T, U>
+impl<'a, D, T, U, Rhs, URhs> BitAnd<Rhs> for SwitchedDistribution<'a, D, T, U>
 where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,

@@ -49,14 +49,14 @@ impl<'a> Distribution for PitmanYorGibbs<'a> {
         let d = theta.base.d;
         let s = theta.s.s();
         let n = s.len().max(1) - 1;
-        let n_map = theta.s.n_map();
+        let s_inv = theta.s.s_inv();
 
         let p = rng.gen_range(0.0..1.0);
         let mut p_sum = 0.0;
 
-        //カテゴリ分布に変える
-        for (&k, &nk) in n_map.iter() {
-            let mut nk = nk;
+        // todo: カテゴリ分布に変える？
+        for (&k, indice) in s_inv.iter() {
+            let mut nk = indice.len();
             if s[theta.remove_index] == k {
                 nk -= 1;
             }
@@ -69,13 +69,19 @@ impl<'a> Distribution for PitmanYorGibbs<'a> {
             }
         }
 
-        Ok(0)
+        let ret = if s_inv[&s[theta.remove_index]].len() == 1 {
+            s[theta.remove_index]
+        } else {
+            0
+        };
+
+        Ok(ret)
     }
 }
 
 #[derive(Clone, Debug)]
 pub struct PitmanYorGibbsParams<'a> {
-    base: PitmanYorProcessParams,
+    base: &'a PitmanYorProcessParams,
     s: &'a ClusterSwitch,
     remove_index: usize,
 }
@@ -83,7 +89,7 @@ pub struct PitmanYorGibbsParams<'a> {
 impl<'a> PitmanYorGibbsParams<'a> {
     /// - `d`: 0 ≦ d < 1. If it is zero, Pitman-Yor process means Chinese restaurant process.
     pub fn new(
-        base: PitmanYorProcessParams,
+        base: &'a PitmanYorProcessParams,
         s: &'a ClusterSwitch,
         remove_index: usize,
     ) -> Result<Self, DistributionError> {
