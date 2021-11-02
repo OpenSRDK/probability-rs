@@ -77,6 +77,17 @@ where
     }
 }
 
+impl<'a, D, T, U> SwitchedDistribution<'a, D, T, U>
+where
+    D: Distribution<T = T, U = U>,
+    T: RandomVariable,
+    U: RandomVariable,
+{
+    pub fn distribution(&self) -> &D {
+        &self.distribution
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum SwitchedParams<U>
 where

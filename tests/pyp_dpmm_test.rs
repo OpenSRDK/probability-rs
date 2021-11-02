@@ -90,16 +90,12 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         },
     );
 
-    const ITER: usize = 50;
-    const BURNIN: usize = 0;
+    const ITER: usize = 150;
+    const BURNIN: usize = 50;
 
-    let mut s_list = LinkedList::<ClusterSwitch>::new();
-    s_list.push_back(ClusterSwitch::new(
-        (1u32..=n as u32).into_iter().collect::<Vec<_>>(),
-    )?);
-
-    let mut theta_list = LinkedList::<HashMap<_, _>>::new();
-    theta_list.push_back(
+    let mut state_list = LinkedList::<(ClusterSwitch, HashMap<_, _>)>::new();
+    state_list.push_back((
+        ClusterSwitch::new((1u32..=n as u32).into_iter().collect::<Vec<_>>())?,
         (1..=n as u32)
             .into_iter()
             .map(|k| {
@@ -110,102 +106,45 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
                 )
             })
             .collect::<HashMap<u32, ExactEllipticalParams>>(),
-    );
+    ));
 
     for iter in 0..ITER {
         println!("iteration {}", iter);
 
-        let s = s_list.back().unwrap();
-        let theta = theta_list.back().unwrap();
+        let (mut s, mut theta) = state_list.back().unwrap().clone();
 
-        let new_s = {
-            let likelihood = MultivariateNormal::new().switch(theta);
+        let (i, si, theta_si) = {
+            let likelihood = MultivariateNormal::new().switch(&theta);
 
-            let sampler = PitmanYorGibbsSampler::new(&pyp_params, s, &x, &likelihood);
+            let gibbs_sampler = PitmanYorGibbsSampler::new(&pyp_params, &s, &x, &likelihood);
 
-            sampler.sample(Some(&|i| [i as u8; 32]))?
+            gibbs_sampler.step_sample(&mh_proposal, &mut rng)?
         };
 
-        if iter <= BURNIN {
-            s_list.clear();
-        }
-        s_list.push_back(new_s);
-
-        let s = s_list.back().unwrap();
-
-        let new_theta = s
-            .s_inv()
-            .into_par_iter()
-            .map(|(&k, indice)| {
-                let x_in_k = indice.iter().map(|&i| x[i].clone()).collect::<Vec<_>>();
-
-                (k, x_in_k)
-            })
-            .filter(|(_, x_in_k)| x_in_k.len() != 0)
-            .map(|(k, x_in_k)| {
-                let x_likelihood = vec![MultivariateNormal::new(); x_in_k.len()]
-                    .into_iter()
-                    .joint();
-                let mh_sampler =
-                    MetropolisHastingsSampler::new(&x_in_k, &x_likelihood, &g0.distr, &mh_proposal);
-
-                let mut rng = StdRng::from_seed([1; 32]);
-
-                let theta_k = mh_sampler
-                    .sample(
-                        4,
-                        theta
-                            .get(&k)
-                            .unwrap_or(&g0.distr.sample(&(), &mut rng).unwrap())
-                            .clone(),
-                        &mut rng,
-                    )
-                    .unwrap();
-
-                (k, theta_k)
-            })
-            .collect::<HashMap<_, _>>();
+        s.set_s(i, si);
+        theta.insert(si, theta_si);
 
         if iter <= BURNIN {
-            theta_list.clear();
+            state_list.clear();
         }
-        theta_list.push_back(new_theta);
+        state_list.push_back((s, theta));
     }
 
-    let mut accumulated_s = Vec::<SamplesDistribution<_>>::new();
-    let mut e_theta = HashMap::<u32, (usize, ExactEllipticalParams)>::new();
+    let mut max_p = 0.0;
+    let mut max_p_state = state_list.front().unwrap().clone();
 
-    for (i, (s_t, theta_t)) in s_list.into_iter().zip(theta_list.into_iter()).enumerate() {
-        println!("gif {} writing...", i);
-        accumulated_s
-            .par_iter_mut()
-            .zip(s_t.s().par_iter())
-            .for_each(|(asi, &sti)| asi.push(sti));
+    for (t, (s_t, theta_t)) in state_list.into_iter().enumerate() {
+        println!("gif {} writing...", t);
 
-        for (k, theta_tk) in theta_t {
-            let entry = e_theta.entry(k).or_insert((
-                0,
-                ExactEllipticalParams::new(vec![0.0, 0.0], DiagonalMatrix::identity(2).mat())?,
-            ));
-            let (new_mu, new_lsigma) = theta_tk.eject();
-            let new_weight = (1.0 / (entry.0 + 1) as f64).max(0.05);
+        let p = (0..n)
+            .into_iter()
+            .map(|i| MultivariateNormal::new().p(&x[i], theta_t.get(&s_t.s()[i]).unwrap()))
+            .product::<Result<f64, DistributionError>>()?;
 
-            entry.0 += 1;
-            entry.1 = ExactEllipticalParams::new(
-                ((1.0 - new_weight) * entry.1.mu().to_vec().col_mat()
-                    + new_weight * new_mu.col_mat())
-                .vec(),
-                new_lsigma,
-            )
-            .unwrap();
+        if max_p < p {
+            max_p = p;
+            max_p_state = (s_t, theta_t);
         }
-
-        let accumulated_clusters = ClusterSwitch::new(
-            accumulated_s
-                .iter()
-                .map(|asi| -> Result<_, DistributionError> { Ok(asi.mode()?.clone()) })
-                .collect::<Result<_, _>>()?,
-        )?;
 
         let root = BitMapBackend::gif("dpmm.gif", (1600, 900), 0_500)?.into_drawing_area();
 
@@ -232,11 +171,12 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         ))?;
 
         chart.draw_series(PointSeries::of_element(
-            accumulated_clusters
+            max_p_state
+                .0
                 .s_inv()
                 .iter()
-                .map(|(k, _)| e_theta.get(k).unwrap())
-                .map(|(_, theta_k)| (theta_k.mu()[0], theta_k.mu()[1])),
+                .map(|(k, _)| max_p_state.1.get(k).unwrap())
+                .map(|theta_k| (theta_k.mu()[0], theta_k.mu()[1])),
             60,
             ShapeStyle::from(&BLUE.mix(0.5)).stroke_width(1),
             &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
@@ -248,13 +188,6 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
     println!("png writing...");
 
     let root = BitMapBackend::new("dpmm.png", (1600, 900)).into_drawing_area();
-
-    let accumulated_clusters = ClusterSwitch::new(
-        accumulated_s
-            .iter()
-            .map(|asi| -> Result<_, DistributionError> { Ok(asi.mode()?.clone()) })
-            .collect::<Result<_, _>>()?,
-    )?;
 
     root.fill(&WHITE)?;
     let mut chart = ChartBuilder::on(&root)
@@ -278,11 +211,12 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
     ))?;
     chart.draw_series(PointSeries::of_element(
-        accumulated_clusters
+        max_p_state
+            .0
             .s_inv()
             .iter()
-            .map(|(k, _)| e_theta.get(k).unwrap())
-            .map(|(_, theta_k)| (theta_k.mu()[0], theta_k.mu()[1])),
+            .map(|(k, _)| max_p_state.1.get(k).unwrap())
+            .map(|theta_k| (theta_k.mu()[0], theta_k.mu()[1])),
         60,
         ShapeStyle::from(&BLUE.mix(0.5)).stroke_width(1),
         &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
