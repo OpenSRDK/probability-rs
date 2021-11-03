@@ -60,8 +60,8 @@ where
 {
     type T = T;
     type U = U2;
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, crate::DistributionError> {
-        self.distribution.p(x, &(self.condition)(theta)?)
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, crate::DistributionError> {
+        self.distribution.fk(x, &(self.condition)(theta)?)
     }
 
     fn sample(

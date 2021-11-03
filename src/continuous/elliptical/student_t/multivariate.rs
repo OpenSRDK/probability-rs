@@ -46,7 +46,7 @@ where
     type T = Vec<f64>;
     type U = T;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let elliptical = theta.elliptical();
         let x_mu = elliptical.x_mu(x)?.col_mat();
 

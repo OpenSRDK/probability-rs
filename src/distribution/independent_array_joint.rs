@@ -24,10 +24,10 @@ where
     type T = Vec<T>;
     type U = U;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         x.iter()
             .enumerate()
-            .map(|(i, xi)| self.distributions[i].p(xi, theta))
+            .map(|(i, xi)| self.distributions[i].fk(xi, theta))
             .product()
     }
 

@@ -1,5 +1,5 @@
-use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{DiscreteDistribution, DistributionError};
 use num_integer::binomial;
 use rand::prelude::*;
 use rand_distr::Binomial as RandBinominal;
@@ -21,7 +21,7 @@ impl Distribution for Binominal {
     type T = u64;
     type U = BinominalParams;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let n = theta.n();
         let p = theta.p();
 
@@ -40,6 +40,8 @@ impl Distribution for Binominal {
         Ok(rng.sample(binominal))
     }
 }
+
+impl DiscreteDistribution for Binominal {}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct BinominalParams {

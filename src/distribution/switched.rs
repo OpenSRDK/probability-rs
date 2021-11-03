@@ -8,36 +8,37 @@ use std::{
 };
 
 #[derive(Clone, Debug)]
-pub struct SwitchedDistribution<'a, D, T, U>
+pub struct SwitchedDistribution<D, T, U>
 where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,
     U: RandomVariable,
 {
     distribution: D,
-    map: &'a HashMap<u32, U>,
 }
 
 #[derive(thiserror::Error, Debug)]
 pub enum SwitchedError {
     #[error("Key not found")]
     KeyNotFound,
+    #[error("None is invalid for sample.")]
+    NoneIsInvalidForSample,
     #[error("Unknown error")]
     Unknown,
 }
 
-impl<'a, D, T, U> SwitchedDistribution<'a, D, T, U>
+impl<D, T, U> SwitchedDistribution<D, T, U>
 where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,
     U: RandomVariable,
 {
-    pub fn new(distribution: D, map: &'a HashMap<u32, U>) -> Self {
-        Self { distribution, map }
+    pub fn new(distribution: D) -> Self {
+        Self { distribution }
     }
 }
 
-impl<'a, D, T, U> Distribution for SwitchedDistribution<'a, D, T, U>
+impl<D, T, U> Distribution for SwitchedDistribution<D, T, U>
 where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,
@@ -46,17 +47,17 @@ where
     type T = T;
     type U = SwitchedParams<U>;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let s = theta;
 
         match s {
-            SwitchedParams::Key(k) => match self.map.get(k) {
-                Some(theta) => self.distribution.p(x, theta),
+            SwitchedParams::Key(k, map) => match map.get(k) {
+                Some(theta) => self.distribution.fk(x, theta),
                 None => Err(DistributionError::InvalidParameters(
                     SwitchedError::KeyNotFound.into(),
                 )),
             },
-            SwitchedParams::Direct(theta) => self.distribution.p(x, theta),
+            SwitchedParams::Direct(theta) => self.distribution.fk(x, theta),
             SwitchedParams::None => Ok(1.0),
         }
     }
@@ -65,15 +66,28 @@ where
         let s = theta;
 
         match s {
-            SwitchedParams::Key(k) => match self.map.get(k) {
+            SwitchedParams::Key(k, map) => match map.get(k) {
                 Some(theta) => self.distribution.sample(theta, rng),
                 None => Err(DistributionError::InvalidParameters(
                     SwitchedError::KeyNotFound.into(),
                 )),
             },
             SwitchedParams::Direct(theta) => self.distribution.sample(theta, rng),
-            SwitchedParams::None => todo!(),
+            SwitchedParams::None => Err(DistributionError::InvalidParameters(
+                SwitchedError::NoneIsInvalidForSample.into(),
+            )),
         }
+    }
+}
+
+impl<D, T, U> SwitchedDistribution<D, T, U>
+where
+    D: Distribution<T = T, U = U>,
+    T: RandomVariable,
+    U: RandomVariable,
+{
+    pub fn distribution(&self) -> &D {
+        &self.distribution
     }
 }
 
@@ -82,16 +96,13 @@ pub enum SwitchedParams<U>
 where
     U: RandomVariable,
 {
-    Key(u32),
+    Key(u32, HashMap<u32, U>),
     Direct(U),
     None,
 }
 
 pub trait SwitchableDistribution: Distribution + Sized {
-    fn switch<'a>(
-        self,
-        map: &'a HashMap<u32, Self::U>,
-    ) -> SwitchedDistribution<'a, Self, Self::T, Self::U>;
+    fn switch<'a>(self) -> SwitchedDistribution<Self, Self::T, Self::U>;
 }
 
 impl<D, T, U> SwitchableDistribution for D
@@ -100,12 +111,12 @@ where
     T: RandomVariable,
     U: RandomVariable,
 {
-    fn switch<'a>(self, map: &'a HashMap<u32, U>) -> SwitchedDistribution<'a, Self, Self::T, U> {
-        SwitchedDistribution::<Self, Self::T, U>::new(self, map)
+    fn switch(self) -> SwitchedDistribution<Self, Self::T, U> {
+        SwitchedDistribution::<Self, Self::T, U>::new(self)
     }
 }
 
-impl<'a, D, T, U, Rhs, TRhs> Mul<Rhs> for SwitchedDistribution<'a, D, T, U>
+impl<D, T, U, Rhs, TRhs> Mul<Rhs> for SwitchedDistribution<D, T, U>
 where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,
@@ -120,7 +131,7 @@ where
     }
 }
 
-impl<'a, D, T, U, Rhs, URhs> BitAnd<Rhs> for SwitchedDistribution<'a, D, T, U>
+impl<D, T, U, Rhs, URhs> BitAnd<Rhs> for SwitchedDistribution<D, T, U>
 where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,

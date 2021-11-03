@@ -32,7 +32,7 @@ impl Distribution for Wishart {
     type U = WishartParams;
 
     /// x must be cholesky decomposed
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let lv = theta.lv();
         let n = theta.n();
 

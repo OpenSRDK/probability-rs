@@ -14,7 +14,7 @@ impl Distribution for StudentT {
     type T = f64;
     type U = StudentTParams;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let nu = theta.nu();
         let mu = theta.mu();
         let sigma = theta.sigma();

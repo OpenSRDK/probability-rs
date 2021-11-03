@@ -38,7 +38,7 @@ where
     type T = Vec<f64>;
     type U = T;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let x_mu = theta.x_mu(x)?.col_mat();
         let n = x_mu.rows() as f64;
 

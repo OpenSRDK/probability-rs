@@ -21,7 +21,7 @@ impl Distribution for Beta {
     type T = f64;
     type U = BetaParams;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let alpha = theta.alpha();
         let beta = theta.beta();
 

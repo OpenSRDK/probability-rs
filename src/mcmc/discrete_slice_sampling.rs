@@ -40,7 +40,7 @@ where
         let f_map = range
             .iter()
             .map(|b| -> Result<_, DistributionError> {
-                Ok((b.clone(), likelihood.p(value, b)? * prior.p(b, &())?))
+                Ok((b.clone(), likelihood.fk(value, b)? * prior.fk(b, &())?))
             })
             .collect::<Result<HashMap<_, _>, _>>()?;
 

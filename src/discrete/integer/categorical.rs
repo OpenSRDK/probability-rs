@@ -23,7 +23,7 @@ impl Distribution for Categorical {
     type T = usize;
     type U = CategoricalParams;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let k = *x;
         if k < theta.p().len() {
             return Err(DistributionError::InvalidParameters(
@@ -49,6 +49,8 @@ impl Distribution for Categorical {
         Err(DistributionError::Others(CategoricalError::Unknown.into()))
     }
 }
+
+impl DiscreteDistribution for Categorical {}
 
 #[derive(Clone, Debug)]
 pub struct CategoricalParams {

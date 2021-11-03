@@ -37,10 +37,10 @@ where
     type T = Vec<f64>;
     type U = T;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let studentt_params = MultivariateStudentTWrapper::new(theta);
 
-        MultivariateStudentT::new().p(x, &studentt_params)
+        MultivariateStudentT::new().fk(x, &studentt_params)
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {

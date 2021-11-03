@@ -19,7 +19,7 @@ impl Distribution for ChiSquared {
     type T = f64;
     type U = ChiSquaredParams;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let k = theta.k();
 
         Ok((1.0 / (2f64.powf(k / 2.0) * Gamma::gamma(k / 2.0)))

@@ -21,7 +21,7 @@ impl Distribution for FisherF {
     type T = f64;
     type U = FisherFParams;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let m = theta.m();
         let n = theta.n();
 

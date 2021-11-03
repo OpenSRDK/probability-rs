@@ -34,7 +34,7 @@ impl Distribution for Dirichlet {
     type T = Vec<f64>;
     type U = DirichletParams;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let alpha = theta.alpha();
 
         if x.len() != alpha.len() {

@@ -47,7 +47,7 @@ where
     type T = T;
     type U = U;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         (self.p)(x, theta)
     }
 
