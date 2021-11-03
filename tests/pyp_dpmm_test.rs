@@ -18,7 +18,7 @@ use std::time::Instant;
 
 #[test]
 fn test_main() {
-    let is_not_ci = true;
+    let is_not_ci = false;
 
     if is_not_ci {
         let start = Instant::now();
@@ -90,8 +90,8 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         },
     );
 
-    const ITER: usize = 3000;
-    const BURNIN: usize = 3000;
+    const ITER: usize = 4000;
+    const BURNIN: usize = 4000;
 
     let mut state_list = LinkedList::<ClusterSwitch<ExactEllipticalParams>>::new();
     state_list.push_back(ClusterSwitch::new(
@@ -108,14 +108,14 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
             .collect::<HashMap<u32, ExactEllipticalParams>>(),
     )?);
 
+    let likelihood = MultivariateNormal::new().switch();
+
     for iter in 0..ITER {
         println!("iteration {}", iter);
 
         let mut s = state_list.back().unwrap().clone();
 
         let (i, si, theta_si) = {
-            let likelihood = MultivariateNormal::new().switch();
-
             let gibbs_sampler = PitmanYorGibbsSampler::new(&pyp_params, &s, &x, &likelihood);
 
             gibbs_sampler.step_sample(&mh_proposal, &mut rng)?
