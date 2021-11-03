@@ -62,7 +62,7 @@ where
         &self.theta
     }
 
-    pub fn set_s(&mut self, i: usize, si: u32, theta: T) -> u32 {
+    pub fn set_s(&mut self, i: usize, si: u32) -> u32 {
         self.s_inv
             .entry(self.s[i])
             .or_insert(HashSet::new())
@@ -79,7 +79,6 @@ where
                 .entry(self.s[i])
                 .or_insert(HashSet::new())
                 .insert(i);
-            self.theta.insert(self.s[i], theta);
 
             return self.max_k;
         }
@@ -89,13 +88,18 @@ where
             .entry(self.s[i])
             .or_insert(HashSet::new())
             .insert(i);
-        self.theta.insert(si, theta);
 
         if self.max_k < si {
             self.max_k = si;
         }
 
         si
+    }
+
+    pub fn set_s_with_theta(&mut self, i: usize, si: u32, theta: T) -> u32 {
+        let new_k = self.set_s(i, si);
+        self.theta.insert(new_k, theta);
+        new_k
     }
 
     pub fn n(&self, k: u32) -> usize {
@@ -107,5 +111,45 @@ where
 
     pub fn clusters_len(&self) -> usize {
         self.s_inv.len()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::nonparametric::ClusterSwitch;
+    use crate::*;
+    use std::collections::HashMap;
+
+    #[test]
+    fn it_works() {
+        let mu = 5.0;
+        let s = vec![1u32, 2u32, 3u32, 4u32];
+        let mut theta = HashMap::new();
+        theta.insert(1u32, NormalParams::new(1.0, 2.0).unwrap());
+        theta.insert(2u32, NormalParams::new(2.0, 2.0).unwrap());
+        theta.insert(3u32, NormalParams::new(3.0, 2.0).unwrap());
+        theta.insert(4u32, NormalParams::new(4.0, 2.0).unwrap());
+
+        let mut cs = ClusterSwitch::new(s, theta).unwrap();
+        let new_k = cs.set_s_with_theta(0, 0u32, NormalParams::new(mu, 2.0).unwrap());
+        let new_mu = cs.theta().get(&new_k).unwrap().mu();
+
+        assert_eq!(mu, new_mu);
+    }
+
+    #[test]
+    fn it_works2() {
+        let s = vec![1u32, 2u32, 3u32, 4u32];
+        let mut theta = HashMap::new();
+        theta.insert(1u32, NormalParams::new(1.0, 2.0).unwrap());
+        theta.insert(2u32, NormalParams::new(2.0, 2.0).unwrap());
+        theta.insert(3u32, NormalParams::new(3.0, 2.0).unwrap());
+        theta.insert(4u32, NormalParams::new(4.0, 2.0).unwrap());
+
+        let mut cs = ClusterSwitch::new(s, theta).unwrap();
+        cs.set_s(0, 2u32);
+        let new_mu = cs.theta().get(&2u32).unwrap().mu();
+
+        assert_eq!(2.0, new_mu);
     }
 }
