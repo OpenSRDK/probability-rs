@@ -8,37 +8,36 @@ use std::{
 };
 
 #[derive(Clone, Debug)]
-pub struct SwitchedDistribution<D, T, U>
+pub struct SwitchedDistribution<'a, D, T, U>
 where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,
     U: RandomVariable,
 {
-    distribution: D,
+    distribution: &'a D,
+    map: &'a HashMap<u32, U>,
 }
 
 #[derive(thiserror::Error, Debug)]
 pub enum SwitchedError {
     #[error("Key not found")]
     KeyNotFound,
-    #[error("None is invalid for sample.")]
-    NoneIsInvalidForSample,
     #[error("Unknown error")]
     Unknown,
 }
 
-impl<D, T, U> SwitchedDistribution<D, T, U>
+impl<'a, D, T, U> SwitchedDistribution<'a, D, T, U>
 where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,
     U: RandomVariable,
 {
-    pub fn new(distribution: D) -> Self {
-        Self { distribution }
+    pub fn new(distribution: &'a D, map: &'a HashMap<u32, U>) -> Self {
+        Self { distribution, map }
     }
 }
 
-impl<D, T, U> Distribution for SwitchedDistribution<D, T, U>
+impl<'a, D, T, U> Distribution for SwitchedDistribution<'a, D, T, U>
 where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,
@@ -51,14 +50,13 @@ where
         let s = theta;
 
         match s {
-            SwitchedParams::Key(k, map) => match map.get(k) {
+            SwitchedParams::Key(k) => match self.map.get(k) {
                 Some(theta) => self.distribution.fk(x, theta),
                 None => Err(DistributionError::InvalidParameters(
                     SwitchedError::KeyNotFound.into(),
                 )),
             },
             SwitchedParams::Direct(theta) => self.distribution.fk(x, theta),
-            SwitchedParams::None => Ok(1.0),
         }
     }
 
@@ -66,21 +64,18 @@ where
         let s = theta;
 
         match s {
-            SwitchedParams::Key(k, map) => match map.get(k) {
+            SwitchedParams::Key(k) => match self.map.get(k) {
                 Some(theta) => self.distribution.sample(theta, rng),
                 None => Err(DistributionError::InvalidParameters(
                     SwitchedError::KeyNotFound.into(),
                 )),
             },
             SwitchedParams::Direct(theta) => self.distribution.sample(theta, rng),
-            SwitchedParams::None => Err(DistributionError::InvalidParameters(
-                SwitchedError::NoneIsInvalidForSample.into(),
-            )),
         }
     }
 }
 
-impl<D, T, U> SwitchedDistribution<D, T, U>
+impl<'a, D, T, U> SwitchedDistribution<'a, D, T, U>
 where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,
@@ -96,27 +91,35 @@ pub enum SwitchedParams<U>
 where
     U: RandomVariable,
 {
-    Key(u32, HashMap<u32, U>),
+    Key(u32),
     Direct(U),
-    None,
 }
 
-pub trait SwitchableDistribution: Distribution + Sized {
-    fn switch<'a>(self) -> SwitchedDistribution<Self, Self::T, Self::U>;
+pub trait SwitchableDistribution<U>: Distribution + Sized
+where
+    U: RandomVariable,
+{
+    fn switch<'a>(
+        &'a self,
+        map: &'a HashMap<u32, U>,
+    ) -> SwitchedDistribution<'a, Self, Self::T, Self::U>;
 }
 
-impl<D, T, U> SwitchableDistribution for D
+impl<D, T, U> SwitchableDistribution<U> for D
 where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,
     U: RandomVariable,
 {
-    fn switch(self) -> SwitchedDistribution<Self, Self::T, U> {
-        SwitchedDistribution::<Self, Self::T, U>::new(self)
+    fn switch<'a>(
+        &'a self,
+        map: &'a HashMap<u32, U>,
+    ) -> SwitchedDistribution<'a, Self, Self::T, U> {
+        SwitchedDistribution::<Self, Self::T, U>::new(self, map)
     }
 }
 
-impl<D, T, U, Rhs, TRhs> Mul<Rhs> for SwitchedDistribution<D, T, U>
+impl<'a, D, T, U, Rhs, TRhs> Mul<Rhs> for SwitchedDistribution<'a, D, T, U>
 where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,
@@ -131,7 +134,7 @@ where
     }
 }
 
-impl<D, T, U, Rhs, URhs> BitAnd<Rhs> for SwitchedDistribution<D, T, U>
+impl<'a, D, T, U, Rhs, URhs> BitAnd<Rhs> for SwitchedDistribution<'a, D, T, U>
 where
     D: Distribution<T = T, U = U>,
     T: RandomVariable,
@@ -153,13 +156,13 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let distr = Normal.switch();
         let mut theta = HashMap::new();
         theta.insert(1u32, NormalParams::new(1.0, 2.0).unwrap());
         theta.insert(2u32, NormalParams::new(2.0, 2.0).unwrap());
         theta.insert(3u32, NormalParams::new(3.0, 2.0).unwrap());
         theta.insert(4u32, NormalParams::new(4.0, 2.0).unwrap());
-        let switched_fk = distr.fk(&0f64, &SwitchedParams::Key(1u32, theta)).unwrap();
+        let distr = Normal.switch(&theta);
+        let switched_fk = distr.fk(&0f64, &SwitchedParams::Key(1u32)).unwrap();
         let fk = Normal
             .fk(&0f64, &NormalParams::new(1.0, 2.0).unwrap())
             .unwrap();

@@ -2,6 +2,8 @@ use std::collections::{HashMap, HashSet};
 
 use crate::{DistributionError, RandomVariable};
 
+use super::PitmanYorGibbsSample;
+
 #[derive(Clone, Debug)]
 pub struct ClusterSwitch<T>
 where
@@ -15,8 +17,6 @@ where
 
 #[derive(thiserror::Error, Debug)]
 pub enum ClusterSwitchError {
-    #[error("All elements of `s` must be positive")]
-    SMustBePositive,
     #[error("Unknown error")]
     Unknown,
 }
@@ -30,11 +30,6 @@ where
         let mut max_k = 0;
 
         for (i, &si) in s.iter().enumerate() {
-            if si == 0 {
-                return Err(DistributionError::InvalidParameters(
-                    ClusterSwitchError::SMustBePositive.into(),
-                ));
-            }
             s_inv.entry(si).or_insert(HashSet::new()).insert(i);
 
             if max_k < si {
@@ -62,7 +57,7 @@ where
         &self.theta
     }
 
-    pub fn set_s(&mut self, i: usize, si: u32) -> u32 {
+    pub fn set_s(&mut self, i: usize, si: PitmanYorGibbsSample) -> u32 {
         self.s_inv
             .entry(self.s[i])
             .or_insert(HashSet::new())
@@ -72,31 +67,34 @@ where
             self.theta.remove(&self.s[i]);
         }
 
-        if si == 0 {
-            self.max_k += 1;
-            self.s[i] = self.max_k;
-            self.s_inv
-                .entry(self.s[i])
-                .or_insert(HashSet::new())
-                .insert(i);
+        match si {
+            PitmanYorGibbsSample::Existing(si) => {
+                self.s[i] = si;
+                self.s_inv
+                    .entry(self.s[i])
+                    .or_insert(HashSet::new())
+                    .insert(i);
 
-            return self.max_k;
+                if self.max_k < si {
+                    self.max_k = si;
+                }
+
+                self.s[i]
+            }
+            PitmanYorGibbsSample::New => {
+                self.max_k += 1;
+                self.s[i] = self.max_k;
+                self.s_inv
+                    .entry(self.s[i])
+                    .or_insert(HashSet::new())
+                    .insert(i);
+
+                self.s[i]
+            }
         }
-
-        self.s[i] = si;
-        self.s_inv
-            .entry(self.s[i])
-            .or_insert(HashSet::new())
-            .insert(i);
-
-        if self.max_k < si {
-            self.max_k = si;
-        }
-
-        si
     }
 
-    pub fn set_s_with_theta(&mut self, i: usize, si: u32, theta: T) -> u32 {
+    pub fn set_s_with_theta(&mut self, i: usize, si: PitmanYorGibbsSample, theta: T) -> u32 {
         let new_k = self.set_s(i, si);
         self.theta.insert(new_k, theta);
         new_k
@@ -116,7 +114,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::nonparametric::ClusterSwitch;
+    use crate::nonparametric::*;
     use crate::*;
     use std::collections::HashMap;
 
@@ -131,7 +129,11 @@ mod tests {
         theta.insert(4u32, NormalParams::new(4.0, 2.0).unwrap());
 
         let mut cs = ClusterSwitch::new(s, theta).unwrap();
-        let new_k = cs.set_s_with_theta(0, 0u32, NormalParams::new(mu, 2.0).unwrap());
+        let new_k = cs.set_s_with_theta(
+            0,
+            PitmanYorGibbsSample::New,
+            NormalParams::new(mu, 2.0).unwrap(),
+        );
         let new_mu = cs.theta().get(&new_k).unwrap().mu();
 
         assert_eq!(mu, new_mu);
@@ -147,7 +149,7 @@ mod tests {
         theta.insert(4u32, NormalParams::new(4.0, 2.0).unwrap());
 
         let mut cs = ClusterSwitch::new(s, theta).unwrap();
-        cs.set_s(0, 2u32);
+        cs.set_s(0, PitmanYorGibbsSample::Existing(2));
         let new_mu = cs.theta().get(&2u32).unwrap().mu();
 
         assert_eq!(2.0, new_mu);

@@ -32,30 +32,34 @@ where
     G0: Distribution<T = TH, U = ()>,
     TH: RandomVariable,
 {
-    type T = u32;
+    type T = PitmanYorGibbsSample;
     type U = PitmanYorGibbsParams<'a, G0, TH>;
 
     fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let alpha = theta.base.alpha;
         let d = theta.base.d;
-        let k = *x;
         let s = theta.s.s();
         let n = s.len().max(1) - 1;
         let clusters_len = theta.s.clusters_len();
-        let mut nk = theta.s.n(k);
 
-        if s[theta.remove_index] == k {
-            nk -= 1
+        match *x {
+            PitmanYorGibbsSample::Existing(k) => {
+                let mut nk = theta.s.n(k);
+
+                if s[theta.remove_index] == k {
+                    nk -= 1
+                }
+
+                if nk != 0 {
+                    return Ok((nk as f64 - d) / (n as f64 + alpha));
+                }
+
+                Ok((alpha + clusters_len as f64 * d) / (n as f64 + alpha))
+            }
+            PitmanYorGibbsSample::New => Ok((alpha + clusters_len as f64 * d) / (n as f64 + alpha)),
         }
-
-        if nk != 0 {
-            return Ok((nk as f64 - d) / (n as f64 + alpha));
-        }
-
-        Ok((alpha + clusters_len as f64 * d) / (n as f64 + alpha))
     }
 
-    /// 0 means new cluster. However, you can't use 0 for `s` so use another value which will not conflict.
     fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
         let alpha = theta.base.alpha;
         let d = theta.base.d;
@@ -76,12 +80,18 @@ where
             }
             p_sum += (nk as f64 - d) / (n as f64 + alpha);
             if p < p_sum {
-                return Ok(k);
+                return Ok(PitmanYorGibbsSample::Existing(k));
             }
         }
 
-        Ok(0)
+        Ok(PitmanYorGibbsSample::New)
     }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum PitmanYorGibbsSample {
+    Existing(u32),
+    New,
 }
 
 #[derive(Clone, Debug)]
@@ -127,7 +137,8 @@ where
     Rhs: Distribution<T = TRhs, U = PitmanYorGibbsParams<'a, G0, TH>>,
     TRhs: RandomVariable,
 {
-    type Output = IndependentJoint<Self, Rhs, u32, TRhs, PitmanYorGibbsParams<'a, G0, TH>>;
+    type Output =
+        IndependentJoint<Self, Rhs, PitmanYorGibbsSample, TRhs, PitmanYorGibbsParams<'a, G0, TH>>;
 
     fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
@@ -141,7 +152,8 @@ where
     Rhs: Distribution<T = PitmanYorGibbsParams<'a, G0, TH>, U = URhs>,
     URhs: RandomVariable,
 {
-    type Output = DependentJoint<Self, Rhs, u32, PitmanYorGibbsParams<'a, G0, TH>, URhs>;
+    type Output =
+        DependentJoint<Self, Rhs, PitmanYorGibbsSample, PitmanYorGibbsParams<'a, G0, TH>, URhs>;
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)

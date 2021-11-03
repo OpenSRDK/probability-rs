@@ -50,7 +50,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
 
     let n = x.len();
 
-    let alpha = 2.4;
+    let alpha = 0.7;
     let d = 0.1;
 
     let g0 = BaselineMeasure::new(InstantDistribution::new(
@@ -95,8 +95,8 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut state_list = LinkedList::<ClusterSwitch<ExactEllipticalParams>>::new();
     state_list.push_back(ClusterSwitch::new(
-        (1u32..=n as u32).into_iter().collect::<Vec<_>>(),
-        (1..=n as u32)
+        (0..n as u32).into_iter().collect::<Vec<_>>(),
+        (0..n as u32)
             .into_iter()
             .map(|k| {
                 (
@@ -108,7 +108,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
             .collect::<HashMap<u32, ExactEllipticalParams>>(),
     )?);
 
-    let likelihood = MultivariateNormal::new().switch();
+    let likelihood = MultivariateNormal::new();
 
     for iter in 0..ITER {
         println!("iteration {}", iter);
@@ -116,7 +116,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         let mut s = state_list.back().unwrap().clone();
 
         let (i, si, theta_si) = {
-            let gibbs_sampler = PitmanYorGibbsSampler::new(&pyp_params, &s, &x, &likelihood);
+            let gibbs_sampler = PitmanYorGibbsSampler::new(&pyp_params, &s, &x, likelihood.clone());
 
             gibbs_sampler.step_sample(&mh_proposal, &mut rng)?
         };
@@ -127,6 +127,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
             state_list.clear();
         }
         state_list.push_back(s);
+        println!("{:?}", state_list.back().unwrap().theta().len());
     }
 
     // let mut max_p = 0.0;

@@ -14,8 +14,6 @@ use crate::*;
 pub enum PitmanYorProcessError {
     #[error("'d' must be greater than or equal to 0 and less than 1")]
     DMustBeGTE0AndLT1,
-    #[error("All elements of `s` must be positive")]
-    SMustBePositive,
     #[error("`remove_index` is out of range of `s`.")]
     RemoveIndexOutOfRange,
     #[error("Unknown error")]

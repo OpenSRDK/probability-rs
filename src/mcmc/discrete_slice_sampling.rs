@@ -10,7 +10,6 @@ pub struct DiscreteSliceSampler<B>
 where
     B: RandomVariable + Eq + Hash,
 {
-    range: HashSet<B>,
     f_map: HashMap<B, f64>,
 }
 
@@ -30,7 +29,7 @@ where
         value: &A,
         likelihood: &L,
         prior: &P,
-        range: HashSet<B>,
+        range: &HashSet<B>,
     ) -> Result<Self, DistributionError>
     where
         L: Distribution<T = A, U = B>,
@@ -44,7 +43,7 @@ where
             })
             .collect::<Result<HashMap<_, _>, _>>()?;
 
-        Ok(Self { range, f_map })
+        Ok(Self { f_map })
     }
 
     pub fn sample(
@@ -68,15 +67,12 @@ where
 
         loop {
             let u = rng.gen_range(0.0..=last_f);
-            let mut range = self
+            let range = self
                 .f_map
                 .iter()
-                .filter(|&(_, &v)| v > u)
+                .filter(|&(_, &v)| u <= v)
                 .map(|(k, _)| k.clone())
                 .collect::<HashSet<B>>();
-            if range.len() == 0 {
-                range = self.range.clone();
-            }
 
             last = DiscreteUniform::new().sample(&range, rng)?;
             last_f = *self.f_map.get(&last).unwrap();

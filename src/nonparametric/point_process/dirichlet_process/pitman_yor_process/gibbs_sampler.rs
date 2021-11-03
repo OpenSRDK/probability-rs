@@ -16,7 +16,7 @@ where
     base: &'a PitmanYorProcessParams<G0, U>,
     s: &'a ClusterSwitch<U>,
     value: &'a [T],
-    likelihood: &'a SwitchedDistribution<L, T, U>,
+    likelihood: L,
 }
 
 impl<'a, L, T, U, G0> PitmanYorGibbsSampler<'a, L, T, U, G0>
@@ -30,7 +30,7 @@ where
         base: &'a PitmanYorProcessParams<G0, U>,
         s: &'a ClusterSwitch<U>,
         value: &'a [T],
-        likelihood: &'a SwitchedDistribution<L, T, U>,
+        likelihood: L,
     ) -> Self {
         Self {
             base,
@@ -52,20 +52,22 @@ where
         &self,
         proposal: &impl Distribution<T = U, U = U>,
         rng: &mut dyn RngCore,
-    ) -> Result<(usize, u32, U), DistributionError> {
+    ) -> Result<(usize, PitmanYorGibbsSample, U), DistributionError> {
         let n = self.s.s().len();
         let remove_index = rng.gen_range(0..n);
 
-        let likelihood_condition = {
-            move |s: &u32| {
-                if *s != 0 {
-                    Ok(SwitchedParams::Key(*s, self.s.theta().clone()))
-                } else {
-                    Ok(SwitchedParams::None)
-                }
-            }
+        let new_theta = self.base.g0.distr.sample(&(), rng)?;
+
+        let likelihood_condition = |s: &PitmanYorGibbsSample| {
+            Ok(match *s {
+                PitmanYorGibbsSample::Existing(k) => SwitchedParams::Key(k),
+                PitmanYorGibbsSample::New => SwitchedParams::Direct(new_theta.clone()),
+            })
         };
-        let likelihood = self.likelihood.clone().condition(&likelihood_condition);
+        let likelihood = self
+            .likelihood
+            .switch(self.s.theta())
+            .condition(&likelihood_condition);
         let prior_condition = self.gibbs_condition(remove_index);
         let prior = PitmanYorGibbs::new().condition(&prior_condition);
 
@@ -73,37 +75,45 @@ where
             &self.value[remove_index],
             &likelihood,
             &prior,
-            self.s
+            &self
+                .s
                 .s_inv()
                 .par_iter()
-                .map(|(&si, _)| si)
-                .chain(rayon::iter::once(0))
-                .collect::<HashSet<u32>>(),
+                .map(|(&si, _)| PitmanYorGibbsSample::Existing(si))
+                .chain(rayon::iter::once(PitmanYorGibbsSample::New))
+                .collect::<HashSet<PitmanYorGibbsSample>>(),
         )?;
 
         let si = ds_sampler.sample(3, None, rng)?;
 
-        let x_in_k = self
-            .s
-            .s_inv()
-            .get(&si)
-            .unwrap_or(&HashSet::new())
-            .par_iter()
-            .filter(|&&i| i != remove_index)
-            .map(|&i| self.value[i].clone())
-            .chain(rayon::iter::once(self.value[remove_index].clone()))
-            .collect::<Vec<_>>();
+        let theta_k = match si {
+            PitmanYorGibbsSample::Existing(k) => {
+                let x_in_k = self
+                    .s
+                    .s_inv()
+                    .get(&k)
+                    .unwrap_or(&HashSet::new())
+                    .par_iter()
+                    .filter(|&&i| i != remove_index)
+                    .map(|&i| self.value[i].clone())
+                    .chain(rayon::iter::once(self.value[remove_index].clone()))
+                    .collect::<Vec<_>>();
 
-        let x_likelihood = vec![self.likelihood.distribution().clone(); x_in_k.len()]
-            .into_iter()
-            .joint();
+                let x_likelihood = vec![self.likelihood.clone(); x_in_k.len()]
+                    .into_iter()
+                    .joint();
 
-        let mh_sampler =
-            MetropolisHastingsSampler::new(&x_in_k, &x_likelihood, &self.base.g0.distr, proposal);
+                let mh_sampler = MetropolisHastingsSampler::new(
+                    &x_in_k,
+                    &x_likelihood,
+                    &self.base.g0.distr,
+                    proposal,
+                );
 
-        let theta_k = mh_sampler
-            .sample(4, self.base.g0.distr.sample(&(), rng)?, rng)
-            .unwrap();
+                mh_sampler.sample(4, self.base.g0.distr.sample(&(), rng)?, rng)?
+            }
+            PitmanYorGibbsSample::New => new_theta,
+        };
 
         Ok((remove_index, si, theta_k))
     }
