@@ -1,4 +1,4 @@
-use crate::{CategoricalParams, DistributionError};
+use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rayon::prelude::*;

@@ -63,10 +63,9 @@ where
         let n = s.len().max(1) - 1;
         let s_inv = theta.s.s_inv();
 
-        let p = rng.gen_range(0.0..1.0);
+        let p = rng.gen_range(0.0..=1.0);
         let mut p_sum = 0.0;
 
-        // todo: カテゴリ分布に変える？
         for (&k, indice) in s_inv.iter() {
             let mut nk = indice.len();
             if s[theta.remove_index] == k {
@@ -92,7 +91,7 @@ where
     TH: RandomVariable,
 {
     base: &'a PitmanYorProcessParams<G0, TH>,
-    s: &'a ClusterSwitch,
+    s: &'a ClusterSwitch<TH>,
     remove_index: usize,
 }
 
@@ -104,7 +103,7 @@ where
     /// - `d`: 0 ≦ d < 1. If it is zero, Pitman-Yor process means Chinese restaurant process.
     pub fn new(
         base: &'a PitmanYorProcessParams<G0, TH>,
-        s: &'a ClusterSwitch,
+        s: &'a ClusterSwitch<TH>,
         remove_index: usize,
     ) -> Result<Self, DistributionError> {
         if s.s().len() <= remove_index {

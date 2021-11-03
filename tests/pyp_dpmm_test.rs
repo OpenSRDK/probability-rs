@@ -90,12 +90,12 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         },
     );
 
-    const ITER: usize = 150;
-    const BURNIN: usize = 50;
+    const ITER: usize = 3000;
+    const BURNIN: usize = 3000;
 
-    let mut state_list = LinkedList::<(ClusterSwitch, HashMap<_, _>)>::new();
-    state_list.push_back((
-        ClusterSwitch::new((1u32..=n as u32).into_iter().collect::<Vec<_>>())?,
+    let mut state_list = LinkedList::<ClusterSwitch<ExactEllipticalParams>>::new();
+    state_list.push_back(ClusterSwitch::new(
+        (1u32..=n as u32).into_iter().collect::<Vec<_>>(),
         (1..=n as u32)
             .into_iter()
             .map(|k| {
@@ -106,86 +106,87 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
                 )
             })
             .collect::<HashMap<u32, ExactEllipticalParams>>(),
-    ));
+    )?);
 
     for iter in 0..ITER {
         println!("iteration {}", iter);
 
-        let (mut s, mut theta) = state_list.back().unwrap().clone();
+        let mut s = state_list.back().unwrap().clone();
 
         let (i, si, theta_si) = {
-            let likelihood = MultivariateNormal::new().switch(&theta);
+            let likelihood = MultivariateNormal::new().switch();
 
             let gibbs_sampler = PitmanYorGibbsSampler::new(&pyp_params, &s, &x, &likelihood);
 
             gibbs_sampler.step_sample(&mh_proposal, &mut rng)?
         };
 
-        s.set_s(i, si);
-        theta.insert(si, theta_si);
+        s.set_s(i, si, theta_si);
 
         if iter <= BURNIN {
             state_list.clear();
         }
-        state_list.push_back((s, theta));
+        state_list.push_back(s);
     }
 
-    let mut max_p = 0.0;
-    let mut max_p_state = state_list.front().unwrap().clone();
+    // let mut max_p = 0.0;
+    // let mut max_p_state = state_list.front().unwrap().clone();
 
-    for (t, (s_t, theta_t)) in state_list.into_iter().enumerate() {
-        println!("gif {} writing...", t);
+    // let root = BitMapBackend::gif("dpmm.gif", (1600, 900), 0_500)?.into_drawing_area();
 
-        let p = (0..n)
-            .into_iter()
-            .map(|i| MultivariateNormal::new().p(&x[i], theta_t.get(&s_t.s()[i]).unwrap()))
-            .product::<Result<f64, DistributionError>>()?;
+    // for (t, s_t) in state_list.into_iter().enumerate() {
+    //     println!("gif {} writing...", t);
 
-        if max_p < p {
-            max_p = p;
-            max_p_state = (s_t, theta_t);
-        }
+    //     let p = (0..n)
+    //         .into_iter()
+    //         .map(|i| MultivariateNormal::new().p(&x[i], s_t.theta().get(&s_t.s()[i]).unwrap()))
+    //         .product::<Result<f64, DistributionError>>()?;
 
-        let root = BitMapBackend::gif("dpmm.gif", (1600, 900), 0_500)?.into_drawing_area();
+    //     if max_p < p || true {
+    //         max_p = p;
+    //         max_p_state = s_t;
+    //     }
+    //     println!("{}", max_p);
 
-        root.fill(&WHITE)?;
-        let mut chart = ChartBuilder::on(&root)
-            .margin(10)
-            .set_all_label_area_size(50)
-            .build_cartesian_2d(-30.0..30.0, -30.0..30.0)?;
+    //     root.fill(&WHITE)?;
+    //     let mut chart = ChartBuilder::on(&root)
+    //         .margin(10)
+    //         .set_all_label_area_size(50)
+    //         .build_cartesian_2d(-30.0..30.0, -30.0..30.0)?;
 
-        chart
-            .configure_mesh()
-            .x_labels(10)
-            .y_labels(10)
-            .disable_mesh()
-            .x_label_formatter(&|v| format!("{:.1}", v))
-            .y_label_formatter(&|v| format!("{:.1}", v))
-            .draw()?;
+    //     chart
+    //         .configure_mesh()
+    //         .x_labels(10)
+    //         .y_labels(10)
+    //         .disable_mesh()
+    //         .x_label_formatter(&|v| format!("{:.1}", v))
+    //         .y_label_formatter(&|v| format!("{:.1}", v))
+    //         .draw()?;
 
-        chart.draw_series(PointSeries::of_element(
-            x.iter().map(|xi| (xi[0], xi[1])).into_iter(),
-            2,
-            ShapeStyle::from(&BLACK.mix(0.1)).filled(),
-            &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
-        ))?;
+    //     chart.draw_series(PointSeries::of_element(
+    //         x.iter().map(|xi| (xi[0], xi[1])).into_iter(),
+    //         2,
+    //         ShapeStyle::from(&BLACK.mix(0.1)).filled(),
+    //         &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
+    //     ))?;
 
-        chart.draw_series(PointSeries::of_element(
-            max_p_state
-                .0
-                .s_inv()
-                .iter()
-                .map(|(k, _)| max_p_state.1.get(k).unwrap())
-                .map(|theta_k| (theta_k.mu()[0], theta_k.mu()[1])),
-            60,
-            ShapeStyle::from(&BLUE.mix(0.5)).stroke_width(1),
-            &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
-        ))?;
+    //     chart.draw_series(PointSeries::of_element(
+    //         max_p_state
+    //             .s_inv()
+    //             .iter()
+    //             .map(|(k, _)| max_p_state.theta().get(k).unwrap())
+    //             .map(|theta_k| (theta_k.mu()[0], theta_k.mu()[1])),
+    //         60,
+    //         ShapeStyle::from(&BLUE.mix(0.5)).stroke_width(1),
+    //         &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
+    //     ))?;
 
-        root.present()?;
-    }
+    //     root.present()?;
+    // }
 
     println!("png writing...");
+
+    let last_state = state_list.back().unwrap().clone();
 
     let root = BitMapBackend::new("dpmm.png", (1600, 900)).into_drawing_area();
 
@@ -211,11 +212,10 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
     ))?;
     chart.draw_series(PointSeries::of_element(
-        max_p_state
-            .0
+        last_state
             .s_inv()
             .iter()
-            .map(|(k, _)| max_p_state.1.get(k).unwrap())
+            .map(|(k, _)| last_state.theta().get(k).unwrap())
             .map(|theta_k| (theta_k.mu()[0], theta_k.mu()[1])),
         60,
         ShapeStyle::from(&BLUE.mix(0.5)).stroke_width(1),

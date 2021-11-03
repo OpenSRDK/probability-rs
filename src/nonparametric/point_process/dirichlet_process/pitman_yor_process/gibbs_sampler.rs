@@ -14,9 +14,9 @@ where
     G0: Distribution<T = U, U = ()>,
 {
     base: &'a PitmanYorProcessParams<G0, U>,
-    s: &'a ClusterSwitch,
+    s: &'a ClusterSwitch<U>,
     value: &'a [T],
-    likelihood: &'a SwitchedDistribution<'a, L, T, U>,
+    likelihood: &'a SwitchedDistribution<L, T, U>,
 }
 
 impl<'a, L, T, U, G0> PitmanYorGibbsSampler<'a, L, T, U, G0>
@@ -28,7 +28,7 @@ where
 {
     pub fn new(
         base: &'a PitmanYorProcessParams<G0, U>,
-        s: &'a ClusterSwitch,
+        s: &'a ClusterSwitch<U>,
         value: &'a [T],
         likelihood: &'a SwitchedDistribution<L, T, U>,
     ) -> Self {
@@ -59,7 +59,7 @@ where
         let likelihood_condition = {
             move |s: &u32| {
                 if *s != 0 {
-                    Ok(SwitchedParams::Key(*s))
+                    Ok(SwitchedParams::Key(*s, self.s.theta().clone()))
                 } else {
                     Ok(SwitchedParams::None)
                 }
@@ -68,8 +68,6 @@ where
         let likelihood = self.likelihood.clone().condition(&likelihood_condition);
         let prior_condition = self.gibbs_condition(remove_index);
         let prior = PitmanYorGibbs::new().condition(&prior_condition);
-
-        println!("aa");
 
         let ds_sampler = DiscreteSliceSampler::new(
             &self.value[remove_index],
@@ -84,8 +82,6 @@ where
         )?;
 
         let si = ds_sampler.sample(3, None, rng)?;
-
-        println!("bb");
 
         let x_in_k = self
             .s
@@ -102,16 +98,12 @@ where
             .into_iter()
             .joint();
 
-        println!("cc");
-
         let mh_sampler =
             MetropolisHastingsSampler::new(&x_in_k, &x_likelihood, &self.base.g0.distr, proposal);
 
         let theta_k = mh_sampler
             .sample(4, self.base.g0.distr.sample(&(), rng)?, rng)
             .unwrap();
-
-        println!("dd");
 
         Ok((remove_index, si, theta_k))
     }
