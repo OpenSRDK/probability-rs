@@ -121,7 +121,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
             gibbs_sampler.step_sample(&mh_proposal, &mut rng)?
         };
 
-        s.set_s(i, si, theta_si);
+        s.set_s_with_theta(i, si, theta_si);
 
         if iter <= BURNIN {
             state_list.clear();
