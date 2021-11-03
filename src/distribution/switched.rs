@@ -145,3 +145,25 @@ where
         DependentJoint::new(self, rhs)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::*;
+    use std::collections::HashMap;
+
+    #[test]
+    fn it_works() {
+        let distr = Normal.switch();
+        let mut theta = HashMap::new();
+        theta.insert(1u32, NormalParams::new(1.0, 2.0).unwrap());
+        theta.insert(2u32, NormalParams::new(2.0, 2.0).unwrap());
+        theta.insert(3u32, NormalParams::new(3.0, 2.0).unwrap());
+        theta.insert(4u32, NormalParams::new(4.0, 2.0).unwrap());
+        let switched_fk = distr.fk(&0f64, &SwitchedParams::Key(1u32, theta)).unwrap();
+        let fk = Normal
+            .fk(&0f64, &NormalParams::new(1.0, 2.0).unwrap())
+            .unwrap();
+
+        assert_eq!(switched_fk, fk);
+    }
+}
