@@ -1,4 +1,4 @@
-use crate::DistributionError;
+use crate::{Categorical, CategoricalParams, DistributionError};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rayon::prelude::*;
@@ -75,9 +75,21 @@ where
         Ok(*self.n_map.get(x).unwrap_or(&0) as f64 / self.n as f64)
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
-        // n_mapをiterしてカテゴリ分布に帰着させ、サンプルする
-        todo!()
+    fn sample(
+        &self,
+        _theta: &Self::U,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::T, DistributionError> {
+        let keys = self.n_map.keys().collect::<Vec<_>>();
+        let pi = keys
+            .iter()
+            .map(|&k| *self.n_map.get(k).unwrap())
+            .map(|ni| ni as f64 / self.n as f64)
+            .collect();
+        let params = CategoricalParams::new(pi)?;
+        let sampled = Categorical.sample(&params, rng)?;
+
+        Ok(keys[sampled].clone())
     }
 }
 
