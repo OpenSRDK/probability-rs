@@ -113,10 +113,15 @@ mod tests {
     fn it_works() {
         let mut rng = StdRng::from_seed([1; 32]);
 
+        // {
+        //     // 0.17522173557509294
+        //     println!("{}", rng.gen_range(0.0..=1.0));
+        //     return;
+        // }
         let p = vec![0.1, 0.2, 0.3, 0.4];
         let theta = CategoricalParams::new(p).unwrap();
 
         let hoge = Categorical.sample(&theta, &mut rng).unwrap();
-        assert_eq!(hoge, 2);
+        assert_eq!(hoge, 1);
     }
 }
