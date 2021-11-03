@@ -27,7 +27,7 @@ impl Distribution for NormalInverseWishart {
     type T = ExactMultivariateNormalParams;
     type U = NormalInverseWishartParams;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let mu0 = theta.mu0().clone();
         let lambda = theta.lambda();
         let lpsi = theta.lpsi().clone();
@@ -39,10 +39,10 @@ impl Distribution for NormalInverseWishart {
         let n = MultivariateNormal::new();
         let w_inv = InverseWishart;
 
-        Ok(n.p(
+        Ok(n.fk(
             mu,
             &ExactMultivariateNormalParams::new(mu0, (1.0 / lambda) * lsigma.clone())?,
-        )? * w_inv.p(lsigma, &InverseWishartParams::new(lpsi, nu)?)?)
+        )? * w_inv.fk(lsigma, &InverseWishartParams::new(lpsi, nu)?)?)
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {

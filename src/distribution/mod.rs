@@ -53,13 +53,17 @@ impl From<Box<dyn Error + Send + Sync>> for DistributionError {
 }
 
 /// The trait which all structs of distribution must implement.
+/// - `fk`: The kernel part of probability density function `f`. The kernel means that it doesn't need normalization term of probability density function.
 pub trait Distribution: Clone + Debug + Send + Sync {
     type T: RandomVariable;
     type U: RandomVariable;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError>;
-    fn ln_p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
-        Ok(self.p(x, theta)?.ln())
-    }
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError>;
     fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError>;
+}
+
+pub trait DiscreteDistribution: Distribution {
+    fn fm(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+        self.fk(x, theta)
+    }
 }

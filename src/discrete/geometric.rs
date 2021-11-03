@@ -1,5 +1,5 @@
-use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{DiscreteDistribution, DistributionError};
 use rand::prelude::*;
 use rand_distr::Geometric as RandGeometric;
 use std::{ops::BitAnd, ops::Mul};
@@ -18,7 +18,7 @@ impl Distribution for Geometric {
     type T = u64;
     type U = GeometricParams;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let p = theta.p();
 
         Ok((1.0 - p).powi((x - 1) as i32) * p)
@@ -35,6 +35,8 @@ impl Distribution for Geometric {
         Ok(rng.sample(geometric))
     }
 }
+
+impl DiscreteDistribution for Geometric {}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct GeometricParams {

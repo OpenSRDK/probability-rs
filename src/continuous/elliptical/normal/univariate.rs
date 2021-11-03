@@ -13,7 +13,7 @@ impl Distribution for Normal {
     type T = f64;
     type U = NormalParams;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let mu = theta.mu();
         let sigma = theta.sigma();
 

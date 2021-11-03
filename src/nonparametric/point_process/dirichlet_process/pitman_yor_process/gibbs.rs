@@ -35,7 +35,7 @@ where
     type T = u32;
     type U = PitmanYorGibbsParams<'a, G0, TH>;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let alpha = theta.base.alpha;
         let d = theta.base.d;
         let k = *x;

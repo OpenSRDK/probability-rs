@@ -15,7 +15,7 @@ impl Distribution for Bernoulli {
     type T = bool;
     type U = BernoulliParams;
 
-    fn p(&self, _x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, _x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         Ok(theta.p())
     }
 
@@ -28,6 +28,8 @@ impl Distribution for Bernoulli {
         Ok(u <= theta.p())
     }
 }
+
+impl DiscreteDistribution for Bernoulli {}
 
 #[derive(Clone, Debug)]
 pub struct BernoulliParams {

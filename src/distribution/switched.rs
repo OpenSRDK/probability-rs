@@ -47,17 +47,17 @@ where
     type T = T;
     type U = SwitchedParams<U>;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let s = theta;
 
         match s {
             SwitchedParams::Key(k, map) => match map.get(k) {
-                Some(theta) => self.distribution.p(x, theta),
+                Some(theta) => self.distribution.fk(x, theta),
                 None => Err(DistributionError::InvalidParameters(
                     SwitchedError::KeyNotFound.into(),
                 )),
             },
-            SwitchedParams::Direct(theta) => self.distribution.p(x, theta),
+            SwitchedParams::Direct(theta) => self.distribution.fk(x, theta),
             SwitchedParams::None => Ok(1.0),
         }
     }

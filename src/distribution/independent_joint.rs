@@ -41,8 +41,8 @@ where
     type T = (TL, TR);
     type U = U;
 
-    fn p(&self, x: &(TL, TR), theta: &U) -> Result<f64, DistributionError> {
-        Ok(self.lhs.p(&x.0, theta)? * self.rhs.p(&x.1, theta)?)
+    fn fk(&self, x: &(TL, TR), theta: &U) -> Result<f64, DistributionError> {
+        Ok(self.lhs.fk(&x.0, theta)? * self.rhs.fk(&x.1, theta)?)
     }
 
     fn sample(&self, theta: &U, rng: &mut dyn RngCore) -> Result<(TL, TR), DistributionError> {

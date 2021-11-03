@@ -25,7 +25,7 @@ impl Distribution for Gamma {
     type T = f64;
     type U = GammaParams;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let shape = theta.shape();
         let scale = theta.scale();
 

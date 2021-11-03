@@ -71,7 +71,7 @@ where
     type T = T;
     type U = ();
 
-    fn p(&self, x: &Self::T, _: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, _: &Self::U) -> Result<f64, DistributionError> {
         Ok(*self.n_map.get(x).unwrap_or(&0) as f64 / self.n as f64)
     }
 

@@ -34,7 +34,7 @@ impl Distribution for InverseWishart {
     type U = InverseWishartParams;
 
     /// x must be cholesky decomposed
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let lpsi = theta.lpsi();
         let nu = theta.nu();
 

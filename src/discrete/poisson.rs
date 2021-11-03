@@ -1,5 +1,5 @@
-use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{DiscreteDistribution, DistributionError};
 use rand::prelude::*;
 use rand_distr::Poisson as RandPoisson;
 use std::{ops::BitAnd, ops::Mul};
@@ -25,7 +25,7 @@ impl Distribution for Poisson {
     type T = u64;
     type U = PoissonParams;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let lambda = theta.lambda();
 
         Ok(lambda.powi(*x as i32) / factorial(*x) as f64 * (-lambda).exp())
@@ -42,6 +42,8 @@ impl Distribution for Poisson {
         Ok(rng.sample(poisson) as u64)
     }
 }
+
+impl DiscreteDistribution for Poisson {}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct PoissonParams {

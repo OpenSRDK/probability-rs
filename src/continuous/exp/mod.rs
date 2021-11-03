@@ -18,7 +18,7 @@ impl Distribution for Exp {
     type T = f64;
     type U = ExpParams;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let lambda = theta.lambda();
 
         Ok(lambda * (-lambda * x).exp())

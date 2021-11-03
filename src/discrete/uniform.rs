@@ -1,4 +1,4 @@
-use crate::{Distribution, DistributionError, RandomVariable};
+use crate::{DiscreteDistribution, Distribution, DistributionError, RandomVariable};
 use rand::prelude::*;
 use std::{collections::HashSet, hash::Hash, marker::PhantomData};
 
@@ -36,7 +36,7 @@ where
     type T = T;
     type U = HashSet<T>;
 
-    fn p(&self, _: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, _x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         Ok(1.0 / theta.len() as f64)
     }
 
@@ -60,3 +60,5 @@ where
         ))
     }
 }
+
+impl<T> DiscreteDistribution for DiscreteUniform<T> where T: RandomVariable + Eq + Hash {}

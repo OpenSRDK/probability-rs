@@ -70,7 +70,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
 
     let mh_proposal = InstantDistribution::new(
         &|x: &ExactEllipticalParams, theta: &ExactEllipticalParams| {
-            Ok(MultivariateNormal::new().p(
+            Ok(MultivariateNormal::new().fk(
                 &x.mu(),
                 &ExactEllipticalParams::new(
                     theta.mu().clone(),

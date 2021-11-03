@@ -13,10 +13,10 @@ impl Distribution for Cauchy {
     type T = f64;
     type U = CauchyParams;
 
-    fn p(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let studentt_params = StudentTParams::new(1.0, theta.mu, theta.sigma)?;
 
-        StudentT.p(x, &studentt_params)
+        StudentT.fk(x, &studentt_params)
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
