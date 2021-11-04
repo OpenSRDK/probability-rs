@@ -1,7 +1,7 @@
 use crate::*;
 use crate::{Distribution, DistributionError};
-use rand::prelude::*;
-use rand_distr::num_traits::Pow;
+use rand::distributions::WeightedIndex;
+use rand_distr::Distribution as RandDistribution;
 use std::ops::{BitAnd, Mul};
 
 #[derive(Clone, Debug)]
@@ -38,15 +38,13 @@ impl Distribution for Categorical {
         theta: &Self::U,
         rng: &mut dyn rand::RngCore,
     ) -> Result<Self::T, DistributionError> {
-        let u = rng.gen_range(0.0..=1.0);
-        let mut p_sum = 0.0;
-        for i in 0..theta.p().len() {
-            p_sum += theta.p()[i];
-            if u <= p_sum {
-                return Ok(i);
-            }
-        }
-        Err(DistributionError::Others(CategoricalError::Unknown.into()))
+        let index = match WeightedIndex::new(theta.p.clone()) {
+            Ok(v) => Ok(v),
+            Err(e) => Err(DistributionError::Others(e.into())),
+        }?
+        .sample(rng);
+
+        Ok(index)
     }
 }
 
@@ -59,22 +57,6 @@ pub struct CategoricalParams {
 
 impl CategoricalParams {
     pub fn new(p: Vec<f64>) -> Result<Self, DistributionError> {
-        let mut p_sum = 0.0;
-        for &pi in p.iter() {
-            if pi < 0.0 || 1.0 < pi {
-                return Err(DistributionError::InvalidParameters(
-                    CategoricalError::PMustBeProbability.into(),
-                ));
-            }
-            p_sum += pi;
-        }
-        let epsilon = 10.0.pow(-6);
-        if p_sum < 1.0 - epsilon || 1.0 + epsilon < p_sum {
-            return Err(DistributionError::InvalidParameters(
-                CategoricalError::SumOfPMustBeOne.into(),
-            ));
-        }
-
         Ok(Self { p })
     }
 

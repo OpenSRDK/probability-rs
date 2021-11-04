@@ -6,7 +6,7 @@ use opensrdk_linear_algebra::Vector;
 use rand::prelude::*;
 use rand_distr::StandardNormal;
 use std::marker::PhantomData;
-use std::{f64::consts::PI, ops::BitAnd, ops::Mul};
+use std::{ops::BitAnd, ops::Mul};
 
 /// Multivariate normal distribution
 #[derive(Clone, Debug)]
@@ -40,10 +40,8 @@ where
 
     fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let x_mu = theta.x_mu(x)?.col_mat();
-        let n = x_mu.rows() as f64;
 
-        Ok(1.0 / ((2.0 * PI).powf(n / 2.0) * theta.sigma_det_sqrt())
-            * (-1.0 / 2.0 * (x_mu.t() * theta.sigma_inv_mul(x_mu)?)[(0, 0)]).exp())
+        Ok((-1.0 / 2.0 * (x_mu.t() * theta.sigma_inv_mul(x_mu)?)[(0, 0)]).exp())
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {

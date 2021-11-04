@@ -3,8 +3,6 @@ use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use opensrdk_linear_algebra::{matrix::ge::sy_he::po::trf::POTRF, *};
 use rand::prelude::*;
-use special::Gamma;
-use std::f64::consts::PI;
 use std::{ops::BitAnd, ops::Mul};
 
 /// Inverse Wishart distribution
@@ -21,14 +19,6 @@ pub enum InverseWishartError {
     Unknown,
 }
 
-fn multivariate_gamma(p: u64, a: f64) -> f64 {
-    PI.powf(p as f64 * (p as f64 - 1.0) / 4.0)
-        * (0..p)
-            .into_iter()
-            .map(|i| Gamma::gamma(a + i as f64 / 2.0))
-            .product::<f64>()
-}
-
 impl Distribution for InverseWishart {
     type T = Matrix;
     type U = InverseWishartParams;
@@ -40,9 +30,7 @@ impl Distribution for InverseWishart {
 
         let p = x.rows() as f64;
 
-        Ok(lpsi.trdet().powf(nu / 2.0)
-            / (2f64.powf(nu * p / 2.0) * multivariate_gamma(p as u64, nu / 2.0))
-            * x.trdet().powf(-(nu + p + 1.0) / 2.0)
+        Ok(x.trdet().powf(-(nu + p + 1.0) / 2.0)
             * (-0.5 * POTRF(x.clone()).potrs(lpsi * lpsi.t())?.tr()).exp())
     }
 

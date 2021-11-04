@@ -2,7 +2,6 @@ use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::Beta as RandBeta;
-use special::Beta as BetaFunc;
 use std::{ops::BitAnd, ops::Mul};
 
 /// Beta distribution
@@ -25,8 +24,7 @@ impl Distribution for Beta {
         let alpha = theta.alpha();
         let beta = theta.beta();
 
-        Ok((x.powf(alpha - 1.0) * (1.0 - x).powf(beta - 1.0))
-            / BetaFunc::ln_beta(alpha, beta).exp())
+        Ok(x.powf(alpha - 1.0) * (1.0 - x).powf(beta - 1.0))
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {

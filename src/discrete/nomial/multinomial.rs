@@ -2,24 +2,24 @@ use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use crate::{DiscreteDistribution, DistributionError};
 use num_integer::binomial;
 use rand::prelude::*;
-use rand_distr::Binomial as RandBinominal;
+use rand_distr::Binomial as RandMultinominal;
 use std::{ops::BitAnd, ops::Mul};
 
-/// Binominal distribution
+/// Multinominal distribution
 #[derive(Clone, Debug)]
-pub struct Binominal;
+pub struct Multinominal;
 
 #[derive(thiserror::Error, Debug)]
-pub enum BinominalError {
+pub enum MultinominalError {
     #[error("'p' must be probability.")]
     PMustBeProbability,
     #[error("Unknown error")]
     Unknown,
 }
 
-impl Distribution for Binominal {
+impl Distribution for Multinominal {
     type T = u64;
-    type U = BinominalParams;
+    type U = MultinominalParams;
 
     fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let n = theta.n();
@@ -32,28 +32,28 @@ impl Distribution for Binominal {
         let n = theta.n();
         let p = theta.p();
 
-        let binominal = match RandBinominal::new(n, p) {
+        let multinominal = match RandMultinominal::new(n, p) {
             Ok(v) => Ok(v),
             Err(e) => Err(DistributionError::Others(e.into())),
         }?;
 
-        Ok(rng.sample(binominal))
+        Ok(rng.sample(multinominal))
     }
 }
 
-impl DiscreteDistribution for Binominal {}
+impl DiscreteDistribution for Multinominal {}
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct BinominalParams {
+pub struct MultinominalParams {
     n: u64,
     p: f64,
 }
 
-impl BinominalParams {
+impl MultinominalParams {
     pub fn new(n: u64, p: f64) -> Result<Self, DistributionError> {
         if p < 0.0 || 1.0 < p {
             return Err(DistributionError::InvalidParameters(
-                BinominalError::PMustBeProbability.into(),
+                MultinominalError::PMustBeProbability.into(),
             ));
         }
 
@@ -69,24 +69,24 @@ impl BinominalParams {
     }
 }
 
-impl<Rhs, TRhs> Mul<Rhs> for Binominal
+impl<Rhs, TRhs> Mul<Rhs> for Multinominal
 where
-    Rhs: Distribution<T = TRhs, U = BinominalParams>,
+    Rhs: Distribution<T = TRhs, U = MultinominalParams>,
     TRhs: RandomVariable,
 {
-    type Output = IndependentJoint<Self, Rhs, u64, TRhs, BinominalParams>;
+    type Output = IndependentJoint<Self, Rhs, u64, TRhs, MultinominalParams>;
 
     fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
     }
 }
 
-impl<Rhs, URhs> BitAnd<Rhs> for Binominal
+impl<Rhs, URhs> BitAnd<Rhs> for Multinominal
 where
-    Rhs: Distribution<T = BinominalParams, U = URhs>,
+    Rhs: Distribution<T = MultinominalParams, U = URhs>,
     URhs: RandomVariable,
 {
-    type Output = DependentJoint<Self, Rhs, u64, BinominalParams, URhs>;
+    type Output = DependentJoint<Self, Rhs, u64, MultinominalParams, URhs>;
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)

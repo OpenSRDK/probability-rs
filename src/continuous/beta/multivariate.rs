@@ -3,7 +3,6 @@ use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::Dirichlet as RandDirichlet;
 use rayon::{iter::IntoParallelIterator, prelude::*};
-use special::Gamma;
 use std::{ops::BitAnd, ops::Mul};
 
 /// Dirichlet distribution
@@ -22,14 +21,6 @@ pub enum DirichletError {
     Unknown,
 }
 
-fn multivariate_beta(alpha: &[f64]) -> f64 {
-    alpha
-        .into_par_iter()
-        .map(|&alphai| Gamma::gamma(alphai))
-        .product::<f64>()
-        / Gamma::gamma(alpha.into_par_iter().sum::<f64>())
-}
-
 impl Distribution for Dirichlet {
     type T = Vec<f64>;
     type U = DirichletParams;
@@ -43,11 +34,10 @@ impl Distribution for Dirichlet {
             ));
         }
 
-        Ok(1.0 / multivariate_beta(alpha)
-            * x.into_par_iter()
-                .zip(alpha.into_par_iter())
-                .map(|(&xi, &alphai)| xi.powf(alphai - 1.0))
-                .product::<f64>())
+        Ok(x.into_par_iter()
+            .zip(alpha.into_par_iter())
+            .map(|(&xi, &alphai)| xi.powf(alphai - 1.0))
+            .product::<f64>())
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {

@@ -314,10 +314,6 @@ where
         Self::sigma_inv_mul_with_params(n, sigma2, &self.wx, &self.kuu, &v)
     }
 
-    fn sigma_det_sqrt(&self) -> f64 {
-        self.kxx_det_sqrt
-    }
-
     fn lsigma_cols(&self) -> usize {
         self.mu.len()
     }

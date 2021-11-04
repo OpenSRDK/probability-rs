@@ -90,10 +90,6 @@ where
         Ok(self.lsigma.potrs(v)?)
     }
 
-    fn sigma_det_sqrt(&self) -> f64 {
-        self.lsigma.0.trdet()
-    }
-
     fn lsigma_cols(&self) -> usize {
         self.lsigma.0.cols()
     }

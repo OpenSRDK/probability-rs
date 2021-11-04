@@ -1,5 +1,6 @@
 use crate::{DiscreteUniform, Distribution, DistributionError, RandomVariable};
 use rand::prelude::*;
+use rayon::prelude::*;
 use std::{
     collections::{HashMap, HashSet},
     hash::Hash,
@@ -37,7 +38,7 @@ where
         A: RandomVariable,
     {
         let f_map = range
-            .iter()
+            .par_iter()
             .map(|b| -> Result<_, DistributionError> {
                 Ok((b.clone(), likelihood.fk(value, b)? * prior.fk(b, &())?))
             })
@@ -69,7 +70,7 @@ where
             let u = rng.gen_range(0.0..=last_f);
             let range = self
                 .f_map
-                .iter()
+                .par_iter()
                 .filter(|&(_, &v)| u <= v)
                 .map(|(k, _)| k.clone())
                 .collect::<HashSet<B>>();

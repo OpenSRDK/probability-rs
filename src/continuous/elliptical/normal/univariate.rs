@@ -3,7 +3,7 @@ use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use crate::{DistributionError, NormalError};
 use rand::prelude::*;
 use rand_distr::Normal as RandNormal;
-use std::{f64::consts::PI, ops::BitAnd, ops::Mul};
+use std::{ops::BitAnd, ops::Mul};
 
 /// Normal distribution
 #[derive(Clone, Debug)]
@@ -17,8 +17,7 @@ impl Distribution for Normal {
         let mu = theta.mu();
         let sigma = theta.sigma();
 
-        Ok(1.0 / (2.0 * PI * sigma.powi(2)).sqrt()
-            * (-(x - mu).powi(2) / (2.0 * sigma.powi(2))).exp())
+        Ok((-(x - mu).powi(2) / (2.0 * sigma.powi(2))).exp())
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {

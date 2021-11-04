@@ -57,7 +57,11 @@ where
         &self.theta
     }
 
-    pub fn set_s(&mut self, i: usize, si: PitmanYorGibbsSample) -> u32 {
+    pub fn theta_mut(&mut self) -> &mut HashMap<u32, T> {
+        &mut self.theta
+    }
+
+    pub fn set_s(&mut self, i: usize, sampled: PitmanYorGibbsSample) -> u32 {
         self.s_inv
             .entry(self.s[i])
             .or_insert(HashSet::new())
@@ -67,7 +71,7 @@ where
             self.theta.remove(&self.s[i]);
         }
 
-        match si {
+        match sampled {
             PitmanYorGibbsSample::Existing(si) => {
                 self.s[i] = si;
                 self.s_inv
@@ -92,12 +96,6 @@ where
                 self.s[i]
             }
         }
-    }
-
-    pub fn set_s_with_theta(&mut self, i: usize, si: PitmanYorGibbsSample, theta: T) -> u32 {
-        let new_k = self.set_s(i, si);
-        self.theta.insert(new_k, theta);
-        new_k
     }
 
     pub fn n(&self, k: u32) -> usize {
@@ -129,11 +127,11 @@ mod tests {
         theta.insert(4u32, NormalParams::new(4.0, 2.0).unwrap());
 
         let mut cs = ClusterSwitch::new(s, theta).unwrap();
-        let new_k = cs.set_s_with_theta(
-            0,
-            PitmanYorGibbsSample::New,
-            NormalParams::new(mu, 2.0).unwrap(),
-        );
+
+        let new_k = cs.set_s(0, PitmanYorGibbsSample::New);
+        cs.theta_mut()
+            .insert(new_k, NormalParams::new(mu, 2.0).unwrap());
+
         let new_mu = cs.theta().get(&new_k).unwrap().mu();
 
         assert_eq!(mu, new_mu);

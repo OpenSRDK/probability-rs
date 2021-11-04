@@ -1,5 +1,6 @@
 pub mod conditioned;
 pub mod dependent_joint;
+pub mod discrete_posterior;
 pub mod independent_array_joint;
 pub mod independent_joint;
 pub mod instant;
@@ -8,6 +9,7 @@ pub mod switched;
 
 pub use conditioned::*;
 pub use dependent_joint::*;
+pub use discrete_posterior::*;
 pub use independent_array_joint::*;
 pub use independent_joint::*;
 pub use instant::*;

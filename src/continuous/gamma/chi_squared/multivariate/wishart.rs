@@ -3,8 +3,6 @@ use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use crate::{ExactMultivariateNormalParams, MultivariateNormal};
 use opensrdk_linear_algebra::{matrix::ge::sy_he::po::trf::POTRF, *};
 use rand::prelude::*;
-use special::Gamma;
-use std::f64::consts::PI;
 use std::{ops::BitAnd, ops::Mul};
 
 /// Wishart distribution
@@ -19,14 +17,6 @@ pub enum WishartError {
     NMustBeGTEDimension,
 }
 
-fn multivariate_gamma(p: u64, a: f64) -> f64 {
-    PI.powf(p as f64 * (p as f64 - 1.0) / 4.0)
-        * (0..p)
-            .into_iter()
-            .map(|i| Gamma::gamma(a + i as f64 / 2.0))
-            .product::<f64>()
-}
-
 impl Distribution for Wishart {
     type T = Matrix;
     type U = WishartParams;
@@ -39,10 +29,7 @@ impl Distribution for Wishart {
         let p = x.rows() as f64;
 
         Ok(x.trdet().powf((n + p + 1.0) / 2.0)
-            * (-0.5 * POTRF(lv.clone()).potrs(x * x.t())?.tr()).exp()
-            / (2f64.powf(n * p / 2.0)
-                * lv.trdet().powf(n / 2.0)
-                * multivariate_gamma(p as u64, n / 2.0)))
+            * (-0.5 * POTRF(lv.clone()).potrs(x * x.t())?.tr()).exp())
     }
 
     /// output is cholesky decomposed

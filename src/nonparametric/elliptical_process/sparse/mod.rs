@@ -160,10 +160,6 @@ where
         Self::sigma_inv_mul(&self.kux, &self.omega_inv.mat(), &self.ls, v)
     }
 
-    fn sigma_det_sqrt(&self) -> f64 {
-        self.kxx_det_sqrt
-    }
-
     fn lsigma_cols(&self) -> usize {
         self.lsigma.cols()
     }

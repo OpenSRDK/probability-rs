@@ -88,7 +88,7 @@ where
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum PitmanYorGibbsSample {
     Existing(u32),
     New,

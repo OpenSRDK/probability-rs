@@ -18,7 +18,7 @@ use std::time::Instant;
 
 #[test]
 fn test_main() {
-    let is_not_ci = false;
+    let is_not_ci = true;
 
     if is_not_ci {
         let start = Instant::now();
@@ -90,8 +90,8 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         },
     );
 
-    const ITER: usize = 4000;
-    const BURNIN: usize = 4000;
+    const ITER: usize = 2000;
+    const BURNIN: usize = 1000;
 
     let mut state_list = LinkedList::<ClusterSwitch<ExactEllipticalParams>>::new();
     state_list.push_back(ClusterSwitch::new(
@@ -115,13 +115,12 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
 
         let mut s = state_list.back().unwrap().clone();
 
-        let (i, si, theta_si) = {
-            let gibbs_sampler = PitmanYorGibbsSampler::new(&pyp_params, &s, &x, likelihood.clone());
+        {
+            let mut gibbs_sampler =
+                PitmanYorGibbsSampler::new(&pyp_params, &mut s, &x, &likelihood);
 
-            gibbs_sampler.step_sample(&mh_proposal, &mut rng)?
+            gibbs_sampler.sample(&mh_proposal, &mut rng)?;
         };
-
-        s.set_s_with_theta(i, si, theta_si);
 
         if iter <= BURNIN {
             state_list.clear();

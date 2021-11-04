@@ -2,8 +2,6 @@ use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable, Vect
 use crate::{DistributionError, StudentTError};
 use rand::prelude::*;
 use rand_distr::StudentT as RandStudentT;
-use special::Gamma;
-use std::f64::consts::PI;
 use std::{ops::BitAnd, ops::Mul};
 
 /// Student-t distribution
@@ -19,10 +17,7 @@ impl Distribution for StudentT {
         let mu = theta.mu();
         let sigma = theta.sigma();
 
-        Ok(
-            (Gamma::gamma((nu + 1.0) / 2.0) / ((nu * PI).sqrt() * Gamma::gamma(nu / 2.0)))
-                * (1.0 + ((x - mu) / sigma).powi(2) / nu).powf(-((nu + 1.0) / 2.0)),
-        )
+        Ok((1.0 + ((x - mu) / sigma).powi(2) / nu).powf(-((nu + 1.0) / 2.0)))
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
