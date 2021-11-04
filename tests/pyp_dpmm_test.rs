@@ -109,23 +109,56 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
     )?);
 
     let likelihood = MultivariateNormal::new();
+    let mut modification_count = HashMap::<u32, usize>::new();
 
     for iter in 0..ITER {
         println!("iteration {}", iter);
 
-        let mut s = state_list.back().unwrap().clone();
+        let old_switch = state_list.back().unwrap();
+        let old_theta = old_switch.theta();
 
-        {
-            let mut gibbs_sampler =
-                PitmanYorGibbsSampler::new(&pyp_params, &mut s, &x, &likelihood);
+        let mut new_switch = {
+            let gibbs_sampler =
+                PitmanYorGibbsSampler::new(&pyp_params, old_switch, &x, &likelihood);
 
-            gibbs_sampler.sample(&mh_proposal, &mut rng)?;
+            gibbs_sampler.sample(&mh_proposal, &mut rng)?
         };
+
+        new_switch
+            .theta_mut()
+            .par_iter_mut()
+            .for_each(|(&k, theta_k)| {
+                match old_theta.get(&k) {
+                    Some(old_theta_k) => {
+                        let count = *modification_count.get(&k).unwrap_or(&0) + 1;
+                        let w = (1.0 / count as f64).max(0.05);
+
+                        let matrix = (1.0 - w) * old_theta_k.clone().transform_vec().0.col_mat()
+                            + w * theta_k.clone().transform_vec().0.col_mat();
+                        *theta_k = ExactMultivariateNormalParams::restore((matrix.vec(), 2));
+                    }
+                    None => {}
+                };
+            });
+        new_switch.theta().iter().for_each(|(&k, _)| {
+            *modification_count.entry(k).or_insert(0) += 1;
+        });
+
+        println!("{:?}", new_switch.theta().keys().collect::<Vec<_>>());
+
+        // println!(
+        //     "{:?}",
+        //     new_switch
+        //         .theta()
+        //         .values()
+        //         .map(|th| th.mu())
+        //         .collect::<Vec<_>>()
+        // );
 
         if iter <= BURNIN {
             state_list.clear();
         }
-        state_list.push_back(s);
+        state_list.push_back(new_switch);
         println!("{:?}", state_list.back().unwrap().theta().len());
     }
 
