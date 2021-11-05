@@ -18,7 +18,7 @@ use std::time::Instant;
 
 #[test]
 fn test_main() {
-    let is_not_ci = true;
+    let is_not_ci = false;
 
     if is_not_ci {
         let start = Instant::now();
@@ -53,7 +53,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("x生成完了");
 
-    let n = x.len();
+    let n = y_x.len();
 
     let alpha_pyp = 0.7;
     let d = 0.1;
@@ -104,35 +104,64 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
             .collect::<HashMap<u32, (f64, f64)>>(),
     )?);
 
-    let likelihood = InstantDistribution::new(
-        &|x: &(f64, f64), theta: &(f64, f64)| {
-            let (y, x) = *x;
-            let (alpha, beta) = *theta;
-            Normal.fk(&y, &NormalParams::new(alpha + beta * x, sigma)?)
-        },
-        &|theta: &(f64, f64), rng| Ok((0.0, 0.0)),
-    );
+    let instant_p = |x: &(f64, f64), theta: &(f64, f64)| {
+        let (y, x) = *x;
+        let (alpha, beta) = *theta;
+        Normal.fk(&y, &NormalParams::new(alpha + beta * x, sigma)?)
+    };
+
+    let likelihood =
+        InstantDistribution::new(&instant_p, &|_theta: &(f64, f64), _rng| Ok((0.0, 0.0)));
+    let mut modification_count = HashMap::<u32, usize>::new();
 
     for iter in 0..ITER {
         println!("iteration {}", iter);
 
-        let mut s = state_list.back().unwrap().clone();
+        let old_switch = state_list.back().unwrap();
+        let old_theta = old_switch.theta();
 
-        {
-            let mut gibbs_sampler = PitmanYorGibbsSampler::<
-                InstantDistribution<(f64, f64), (f64, f64)>,
-                (f64, f64),
-                (f64, f64),
-                InstantDistribution<(f64, f64), ()>,
-            >::new(&pyp_params, &mut s, &y_x, &likelihood);
+        let mut new_switch = {
+            let gibbs_sampler =
+                PitmanYorGibbsSampler::new(&pyp_params, old_switch, &y_x, &likelihood);
 
-            gibbs_sampler.sample(&mh_proposal, &mut rng)?;
+            gibbs_sampler.sample(&mh_proposal, &mut rng)?
         };
+
+        new_switch
+            .theta_mut()
+            .par_iter_mut()
+            .for_each(|(&k, theta_k)| {
+                match old_theta.get(&k) {
+                    Some(old_theta_k) => {
+                        let count = *modification_count.get(&k).unwrap_or(&0) + 1;
+                        let w = (1.0 / count as f64).max(0.05);
+
+                        let matrix = (1.0 - w) * vec![old_theta_k.0, old_theta_k.1].col_mat()
+                            + w * vec![theta_k.0, theta_k.1].col_mat();
+                        *theta_k = (matrix.elems()[0], matrix.elems()[1]);
+                    }
+                    None => {}
+                };
+            });
+        new_switch.theta().iter().for_each(|(&k, _)| {
+            *modification_count.entry(k).or_insert(0) += 1;
+        });
+
+        println!("{:?}", new_switch.theta().keys().collect::<Vec<_>>());
+
+        // println!(
+        //     "{:?}",
+        //     new_switch
+        //         .theta()
+        //         .values()
+        //         .map(|th| th.mu())
+        //         .collect::<Vec<_>>()
+        // );
 
         if iter <= BURNIN {
             state_list.clear();
         }
-        state_list.push_back(s);
+        state_list.push_back(new_switch);
         println!("{:?}", state_list.back().unwrap().theta().len());
     }
 
@@ -213,7 +242,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         .draw()?;
 
     chart.draw_series(PointSeries::of_element(
-        x.iter().map(|xi| (xi[0], xi[1])).into_iter(),
+        y_x.iter().map(|&(yi, xi)| (xi, yi)).into_iter(),
         2,
         ShapeStyle::from(&BLACK.mix(0.1)).filled(),
         &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
@@ -223,7 +252,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
             .s_inv()
             .iter()
             .map(|(k, _)| last_state.theta().get(k).unwrap())
-            .map(|theta_k| (theta_k.mu()[0], theta_k.mu()[1])),
+            .map(|&(alpha, beta)| (alpha, beta)),
         60,
         ShapeStyle::from(&BLUE.mix(0.5)).stroke_width(1),
         &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),

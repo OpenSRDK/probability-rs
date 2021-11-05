@@ -18,7 +18,7 @@ use std::time::Instant;
 
 #[test]
 fn test_main() {
-    let is_not_ci = true;
+    let is_not_ci = false;
 
     if is_not_ci {
         let start = Instant::now();
