@@ -2,6 +2,8 @@ use crate::nonparametric::*;
 use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
+use std::collections::HashMap;
+use std::collections::HashSet;
 use std::marker::PhantomData;
 use std::{ops::BitAnd, ops::Mul};
 
@@ -38,17 +40,12 @@ where
     fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let alpha = theta.base.alpha;
         let d = theta.base.d;
-        let s = theta.s.s();
-        let n = s.len().max(1) - 1;
-        let clusters_len = theta.s.clusters_len();
+        let n = theta.n;
+        let clusters_len = theta.s_inv.len();
 
         match *x {
             PitmanYorGibbsSample::Existing(k) => {
-                let mut nk = theta.s.n(k);
-
-                if s[theta.remove_index] == k {
-                    nk -= 1
-                }
+                let nk = theta.s_inv.get(&k).unwrap_or(&HashSet::new()).len();
 
                 if nk != 0 {
                     return Ok((nk as f64 - d) / (n as f64 + alpha));
@@ -60,31 +57,12 @@ where
         }
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
-        let alpha = theta.base.alpha;
-        let d = theta.base.d;
-        let s = theta.s.s();
-        let n = s.len().max(1) - 1;
-        let s_inv = theta.s.s_inv();
-
-        let p = rng.gen_range(0.0..=1.0);
-        let mut p_sum = 0.0;
-
-        for (&k, indice) in s_inv.iter() {
-            let mut nk = indice.len();
-            if s[theta.remove_index] == k {
-                nk -= 1;
-            }
-            if nk == 0 {
-                continue;
-            }
-            p_sum += (nk as f64 - d) / (n as f64 + alpha);
-            if p < p_sum {
-                return Ok(PitmanYorGibbsSample::Existing(k));
-            }
-        }
-
-        Ok(PitmanYorGibbsSample::New)
+    fn sample(
+        &self,
+        _theta: &Self::U,
+        _rng: &mut dyn RngCore,
+    ) -> Result<Self::T, DistributionError> {
+        todo!()
     }
 }
 
@@ -101,8 +79,8 @@ where
     TH: RandomVariable,
 {
     base: &'a PitmanYorProcessParams<G0, TH>,
-    s: &'a ClusterSwitch<TH>,
-    remove_index: usize,
+    s_inv: &'a HashMap<u32, HashSet<usize>>,
+    n: usize,
 }
 
 impl<'a, G0, TH> PitmanYorGibbsParams<'a, G0, TH>
@@ -113,20 +91,10 @@ where
     /// - `d`: 0 ≦ d < 1. If it is zero, Pitman-Yor process means Chinese restaurant process.
     pub fn new(
         base: &'a PitmanYorProcessParams<G0, TH>,
-        s: &'a ClusterSwitch<TH>,
-        remove_index: usize,
-    ) -> Result<Self, DistributionError> {
-        if s.s().len() <= remove_index {
-            return Err(DistributionError::InvalidParameters(
-                PitmanYorProcessError::RemoveIndexOutOfRange.into(),
-            ));
-        }
-
-        Ok(Self {
-            base,
-            s,
-            remove_index,
-        })
+        s_inv: &'a HashMap<u32, HashSet<usize>>,
+        n: usize,
+    ) -> Self {
+        Self { base, s_inv, n }
     }
 }
 

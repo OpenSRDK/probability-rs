@@ -40,8 +40,10 @@ where
 
     fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
         let x_mu = theta.x_mu(x)?.col_mat();
+        let n = x.len();
 
-        Ok((-1.0 / 2.0 * (x_mu.t() * theta.sigma_inv_mul(x_mu)?)[(0, 0)]).exp())
+        // For preventing the result from being zero, dividing e^n
+        Ok((-1.0 / 2.0 * (x_mu.t() * theta.sigma_inv_mul(x_mu)?)[(0, 0)] / (n as f64).exp()).exp())
     }
 
     fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {

@@ -124,7 +124,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
             let gibbs_sampler =
                 PitmanYorGibbsSampler::new(&pyp_params, old_switch, &y_x, &likelihood);
 
-            gibbs_sampler.sample(&mh_proposal, &mut rng)?
+            gibbs_sampler.step_sample(&mh_proposal, &mut rng)?
         };
 
         new_switch

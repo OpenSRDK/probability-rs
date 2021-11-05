@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use crate::*;
 use crate::{nonparametric::*, Distribution};
@@ -42,12 +42,64 @@ where
 
     fn gibbs_condition(
         &'a self,
-        remove_index: usize,
+        s_inv: &'a HashMap<u32, HashSet<usize>>,
+        n: usize,
     ) -> impl Fn(&()) -> Result<PitmanYorGibbsParams<'a, G0, U>, DistributionError> {
-        move |_| PitmanYorGibbsParams::new(self.base, self.switch, remove_index)
+        move |_| Ok(PitmanYorGibbsParams::new(self.base, s_inv, n))
     }
 
-    pub fn sample(
+    fn sample_s(
+        &self,
+        x: &T,
+        new_theta: &U,
+        switch: &ClusterSwitch<U>,
+        rng: &mut dyn RngCore,
+    ) -> Result<PitmanYorGibbsSample, DistributionError> {
+        let likelihood_condition = |s: &PitmanYorGibbsSample| {
+            Ok(match *s {
+                PitmanYorGibbsSample::Existing(k) => SwitchedParams::Key(k),
+                PitmanYorGibbsSample::New => SwitchedParams::Direct(new_theta.clone()),
+            })
+        };
+
+        let likelihood = self
+            .likelihood
+            .switch(switch.theta())
+            .condition(&likelihood_condition);
+        let prior_condition = self.gibbs_condition(switch.s_inv(), switch.s().len());
+        let prior = PitmanYorGibbs::new().condition(&prior_condition);
+
+        let posterior = DiscretePosterior::new(
+            likelihood,
+            prior,
+            switch
+                .s_inv()
+                .par_iter()
+                .map(|(&si, _)| PitmanYorGibbsSample::Existing(si))
+                .chain(rayon::iter::once(PitmanYorGibbsSample::New))
+                .collect::<HashSet<PitmanYorGibbsSample>>(),
+        );
+
+        posterior.sample(x, rng)
+    }
+
+    fn sample_theta(
+        &self,
+        x_in_k: &Vec<T>,
+        proposal: &impl Distribution<T = U, U = U>,
+    ) -> Result<U, DistributionError> {
+        let x_likelihood = vec![self.likelihood.clone(); x_in_k.len()]
+            .into_iter()
+            .joint();
+
+        let mh_sampler =
+            MetropolisHastingsSampler::new(x_in_k, &x_likelihood, &self.base.g0.distr, proposal);
+        let mut rng = thread_rng();
+
+        mh_sampler.sample(4, self.base.g0.distr.sample(&(), &mut rng)?, &mut rng)
+    }
+
+    pub fn step_sample(
         &self,
         proposal: &impl Distribution<T = U, U = U>,
         rng: &mut dyn RngCore,
@@ -58,36 +110,13 @@ where
 
         for remove_index in 0..n {
             let new_theta = self.base.g0.distr.sample(&(), rng)?;
-            let sampled = {
-                let likelihood_condition = |s: &PitmanYorGibbsSample| {
-                    Ok(match *s {
-                        PitmanYorGibbsSample::Existing(k) => SwitchedParams::Key(k),
-                        PitmanYorGibbsSample::New => SwitchedParams::Direct(new_theta.clone()),
-                    })
-                };
 
-                let likelihood = self
-                    .likelihood
-                    .switch(ret.theta())
-                    .condition(&likelihood_condition);
-                let prior_condition = self.gibbs_condition(remove_index);
-                let prior = PitmanYorGibbs::new().condition(&prior_condition);
+            ret.remove(remove_index);
 
-                let posterior = DiscretePosterior::new(
-                    likelihood,
-                    prior,
-                    ret.theta()
-                        .par_iter()
-                        .map(|(&si, _)| PitmanYorGibbsSample::Existing(si))
-                        .chain(rayon::iter::once(PitmanYorGibbsSample::New))
-                        .collect::<HashSet<PitmanYorGibbsSample>>(),
-                );
-
-                posterior.sample(&self.x[remove_index], rng)?
-            };
+            let sampled = self.sample_s(&self.x[remove_index], &new_theta, &ret, rng)?;
 
             let si = ret.set_s(remove_index, sampled);
-            if let PitmanYorGibbsSample::New = sampled {
+            if !ret.theta().contains_key(&si) {
                 ret.theta_mut().insert(si, new_theta);
             }
         }
@@ -101,20 +130,7 @@ where
                     .map(|&i| self.x[i].clone())
                     .collect::<Vec<_>>();
 
-                let x_likelihood = vec![self.likelihood.clone(); x_in_k.len()]
-                    .into_iter()
-                    .joint();
-
-                let mh_sampler = MetropolisHastingsSampler::new(
-                    &x_in_k,
-                    &x_likelihood,
-                    &self.base.g0.distr,
-                    proposal,
-                );
-                let mut rng = thread_rng();
-
-                let theta_k =
-                    mh_sampler.sample(4, self.base.g0.distr.sample(&(), &mut rng)?, &mut rng)?;
+                let theta_k = self.sample_theta(&x_in_k, proposal)?;
 
                 Ok((k, theta_k))
             })

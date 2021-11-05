@@ -58,21 +58,15 @@ where
             .range
             .par_iter()
             .map(|u| -> Result<_, DistributionError> {
-                // println!(
-                //     "{}, {}",
-                //     self.likelihood.fk(theta, u)?,
-                //     self.prior.fk(u, &())?
-                // );
                 Ok((self.likelihood.fk(theta, u)? * self.prior.fk(u, &())?, u))
             })
             .collect::<Result<Vec<(f64, &U)>, _>>()?;
 
-        let index =
-            match WeightedIndex::new(weighted.iter().map(|(w, _)| *w).collect::<Vec<_>>()) {
-                Ok(v) => v,
-                Err(_) => WeightedIndex::new(vec![1.0; weighted.len()]).unwrap(),
-            }
-            .sample(rng);
+        let index = match WeightedIndex::new(weighted.iter().map(|(w, _)| *w)) {
+            Ok(v) => v,
+            Err(_) => WeightedIndex::new(vec![1.0; weighted.len()]).unwrap(),
+        }
+        .sample(rng);
 
         Ok(weighted[index].1.clone())
     }

@@ -61,23 +61,23 @@ where
         &mut self.theta
     }
 
-    pub fn set_s(&mut self, i: usize, sampled: PitmanYorGibbsSample) -> u32 {
+    pub fn remove(&mut self, i: usize) {
         self.s_inv
             .entry(self.s[i])
             .or_insert(HashSet::new())
             .remove(&i);
-        if self.s_inv.get(&self.s[i]).unwrap().len() == 0 {
+        if self.s_inv.get(&self.s[i]).unwrap_or(&HashSet::new()).len() == 0 {
             self.s_inv.remove(&self.s[i]);
             self.theta.remove(&self.s[i]);
         }
+    }
 
-        match sampled {
+    pub fn set_s(&mut self, i: usize, sampled: PitmanYorGibbsSample) -> u32 {
+        self.remove(i);
+
+        let ret = match sampled {
             PitmanYorGibbsSample::Existing(si) => {
                 self.s[i] = si;
-                self.s_inv
-                    .entry(self.s[i])
-                    .or_insert(HashSet::new())
-                    .insert(i);
 
                 if self.max_k < si {
                     self.max_k = si;
@@ -88,14 +88,14 @@ where
             PitmanYorGibbsSample::New => {
                 self.max_k += 1;
                 self.s[i] = self.max_k;
-                self.s_inv
-                    .entry(self.s[i])
-                    .or_insert(HashSet::new())
-                    .insert(i);
 
                 self.s[i]
             }
-        }
+        };
+
+        self.s_inv.entry(ret).or_insert(HashSet::new()).insert(i);
+
+        ret
     }
 
     pub fn n(&self, k: u32) -> usize {
