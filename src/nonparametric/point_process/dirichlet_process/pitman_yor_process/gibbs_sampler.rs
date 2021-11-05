@@ -14,7 +14,7 @@ where
     G0: Distribution<T = U, U = ()>,
 {
     base: &'a PitmanYorProcessParams<G0, U>,
-    switch: &'a mut ClusterSwitch<U>,
+    switch: &'a ClusterSwitch<U>,
     x: &'a [T],
     likelihood: &'a L,
 }
@@ -28,7 +28,7 @@ where
 {
     pub fn new(
         base: &'a PitmanYorProcessParams<G0, U>,
-        s: &'a mut ClusterSwitch<U>,
+        s: &'a ClusterSwitch<U>,
         value: &'a [T],
         likelihood: &'a L,
     ) -> Self {
@@ -48,11 +48,13 @@ where
     }
 
     pub fn sample(
-        &mut self,
+        &self,
         proposal: &impl Distribution<T = U, U = U>,
         rng: &mut dyn RngCore,
-    ) -> Result<(), DistributionError> {
+    ) -> Result<ClusterSwitch<U>, DistributionError> {
         let n = self.switch.s().len();
+
+        let mut ret = self.switch.clone();
 
         for remove_index in 0..n {
             let new_theta = self.base.g0.distr.sample(&(), rng)?;
@@ -66,7 +68,7 @@ where
 
                 let likelihood = self
                     .likelihood
-                    .switch(self.switch.theta())
+                    .switch(ret.theta())
                     .condition(&likelihood_condition);
                 let prior_condition = self.gibbs_condition(remove_index);
                 let prior = PitmanYorGibbs::new().condition(&prior_condition);
@@ -74,8 +76,7 @@ where
                 let posterior = DiscretePosterior::new(
                     likelihood,
                     prior,
-                    self.switch
-                        .theta()
+                    ret.theta()
                         .par_iter()
                         .map(|(&si, _)| PitmanYorGibbsSample::Existing(si))
                         .chain(rayon::iter::once(PitmanYorGibbsSample::New))
@@ -85,14 +86,13 @@ where
                 posterior.sample(&self.x[remove_index], rng)?
             };
 
-            let si = self.switch.set_s(remove_index, sampled);
+            let si = ret.set_s(remove_index, sampled);
             if let PitmanYorGibbsSample::New = sampled {
-                self.switch.theta_mut().insert(si, new_theta);
+                ret.theta_mut().insert(si, new_theta);
             }
         }
 
-        *self.switch.theta_mut() = self
-            .switch
+        *ret.theta_mut() = ret
             .s_inv()
             .par_iter()
             .map(|(&k, indice)| -> Result<_, DistributionError> {
@@ -111,7 +111,7 @@ where
                     &self.base.g0.distr,
                     proposal,
                 );
-                let mut rng = StdRng::from_seed([1; 32]);
+                let mut rng = thread_rng();
 
                 let theta_k =
                     mh_sampler.sample(4, self.base.g0.distr.sample(&(), &mut rng)?, &mut rng)?;
@@ -120,6 +120,6 @@ where
             })
             .collect::<Result<_, _>>()?;
 
-        Ok(())
+        Ok(ret)
     }
 }
