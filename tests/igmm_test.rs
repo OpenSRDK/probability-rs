@@ -18,7 +18,7 @@ use std::time::Instant;
 
 #[test]
 fn test_main() {
-    let is_not_ci = false;
+    let is_not_ci = true;
 
     if is_not_ci {
         let start = Instant::now();
@@ -90,8 +90,8 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         },
     );
 
-    const ITER: usize = 2000;
-    const BURNIN: usize = 1000;
+    const ITER: usize = 200;
+    const BURNIN: usize = 0;
 
     let mut state_list = LinkedList::<ClusterSwitch<ExactEllipticalParams>>::new();
     state_list.push_back(ClusterSwitch::new(
@@ -109,7 +109,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
     )?);
 
     let likelihood = MultivariateNormal::new();
-    let mut modification_count = HashMap::<u32, usize>::new();
+    // let mut modification_count = HashMap::<u32, usize>::new();
 
     for iter in 0..ITER {
         println!("iteration {}", iter);
@@ -130,8 +130,9 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
             .for_each(|(&k, theta_k)| {
                 match old_theta.get(&k) {
                     Some(old_theta_k) => {
-                        let count = *modification_count.get(&k).unwrap_or(&0) + 1;
-                        let w = (1.0 / count as f64).max(0.05);
+                        // let count = *modification_count.get(&k).unwrap_or(&0) + 1;
+                        // let w = (1.0 / count as f64).max(0.05);
+                        let w = (1.0 / (iter + 1) as f64).max(0.05);
 
                         let matrix = (1.0 - w) * old_theta_k.clone().transform_vec().0.col_mat()
                             + w * theta_k.clone().transform_vec().0.col_mat();
@@ -140,9 +141,9 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
                     None => {}
                 };
             });
-        new_switch.theta().iter().for_each(|(&k, _)| {
-            *modification_count.entry(k).or_insert(0) += 1;
-        });
+        // new_switch.theta().iter().for_each(|(&k, _)| {
+        //     *modification_count.entry(k).or_insert(0) += 1;
+        // });
 
         println!("{:?}", new_switch.theta().keys().collect::<Vec<_>>());
 
@@ -162,64 +163,64 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
         println!("{:?}", state_list.back().unwrap().theta().len());
     }
 
-    // let mut max_p = 0.0;
-    // let mut max_p_state = state_list.front().unwrap().clone();
-
-    // let root = BitMapBackend::gif("dpmm.gif", (1600, 900), 0_500)?.into_drawing_area();
-
-    // for (t, s_t) in state_list.into_iter().enumerate() {
-    //     println!("gif {} writing...", t);
-
-    //     let p = (0..n)
-    //         .into_iter()
-    //         .map(|i| MultivariateNormal::new().p(&x[i], s_t.theta().get(&s_t.s()[i]).unwrap()))
-    //         .product::<Result<f64, DistributionError>>()?;
-
-    //     if max_p < p || true {
-    //         max_p = p;
-    //         max_p_state = s_t;
-    //     }
-    //     println!("{}", max_p);
-
-    //     root.fill(&WHITE)?;
-    //     let mut chart = ChartBuilder::on(&root)
-    //         .margin(10)
-    //         .set_all_label_area_size(50)
-    //         .build_cartesian_2d(-30.0..30.0, -30.0..30.0)?;
-
-    //     chart
-    //         .configure_mesh()
-    //         .x_labels(10)
-    //         .y_labels(10)
-    //         .disable_mesh()
-    //         .x_label_formatter(&|v| format!("{:.1}", v))
-    //         .y_label_formatter(&|v| format!("{:.1}", v))
-    //         .draw()?;
-
-    //     chart.draw_series(PointSeries::of_element(
-    //         x.iter().map(|xi| (xi[0], xi[1])).into_iter(),
-    //         2,
-    //         ShapeStyle::from(&BLACK.mix(0.1)).filled(),
-    //         &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
-    //     ))?;
-
-    //     chart.draw_series(PointSeries::of_element(
-    //         max_p_state
-    //             .s_inv()
-    //             .iter()
-    //             .map(|(k, _)| max_p_state.theta().get(k).unwrap())
-    //             .map(|theta_k| (theta_k.mu()[0], theta_k.mu()[1])),
-    //         60,
-    //         ShapeStyle::from(&BLUE.mix(0.5)).stroke_width(1),
-    //         &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
-    //     ))?;
-
-    //     root.present()?;
-    // }
-
-    println!("png writing...");
+    let mut max_p = 0.0;
+    let mut max_p_state = state_list.front().unwrap().clone();
 
     let last_state = state_list.back().unwrap().clone();
+
+    let root = BitMapBackend::gif("dpmm.gif", (1600, 900), 0_500)?.into_drawing_area();
+
+    for (t, s_t) in state_list.into_iter().enumerate() {
+        println!("gif {} writing...", t);
+
+        let p = (0..n)
+            .into_iter()
+            .map(|i| MultivariateNormal::new().fk(&x[i], s_t.theta().get(&s_t.s()[i]).unwrap()))
+            .product::<Result<f64, DistributionError>>()?;
+
+        if max_p < p || true {
+            max_p = p;
+            max_p_state = s_t;
+        }
+        println!("{}", max_p);
+
+        root.fill(&WHITE)?;
+        let mut chart = ChartBuilder::on(&root)
+            .margin(10)
+            .set_all_label_area_size(50)
+            .build_cartesian_2d(-30.0..30.0, -30.0..30.0)?;
+
+        chart
+            .configure_mesh()
+            .x_labels(10)
+            .y_labels(10)
+            .disable_mesh()
+            .x_label_formatter(&|v| format!("{:.1}", v))
+            .y_label_formatter(&|v| format!("{:.1}", v))
+            .draw()?;
+
+        chart.draw_series(PointSeries::of_element(
+            x.iter().map(|xi| (xi[0], xi[1])).into_iter(),
+            2,
+            ShapeStyle::from(&BLACK.mix(0.1)).filled(),
+            &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
+        ))?;
+
+        chart.draw_series(PointSeries::of_element(
+            max_p_state
+                .s_inv()
+                .iter()
+                .map(|(k, _)| max_p_state.theta().get(k).unwrap())
+                .map(|theta_k| (theta_k.mu()[0], theta_k.mu()[1])),
+            60,
+            ShapeStyle::from(&BLUE.mix(0.5)).stroke_width(1),
+            &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
+        ))?;
+
+        root.present()?;
+    }
+
+    println!("png writing...");
 
     let root = BitMapBackend::new("dpmm.png", (1600, 900)).into_drawing_area();
 
