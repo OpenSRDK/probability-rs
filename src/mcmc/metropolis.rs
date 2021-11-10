@@ -2,7 +2,7 @@ use crate::{Distribution, DistributionError, RandomVariable};
 use rand::prelude::*;
 
 /// Sample b from posterior p(b|a) with likelihood p(a|b) and prior p(b)
-pub struct MetropolisHastingsSampler<'a, L, P, A, B, PD>
+pub struct MetropolisSampler<'a, L, P, A, B, PD>
 where
     L: Distribution<T = A, U = B>,
     P: Distribution<T = B, U = ()>,
@@ -16,7 +16,7 @@ where
     proposal: &'a PD,
 }
 
-impl<'a, L, P, A, B, PD> MetropolisHastingsSampler<'a, L, P, A, B, PD>
+impl<'a, L, P, A, B, PD> MetropolisSampler<'a, L, P, A, B, PD>
 where
     L: Distribution<T = A, U = B>,
     P: Distribution<T = B, U = ()>,
