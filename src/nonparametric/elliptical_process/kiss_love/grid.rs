@@ -268,11 +268,22 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let grid = Grid::new(vec![Axis::new(1.0, 2.0, 2).unwrap(); 2]);
-        let x = vec![1.5, 1.75];
+        let grid = Grid::new(vec![Axis::new(0.0, 1.0, 2).unwrap(); 3]);
+
+        //Each element of the vector x is a binary 0 or 1.
+        //The elements of the sparse matrix in wx are arranged in the order in which they would be if the tree were made up of the first through nth elements of x. 
+        //If x is composed of only the largest or smallest values of Axes, then one of the elements of the sparse matrix in wx will be 1, and the order of the elements that are 1 is calculated from the tree.
+       
+        let x = vec![0.0, 1.0, 1.0];
+
+        let x1 = &x[0] * (2f64.powi((x.len() as i32) - 1));
+        let x2 = &x[1] * (2f64.powi((x.len() as i32) - 2));
+        let x3 = &x[2] * (2f64.powi((x.len() as i32) - 3));
+        let sum_x = (x1 + x2 + x3) as usize;
+
         let wx = grid.interpolation_weight(&[x]).unwrap();
 
-        println!("{:#?}", wx);
+        assert_eq!(wx[0][(sum_x, 0)], 1.0)
     }
 
     #[test]
