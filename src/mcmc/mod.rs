@@ -1,10 +1,10 @@
-pub mod discrete_slice_sampling;
 pub mod elliptical_slice_sampling;
 pub mod metropolis_hastings;
+pub mod slice_sampling;
 
-pub use discrete_slice_sampling::*;
 pub use elliptical_slice_sampling::*;
 pub use metropolis_hastings::*;
+pub use slice_sampling::*;
 
 use crate::RandomVariable;
 use opensrdk_linear_algebra::Matrix;
