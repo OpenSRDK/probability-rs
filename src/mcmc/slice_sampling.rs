@@ -40,7 +40,7 @@ where
     pub fn sample(
         &self,
         x: f64,
-        maxiter: usize,
+        max_iter: usize,
         rng: &mut dyn RngCore,
     ) -> Result<f64, DistributionError> {
         let mut st = 0.0;
@@ -50,7 +50,7 @@ where
         let slice = self.likelihood.fk(&self.value, &x)? * self.prior.fk(&x, &())?
             - 2.0 * rng.gen_range(0.0f64..1.0f64).ln();
 
-        for _iter in 0..maxiter {
+        for _iter in 0..max_iter {
             let rnew = rng.gen_range(st..ed);
             let expanded = expand(rnew)?;
 
