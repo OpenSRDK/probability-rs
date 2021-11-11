@@ -270,9 +270,9 @@ mod tests {
     fn it_works() {
         let grid = Grid::new(vec![Axis::new(0.0, 1.0, 2).unwrap(); 3]);
 
-        //Each element of the vector x is a binary 0 or 1.
-        //The elements of the sparse matrix in wx are arranged in the order in which they would be if the tree were made up of the first through nth elements of x. 
-        //If x is composed of only the largest or smallest values of Axes, then one of the elements of the sparse matrix in wx will be 1, and the order of the elements that are 1 is calculated from the tree.
+        // Each element of the vector x is a binary 0 or 1.
+        // The elements of the sparse matrix in wx are arranged in the order in which they would be if the tree were made up of the first through nth elements of x. 
+        // If x is composed of only the largest or smallest values of Axes, then one of the elements of the sparse matrix in wx will be 1, and the order of the elements that are 1 is calculated from the tree.
        
         let x = vec![0.0, 1.0, 1.0];
 
