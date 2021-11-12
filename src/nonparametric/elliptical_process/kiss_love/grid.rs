@@ -1,3 +1,4 @@
+use super::axis::*;
 use crate::DistributionError;
 use crate::{nonparametric::kernel_matrix, opensrdk_linear_algebra::*};
 use opensrdk_kernel_method::KernelError;
@@ -16,42 +17,6 @@ pub enum InducingGridError {
     InvalidRange,
     #[error("points must be more than or equal to 2")]
     TooLessPoints,
-}
-
-#[derive(Clone, Debug)]
-pub struct Axis {
-    min: f64,
-    max: f64,
-    points: usize,
-}
-
-impl Axis {
-    pub fn new(min: f64, max: f64, points: usize) -> Result<Self, DistributionError> {
-        if max <= min {
-            return Err(DistributionError::InvalidParameters(
-                InducingGridError::InvalidRange.into(),
-            ));
-        }
-        if points < 2 {
-            return Err(DistributionError::InvalidParameters(
-                InducingGridError::TooLessPoints.into(),
-            ));
-        }
-
-        Ok(Self { min, max, points })
-    }
-
-    pub fn points(&self) -> usize {
-        self.points
-    }
-
-    pub fn value(&self, index: usize) -> f64 {
-        self.min + index as f64 * (self.max - self.min) / (self.points - 1) as f64
-    }
-
-    pub fn index(&self, value: f64) -> usize {
-        ((value - self.min) / (self.max - self.min) * (self.points - 1) as f64) as usize
-    }
 }
 
 #[derive(Clone, Debug)]
@@ -118,7 +83,7 @@ impl Grid {
             .iter()
             .enumerate()
             .map(|(di, udi)| {
-                let udi_array = (0..udi.points)
+                let udi_array = (0..udi.points())
                     .into_iter()
                     .map(|pi| {
                         let mut value = vec![0.0; d];
@@ -167,7 +132,7 @@ impl Grid {
     where
         T: Convolutable,
     {
-        let m = self.axes().par_iter().map(|ud| ud.points).product();
+        let m = self.axes().par_iter().map(|ud| ud.points()).product();
         let n = x.len();
         if n == 0 {
             return Err(DistributionError::InvalidParameters(
@@ -195,16 +160,16 @@ impl Grid {
                 let udi = &self.axes[di];
 
                 let mut index = {
-                    if xpinidi <= udi.min {
+                    if xpinidi <= udi.min() {
                         0
-                    } else if udi.max <= xpinidi {
-                        udi.points - 1
+                    } else if udi.max() <= xpinidi {
+                        udi.points() - 1
                     } else {
                         udi.index(xpinidi)
                     }
                 };
-                if index == udi.points - 1 {
-                    index = udi.points - 2;
+                if index == udi.points() - 1 {
+                    index = udi.points() - 2;
                 }
 
                 let udi1 = udi.value(index);
@@ -213,7 +178,7 @@ impl Grid {
                 // w = (u2 - x) / (u2 - u1)
                 let weight = (udi2 - xpinidi) as f64 / (udi2 - udi1) as f64;
 
-                let mut sparse = SparseMatrix::new(udi.points, 1);
+                let mut sparse = SparseMatrix::new(udi.points(), 1);
                 sparse[(index, 0)] = weight;
                 sparse[(index + 1, 0)] = 1.0 - weight;
 

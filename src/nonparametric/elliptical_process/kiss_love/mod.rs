@@ -1,6 +1,8 @@
+pub mod axis;
 pub mod grid;
 pub mod regressor;
 
+pub use axis::*;
 pub use grid::*;
 pub use rayon::prelude::*;
 pub use regressor::*;
