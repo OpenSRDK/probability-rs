@@ -13,7 +13,6 @@ use crate::{DistributionError, EllipticalParams};
 use ey::y_ey;
 use opensrdk_kernel_method::*;
 use rayon::prelude::*;
-use std::cmp::Ordering;
 use std::error::Error;
 
 const K: usize = 100;
