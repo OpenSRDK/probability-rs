@@ -2,15 +2,13 @@ use crate::{Distribution, DistributionError, RandomVariable};
 
 /// Sample b from posterior p(b|a) with likelihood p(a|b) and prior p(b)
 
-pub struct ImportanceSampler<D, A, B, PD>
+pub struct ImportanceSampler<T, D, PD>
 where
-    D: Distribution<T = A, U = B>,
-    A: RandomVariable,
-    B: RandomVariable,
-    PD: Distribution<T = B, U = ()>,
+    T: RandomVariable,
+    D: Distribution<T = T, U = ()>,
+    PD: Distribution<T = T, U = ()>,
 {
-    value: A,
-    distribution: D
+    distribution: D,
     proposal: PD,
 }
 
@@ -22,27 +20,24 @@ pub enum ImportanceSamplingError {
     Unknown,
 }
 
-impl<D, A, B, PD> ImportanceSampler<D, A, B, PD>
+impl<T, D, PD> ImportanceSampler<T, D, PD>
 where
-    D: Distribution<T = B, U = ()>,
-    A: RandomVariable,
-    B: RandomVariable,
-    PD: Distribution<T = B, U = ()>,
+    T: RandomVariable,
+    D: Distribution<T = T, U = ()>,
+    PD: Distribution<T = T, U = ()>,
 {
-    pub fn new(value: A, distribution: D, proposal: PD) -> Result<Self, DistributionError> {
+    pub fn new(distribution: D, proposal: PD) -> Result<Self, DistributionError> {
         Ok(Self {
-            value,
             distribution,
             proposal,
         })
     }
 
-    pub fn expectation(&self, f: impl Fn(&B) -> f64, x: &[B]) -> Result<f64, DistributionError> {
+    pub fn expectation(&self, f: impl Fn(&B) -> f64, x: &[T]) -> Result<f64, DistributionError> {
         let wi_fxi = x
             .iter()
             .map(|xi| -> Result<_, DistributionError> {
-                let wi = self.distribution.fk(&xi, &())?
-                    / self.proposal.fk(&xi, &())?;
+                let wi = self.distribution.fk(&xi, &())? / self.proposal.fk(&xi, &())?;
                 let fxi = f(xi);
                 Ok((wi, fxi))
             })
