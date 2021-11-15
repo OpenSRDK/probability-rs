@@ -1,8 +1,9 @@
+pub mod axis;
 pub mod grid;
 pub mod regressor;
 
+pub use axis::*;
 pub use grid::*;
-pub use rayon::prelude::*;
 pub use regressor::*;
 
 use super::{BaseEllipticalProcessParams, EllipticalProcessParams};
@@ -11,6 +12,7 @@ use crate::{opensrdk_linear_algebra::*, RandomVariable};
 use crate::{DistributionError, EllipticalParams};
 use ey::y_ey;
 use opensrdk_kernel_method::*;
+use rayon::prelude::*;
 use std::cmp::Ordering;
 use std::error::Error;
 
