@@ -34,17 +34,6 @@ where
         }
     }
 
-    fn weighted(&self, theta: &A) -> Result<Vec<(f64, &B)>, DistributionError> {
-        let weighted = self
-            .range
-            .par_iter()
-            .map(|u| -> Result<_, DistributionError> {
-                Ok((self.likelihood.fk(theta, u)? * self.prior.fk(u, &())?, u))
-            })
-            .collect::<Result<Vec<(f64, &B)>, _>>()?;
-        Ok(weighted)
-    }
-
     fn index(&self, weighted: &Vec<(f64, &B)>) -> Result<WeightedIndex<f64>, DistributionError> {
         let index = match WeightedIndex::new(weighted.iter().map(|(w, _)| *w)) {
             Ok(v) => v,
