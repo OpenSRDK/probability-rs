@@ -7,8 +7,8 @@ use std::{ops::BitAnd, ops::Mul};
 #[derive(Clone, Debug)]
 pub struct IndependentJoint<L, R, TL, TR, U>
 where
-    L: Distribution<T = TL, U = U>,
-    R: Distribution<T = TR, U = U>,
+    L: Distribution<Value = TL, Condition = U>,
+    R: Distribution<Value = TR, Condition = U>,
     TL: RandomVariable,
     TR: RandomVariable,
     U: RandomVariable,
@@ -19,8 +19,8 @@ where
 
 impl<L, R, TL, TR, U> IndependentJoint<L, R, TL, TR, U>
 where
-    L: Distribution<T = TL, U = U>,
-    R: Distribution<T = TR, U = U>,
+    L: Distribution<Value = TL, Condition = U>,
+    R: Distribution<Value = TR, Condition = U>,
     TL: RandomVariable,
     TR: RandomVariable,
     U: RandomVariable,
@@ -32,14 +32,14 @@ where
 
 impl<L, R, TL, TR, U> Distribution for IndependentJoint<L, R, TL, TR, U>
 where
-    L: Distribution<T = TL, U = U>,
-    R: Distribution<T = TR, U = U>,
+    L: Distribution<Value = TL, Condition = U>,
+    R: Distribution<Value = TR, Condition = U>,
     TL: RandomVariable,
     TR: RandomVariable,
     U: RandomVariable,
 {
-    type T = (TL, TR);
-    type U = U;
+    type Value = (TL, TR);
+    type Condition = U;
 
     fn fk(&self, x: &(TL, TR), theta: &U) -> Result<f64, DistributionError> {
         Ok(self.lhs.fk(&x.0, theta)? * self.rhs.fk(&x.1, theta)?)
@@ -52,12 +52,12 @@ where
 
 impl<L, R, TL, TR, U, Rhs, TRhs> Mul<Rhs> for IndependentJoint<L, R, TL, TR, U>
 where
-    L: Distribution<T = TL, U = U>,
-    R: Distribution<T = TR, U = U>,
+    L: Distribution<Value = TL, Condition = U>,
+    R: Distribution<Value = TR, Condition = U>,
     TL: RandomVariable,
     TR: RandomVariable,
     U: RandomVariable,
-    Rhs: Distribution<T = TRhs, U = U>,
+    Rhs: Distribution<Value = TRhs, Condition = U>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, (TL, TR), TRhs, U>;
@@ -69,12 +69,12 @@ where
 
 impl<L, R, TL, TR, U, Rhs, URhs> BitAnd<Rhs> for IndependentJoint<L, R, TL, TR, U>
 where
-    L: Distribution<T = TL, U = U>,
-    R: Distribution<T = TR, U = U>,
+    L: Distribution<Value = TL, Condition = U>,
+    R: Distribution<Value = TR, Condition = U>,
     TL: RandomVariable,
     TR: RandomVariable,
     U: RandomVariable,
-    Rhs: Distribution<T = U, U = URhs>,
+    Rhs: Distribution<Value = U, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, (TL, TR), U, URhs>;

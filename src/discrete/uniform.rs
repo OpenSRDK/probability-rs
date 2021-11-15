@@ -33,14 +33,18 @@ impl<T> Distribution for DiscreteUniform<T>
 where
     T: RandomVariable + Eq + Hash,
 {
-    type T = T;
-    type U = HashSet<T>;
+    type Value = T;
+    type Condition = HashSet<T>;
 
-    fn fk(&self, _x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, _x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         Ok(1.0 / theta.len() as f64)
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let len = theta.len();
         if len == 0 {
             return Err(DistributionError::InvalidParameters(

@@ -8,7 +8,7 @@ use std::collections::HashSet;
 #[derive(Clone, Debug)]
 pub struct BaselineMeasure<D, T>
 where
-    D: Distribution<T = T, U = ()>,
+    D: Distribution<Value = T, Condition = ()>,
     T: RandomVariable,
 {
     pub distr: D,
@@ -16,7 +16,7 @@ where
 
 impl<D, T> BaselineMeasure<D, T>
 where
-    D: Distribution<T = T, U = ()>,
+    D: Distribution<Value = T, Condition = ()>,
     T: RandomVariable,
 {
     pub fn new(distr: D) -> Self {

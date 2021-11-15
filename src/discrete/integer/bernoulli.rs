@@ -12,18 +12,18 @@ pub enum BernoulliError {
 }
 
 impl Distribution for Bernoulli {
-    type T = bool;
-    type U = BernoulliParams;
+    type Value = bool;
+    type Condition = BernoulliParams;
 
-    fn fk(&self, _x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, _x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         Ok(theta.p())
     }
 
     fn sample(
         &self,
-        theta: &Self::U,
+        theta: &Self::Condition,
         rng: &mut dyn rand::RngCore,
-    ) -> Result<Self::T, DistributionError> {
+    ) -> Result<Self::Value, DistributionError> {
         let u = rng.gen_range(0.0..=1.0);
         Ok(u <= theta.p())
     }
@@ -54,7 +54,7 @@ impl BernoulliParams {
 
 impl<Rhs, TRhs> Mul<Rhs> for Bernoulli
 where
-    Rhs: Distribution<T = TRhs, U = BernoulliParams>,
+    Rhs: Distribution<Value = TRhs, Condition = BernoulliParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, bool, TRhs, BernoulliParams>;
@@ -66,7 +66,7 @@ where
 
 impl<Rhs, URhs> BitAnd<Rhs> for Bernoulli
 where
-    Rhs: Distribution<T = BernoulliParams, U = URhs>,
+    Rhs: Distribution<Value = BernoulliParams, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, bool, BernoulliParams, URhs>;

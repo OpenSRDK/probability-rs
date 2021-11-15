@@ -15,16 +15,20 @@ pub enum GeometricError {
 }
 
 impl Distribution for Geometric {
-    type T = u64;
-    type U = GeometricParams;
+    type Value = u64;
+    type Condition = GeometricParams;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let p = theta.p();
 
         Ok((1.0 - p).powi((x - 1) as i32) * p)
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let p = theta.p();
 
         let geometric = match RandGeometric::new(p) {
@@ -59,7 +63,7 @@ impl GeometricParams {
 
 impl<Rhs, TRhs> Mul<Rhs> for Geometric
 where
-    Rhs: Distribution<T = TRhs, U = GeometricParams>,
+    Rhs: Distribution<Value = TRhs, Condition = GeometricParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, u64, TRhs, GeometricParams>;
@@ -71,7 +75,7 @@ where
 
 impl<Rhs, URhs> BitAnd<Rhs> for Geometric
 where
-    Rhs: Distribution<T = GeometricParams, U = URhs>,
+    Rhs: Distribution<Value = GeometricParams, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, u64, GeometricParams, URhs>;

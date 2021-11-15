@@ -8,10 +8,10 @@ use rayon::prelude::*;
 /// # Pitman-Yor process
 pub struct PitmanYorGibbsSampler<'a, L, T, U, G0>
 where
-    L: Distribution<T = T, U = U>,
+    L: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
-    G0: Distribution<T = U, U = ()>,
+    G0: Distribution<Value = U, Condition = ()>,
 {
     base: &'a PitmanYorProcessParams<G0, U>,
     switch: &'a ClusterSwitch<U>,
@@ -21,10 +21,10 @@ where
 
 impl<'a, L, T, U, G0> PitmanYorGibbsSampler<'a, L, T, U, G0>
 where
-    L: Distribution<T = T, U = U>,
+    L: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
-    G0: Distribution<T = U, U = ()>,
+    G0: Distribution<Value = U, Condition = ()>,
 {
     pub fn new(
         base: &'a PitmanYorProcessParams<G0, U>,
@@ -86,7 +86,7 @@ where
     fn sample_theta(
         &self,
         x_in_k: &Vec<T>,
-        proposal: &impl Distribution<T = U, U = U>,
+        proposal: &impl Distribution<Value = U, Condition = U>,
     ) -> Result<U, DistributionError> {
         let x_likelihood = vec![self.likelihood.clone(); x_in_k.len()]
             .into_iter()
@@ -101,7 +101,7 @@ where
 
     pub fn step_sample(
         &self,
-        proposal: &impl Distribution<T = U, U = U>,
+        proposal: &impl Distribution<Value = U, Condition = U>,
         rng: &mut dyn RngCore,
     ) -> Result<ClusterSwitch<U>, DistributionError> {
         let n = self.switch.s().len();

@@ -10,17 +10,21 @@ use std::{ops::BitAnd, ops::Mul};
 pub struct Normal;
 
 impl Distribution for Normal {
-    type T = f64;
-    type U = NormalParams;
+    type Value = f64;
+    type Condition = NormalParams;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let mu = theta.mu();
         let sigma = theta.sigma();
 
         Ok((-(x - mu).powi(2) / (2.0 * sigma.powi(2))).exp())
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let mu = theta.mu();
         let sigma = theta.sigma();
 
@@ -65,7 +69,7 @@ impl NormalParams {
 
 impl<Rhs, TRhs> Mul<Rhs> for Normal
 where
-    Rhs: Distribution<T = TRhs, U = NormalParams>,
+    Rhs: Distribution<Value = TRhs, Condition = NormalParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, f64, TRhs, NormalParams>;
@@ -77,7 +81,7 @@ where
 
 impl<Rhs, URhs> BitAnd<Rhs> for Normal
 where
-    Rhs: Distribution<T = NormalParams, U = URhs>,
+    Rhs: Distribution<Value = NormalParams, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, f64, NormalParams, URhs>;

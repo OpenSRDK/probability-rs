@@ -22,10 +22,10 @@ pub enum DirichletError {
 }
 
 impl Distribution for Dirichlet {
-    type T = Vec<f64>;
-    type U = DirichletParams;
+    type Value = Vec<f64>;
+    type Condition = DirichletParams;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let alpha = theta.alpha();
 
         if x.len() != alpha.len() {
@@ -40,7 +40,11 @@ impl Distribution for Dirichlet {
             .product::<f64>())
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let alpha = theta.alpha();
 
         let dirichlet = match RandDirichlet::new(alpha) {
@@ -82,7 +86,7 @@ impl DirichletParams {
 
 impl<Rhs, TRhs> Mul<Rhs> for Dirichlet
 where
-    Rhs: Distribution<T = TRhs, U = DirichletParams>,
+    Rhs: Distribution<Value = TRhs, Condition = DirichletParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, Vec<f64>, TRhs, DirichletParams>;
@@ -94,7 +98,7 @@ where
 
 impl<Rhs, URhs> BitAnd<Rhs> for Dirichlet
 where
-    Rhs: Distribution<T = DirichletParams, U = URhs>,
+    Rhs: Distribution<Value = DirichletParams, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, Vec<f64>, DirichletParams, URhs>;

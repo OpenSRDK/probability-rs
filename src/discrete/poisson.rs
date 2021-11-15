@@ -22,16 +22,20 @@ fn factorial(num: u64) -> u64 {
 }
 
 impl Distribution for Poisson {
-    type T = u64;
-    type U = PoissonParams;
+    type Value = u64;
+    type Condition = PoissonParams;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let lambda = theta.lambda();
 
         Ok(lambda.powi(*x as i32) / factorial(*x) as f64 * (-lambda).exp())
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let lambda = theta.lambda();
 
         let poisson = match RandPoisson::new(lambda) {
@@ -66,7 +70,7 @@ impl PoissonParams {
 
 impl<Rhs, TRhs> Mul<Rhs> for Poisson
 where
-    Rhs: Distribution<T = TRhs, U = PoissonParams>,
+    Rhs: Distribution<Value = TRhs, Condition = PoissonParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, u64, TRhs, PoissonParams>;
@@ -78,7 +82,7 @@ where
 
 impl<Rhs, URhs> BitAnd<Rhs> for Poisson
 where
-    Rhs: Distribution<T = PoissonParams, U = URhs>,
+    Rhs: Distribution<Value = PoissonParams, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, u64, PoissonParams, URhs>;

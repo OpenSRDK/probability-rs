@@ -34,16 +34,20 @@ impl<T> Distribution for MultivariateCauchy<T>
 where
     T: EllipticalParams,
 {
-    type T = Vec<f64>;
-    type U = T;
+    type Value = Vec<f64>;
+    type Condition = T;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let studentt_params = MultivariateStudentTWrapper::new(theta);
 
         MultivariateStudentT::new().fk(x, &studentt_params)
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let studentt_params = MultivariateStudentTWrapper::new(theta);
 
         MultivariateStudentT::new().sample(&studentt_params, rng)
@@ -85,7 +89,7 @@ pub type ExactMultivariateCauchyParams = ExactEllipticalParams;
 impl<T, Rhs, TRhs> Mul<Rhs> for MultivariateCauchy<T>
 where
     T: EllipticalParams,
-    Rhs: Distribution<T = TRhs, U = T>,
+    Rhs: Distribution<Value = TRhs, Condition = T>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, Vec<f64>, TRhs, T>;
@@ -98,7 +102,7 @@ where
 impl<T, Rhs, URhs> BitAnd<Rhs> for MultivariateCauchy<T>
 where
     T: EllipticalParams,
-    Rhs: Distribution<T = T, U = URhs>,
+    Rhs: Distribution<Value = T, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, Vec<f64>, T, URhs>;

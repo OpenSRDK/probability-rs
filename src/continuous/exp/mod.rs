@@ -15,16 +15,20 @@ pub enum ExpError {
 }
 
 impl Distribution for Exp {
-    type T = f64;
-    type U = ExpParams;
+    type Value = f64;
+    type Condition = ExpParams;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let lambda = theta.lambda();
 
         Ok(lambda * (-lambda * x).exp())
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let lambda = theta.lambda();
 
         let exp = match RandExp::new(lambda) {
@@ -59,7 +63,7 @@ impl ExpParams {
 
 impl<Rhs, TRhs> Mul<Rhs> for Exp
 where
-    Rhs: Distribution<T = TRhs, U = ExpParams>,
+    Rhs: Distribution<Value = TRhs, Condition = ExpParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, f64, TRhs, ExpParams>;
@@ -71,7 +75,7 @@ where
 
 impl<Rhs, URhs> BitAnd<Rhs> for Exp
 where
-    Rhs: Distribution<T = ExpParams, U = URhs>,
+    Rhs: Distribution<Value = ExpParams, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, f64, ExpParams, URhs>;

@@ -23,7 +23,7 @@ pub enum PitmanYorProcessError {
 #[derive(Clone, Debug)]
 pub struct PitmanYorProcessParams<G0, TH>
 where
-    G0: Distribution<T = TH, U = ()>,
+    G0: Distribution<Value = TH, Condition = ()>,
     TH: RandomVariable,
 {
     alpha: f64,
@@ -33,7 +33,7 @@ where
 
 impl<G0, TH> PitmanYorProcessParams<G0, TH>
 where
-    G0: Distribution<T = TH, U = ()>,
+    G0: Distribution<Value = TH, Condition = ()>,
     TH: RandomVariable,
 {
     /// - `d`: 0 ≦ d < 1. If it is zero, Pitman-Yor process means Chinese restaurant process.

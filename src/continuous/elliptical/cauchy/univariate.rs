@@ -10,16 +10,20 @@ use std::{ops::BitAnd, ops::Mul};
 pub struct Cauchy;
 
 impl Distribution for Cauchy {
-    type T = f64;
-    type U = CauchyParams;
+    type Value = f64;
+    type Condition = CauchyParams;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let studentt_params = StudentTParams::new(1.0, theta.mu, theta.sigma)?;
 
         StudentT.fk(x, &studentt_params)
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let studentt_params = StudentTParams::new(1.0, theta.mu, theta.sigma)?;
 
         StudentT.sample(&studentt_params, rng)
@@ -54,7 +58,7 @@ impl CauchyParams {
 
 impl<Rhs, TRhs> Mul<Rhs> for Cauchy
 where
-    Rhs: Distribution<T = TRhs, U = CauchyParams>,
+    Rhs: Distribution<Value = TRhs, Condition = CauchyParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, f64, TRhs, CauchyParams>;
@@ -66,7 +70,7 @@ where
 
 impl<Rhs, URhs> BitAnd<Rhs> for Cauchy
 where
-    Rhs: Distribution<T = CauchyParams, U = URhs>,
+    Rhs: Distribution<Value = CauchyParams, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, f64, CauchyParams, URhs>;

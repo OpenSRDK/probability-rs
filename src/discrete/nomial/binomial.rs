@@ -18,17 +18,21 @@ pub enum BinominalError {
 }
 
 impl Distribution for Binomial {
-    type T = u64;
-    type U = BinomialParams;
+    type Value = u64;
+    type Condition = BinomialParams;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let n = theta.n();
         let p = theta.p();
 
         Ok(binomial(n, *x) as f64 * p.powi(*x as i32) * (1.0 - p).powi((n - x) as i32))
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let n = theta.n();
         let p = theta.p();
 
@@ -71,7 +75,7 @@ impl BinomialParams {
 
 impl<Rhs, TRhs> Mul<Rhs> for Binomial
 where
-    Rhs: Distribution<T = TRhs, U = BinomialParams>,
+    Rhs: Distribution<Value = TRhs, Condition = BinomialParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, u64, TRhs, BinomialParams>;
@@ -83,7 +87,7 @@ where
 
 impl<Rhs, URhs> BitAnd<Rhs> for Binomial
 where
-    Rhs: Distribution<T = BinomialParams, U = URhs>,
+    Rhs: Distribution<Value = BinomialParams, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, u64, BinomialParams, URhs>;

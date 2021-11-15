@@ -18,11 +18,11 @@ pub enum WishartError {
 }
 
 impl Distribution for Wishart {
-    type T = Matrix;
-    type U = WishartParams;
+    type Value = Matrix;
+    type Condition = WishartParams;
 
     /// x must be cholesky decomposed
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let lv = theta.lv();
         let n = theta.n();
 
@@ -33,7 +33,11 @@ impl Distribution for Wishart {
     }
 
     /// output is cholesky decomposed
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let lv = theta.lv();
         let n = theta.n() as usize;
 
@@ -91,7 +95,7 @@ impl WishartParams {
 
 impl<Rhs, TRhs> Mul<Rhs> for Wishart
 where
-    Rhs: Distribution<T = TRhs, U = WishartParams>,
+    Rhs: Distribution<Value = TRhs, Condition = WishartParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, Matrix, TRhs, WishartParams>;
@@ -103,7 +107,7 @@ where
 
 impl<Rhs, URhs> BitAnd<Rhs> for Wishart
 where
-    Rhs: Distribution<T = WishartParams, U = URhs>,
+    Rhs: Distribution<Value = WishartParams, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, Matrix, WishartParams, URhs>;

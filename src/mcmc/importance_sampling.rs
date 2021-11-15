@@ -5,8 +5,8 @@ use crate::{Distribution, DistributionError, RandomVariable};
 pub struct ImportanceSampler<T, D, PD>
 where
     T: RandomVariable,
-    D: Distribution<T = T, U = ()>,
-    PD: Distribution<T = T, U = ()>,
+    D: Distribution<Value = T, Condition = ()>,
+    PD: Distribution<Value = T, Condition = ()>,
 {
     distribution: D,
     proposal: PD,
@@ -23,8 +23,8 @@ pub enum ImportanceSamplingError {
 impl<T, D, PD> ImportanceSampler<T, D, PD>
 where
     T: RandomVariable,
-    D: Distribution<T = T, U = ()>,
-    PD: Distribution<T = T, U = ()>,
+    D: Distribution<Value = T, Condition = ()>,
+    PD: Distribution<Value = T, Condition = ()>,
 {
     pub fn new(distribution: D, proposal: PD) -> Result<Self, DistributionError> {
         Ok(Self {

@@ -8,7 +8,7 @@ use std::{ops::BitAnd, ops::Mul};
 #[derive(Clone, Debug)]
 pub struct IndependentArrayJoint<D, T, U>
 where
-    D: Distribution<T = T, U = U>,
+    D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
 {
@@ -17,21 +17,25 @@ where
 
 impl<D, T, U> Distribution for IndependentArrayJoint<D, T, U>
 where
-    D: Distribution<T = T, U = U>,
+    D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
 {
-    type T = Vec<T>;
-    type U = U;
+    type Value = Vec<T>;
+    type Condition = U;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         x.iter()
             .enumerate()
             .map(|(i, xi)| self.distributions[i].fk(xi, theta))
             .product()
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         self.distributions
             .iter()
             .map(|di| di.sample(theta, rng))
@@ -41,10 +45,10 @@ where
 
 impl<D, T, U, Rhs, TRhs> Mul<Rhs> for IndependentArrayJoint<D, T, U>
 where
-    D: Distribution<T = T, U = U>,
+    D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
-    Rhs: Distribution<T = TRhs, U = U>,
+    Rhs: Distribution<Value = TRhs, Condition = U>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, Vec<T>, TRhs, U>;
@@ -56,10 +60,10 @@ where
 
 impl<D, T, U, Rhs, URhs> BitAnd<Rhs> for IndependentArrayJoint<D, T, U>
 where
-    D: Distribution<T = T, U = U>,
+    D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
-    Rhs: Distribution<T = U, U = URhs>,
+    Rhs: Distribution<Value = U, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, Vec<T>, U, URhs>;
@@ -71,7 +75,7 @@ where
 
 pub trait DistributionProduct<D, T, U>
 where
-    D: Distribution<T = T, U = U>,
+    D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
 {
@@ -81,7 +85,7 @@ where
 impl<I, D, T, U> DistributionProduct<D, T, U> for I
 where
     I: Iterator<Item = D>,
-    D: Distribution<T = T, U = U>,
+    D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
 {

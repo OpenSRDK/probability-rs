@@ -41,10 +41,10 @@ where
     T: MultivariateStudentTParams<U>,
     U: EllipticalParams,
 {
-    type T = Vec<f64>;
-    type U = T;
+    type Value = Vec<f64>;
+    type Condition = T;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let elliptical = theta.elliptical();
         let x_mu = elliptical.x_mu(x)?.col_mat();
 
@@ -54,7 +54,11 @@ where
         Ok((1.0 + (x_mu.t() * elliptical.sigma_inv_mul(x_mu)?)[(0, 0)] / nu).powf(-(nu + n) / 2.0))
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let nu = theta.nu();
         let elliptical = theta.elliptical();
 
@@ -119,7 +123,7 @@ impl<T, U, Rhs, TRhs> Mul<Rhs> for MultivariateStudentT<T, U>
 where
     T: MultivariateStudentTParams<U>,
     U: EllipticalParams,
-    Rhs: Distribution<T = TRhs, U = T>,
+    Rhs: Distribution<Value = TRhs, Condition = T>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, Vec<f64>, TRhs, T>;
@@ -133,7 +137,7 @@ impl<T, U, Rhs, URhs> BitAnd<Rhs> for MultivariateStudentT<T, U>
 where
     T: MultivariateStudentTParams<U>,
     U: EllipticalParams,
-    Rhs: Distribution<T = T, U = URhs>,
+    Rhs: Distribution<Value = T, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, Vec<f64>, T, URhs>;
