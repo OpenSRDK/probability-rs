@@ -73,13 +73,7 @@ where
         theta: &Self::Condition,
         rng: &mut dyn rand::RngCore,
     ) -> Result<Self::Value, DistributionError> {
-        let weighted = self
-            .range
-            .par_iter()
-            .map(|u| -> Result<_, DistributionError> {
-                Ok((self.likelihood.fk(theta, u)? * self.prior.fk(u, &())?, u))
-            })
-            .collect::<Result<Vec<(f64, &B)>, _>>()?;
+        let weighted = self.weighted(theta)?;
 
         let index = self.index(&weighted)?.sample(rng);
 

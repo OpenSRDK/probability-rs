@@ -13,7 +13,6 @@ use crate::{DistributionError, EllipticalParams};
 use ey::y_ey;
 use opensrdk_kernel_method::*;
 use rayon::prelude::*;
-use std::cmp::Ordering;
 use std::error::Error;
 
 const K: usize = 100;
@@ -32,7 +31,6 @@ where
     wx: Vec<SparseMatrix>,
     kuu: KroneckerMatrices,
     lkuu: KroneckerMatrices,
-    kxx_det_sqrt: f64,
     mahalanobis_squared: f64,
 }
 
@@ -144,7 +142,6 @@ where
             })
             .collect::<Result<Vec<_>, DistributionError>>()?;
 
-        let kxx_det_sqrt = Self::det_kxx(&wx, &kuu, sigma2)?.sqrt();
         let mahalanobis_squared = (y_ey.t() * &sigma_inv_y)[(0, 0)];
 
         Ok(Self {
@@ -156,7 +153,6 @@ where
             wx,
             kuu,
             lkuu,
-            kxx_det_sqrt,
             mahalanobis_squared,
         })
     }
@@ -195,55 +191,6 @@ where
             .try_fold(vec![0.0; v.len()], |a, b: Result<_, DistributionError>| {
                 Ok((a.col_mat() + b?.col_mat()).vec())
             })
-    }
-
-    /// See Andrew Gordon Wilson
-    fn det_kxx(
-        wx: &Vec<SparseMatrix>,
-        kuu: &KroneckerMatrices,
-        sigma2: f64,
-    ) -> Result<f64, DistributionError> {
-        let m = wx[0].rows;
-        let n = wx[0].cols;
-
-        let kuu_toeplitz = kuu
-            .matrices()
-            .iter()
-            .map(|kp| Ok(ToeplitzMatrix::from(kp[0].to_vec(), kp[0][1..].to_vec())?))
-            .collect::<Result<Vec<_>, DistributionError>>()?;
-
-        let lambda = kuu_toeplitz
-            .par_iter()
-            .map(|kp| {
-                kp.embedded_circulant().cievd().1[..kp.dim()]
-                    .to_owned()
-                    .col_mat()
-            })
-            .collect::<Vec<_>>();
-        let lambda = KroneckerMatrices::new(lambda);
-        let mut lambda = lambda.prod().vec();
-
-        lambda.sort_by(|a, b| {
-            a.re.partial_cmp(&b.re).unwrap_or(if !a.re.is_finite() {
-                Ordering::Less
-            } else {
-                Ordering::Greater
-            })
-        });
-        if !lambda[0].re.is_finite() {
-            return Err(DistributionError::Others(
-                EllipticalProcessError::NaNContamination.into(),
-            ));
-        }
-
-        let lambda = &lambda[m - n..];
-
-        let det = lambda
-            .par_iter()
-            .map(|lmd| ((n as f64 / m as f64) * lmd.re + sigma2))
-            .product::<f64>();
-
-        Ok(det)
     }
 
     fn sigma_mul(
