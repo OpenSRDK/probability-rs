@@ -4,7 +4,7 @@ use crate::{Distribution, DistributionError, RandomVariable};
 
 pub struct ImportanceSampler<D, A, B, PD>
 where
-    L: Distribution<T = A, U = B>,
+    D: Distribution<T = A, U = B>,
     A: RandomVariable,
     B: RandomVariable,
     PD: Distribution<T = B, U = ()>,
