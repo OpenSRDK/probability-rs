@@ -1,18 +1,5 @@
+use super::grid::InducingGridError;
 use crate::DistributionError;
-
-#[derive(thiserror::Error, Debug)]
-pub enum InducingGridError {
-    #[error("empty")]
-    Empty,
-    #[error("dimension mismatch")]
-    DimensionMismatch,
-    #[error("NaN contamination")]
-    NaNContamination,
-    #[error("invalid range")]
-    InvalidRange,
-    #[error("points must be more than or equal to 2")]
-    TooLessPoints,
-}
 
 #[derive(Clone, Debug)]
 pub struct Axis {

@@ -4,8 +4,9 @@ pub mod regressor;
 
 pub use axis::*;
 pub use grid::*;
-pub use rayon::prelude::*;
 pub use regressor::*;
+
+use rayon::prelude::*;
 
 use super::{BaseEllipticalProcessParams, EllipticalProcessParams};
 use crate::nonparametric::{ey, EllipticalProcessError};
