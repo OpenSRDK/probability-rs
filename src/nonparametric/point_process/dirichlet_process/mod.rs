@@ -14,7 +14,7 @@ use std::{fmt::Debug, marker::PhantomData};
 #[derive(Clone, Debug)]
 pub struct DirichletProcess<G0, T>
 where
-    G0: Distribution<T = T, U = ()>,
+    G0: Distribution<Value = T, Condition = ()>,
     T: RandomVariable,
 {
     phantom: PhantomData<(G0, T)>,
@@ -30,7 +30,7 @@ pub enum DirichletProcessError {
 
 impl<G0, T> DirichletProcess<G0, T>
 where
-    G0: Distribution<T = T, U = ()>,
+    G0: Distribution<Value = T, Condition = ()>,
     T: RandomVariable,
 {
     pub fn new() -> Self {
@@ -61,7 +61,7 @@ where
 #[derive(Clone, Debug)]
 pub struct DirichletProcessParams<G0, T>
 where
-    G0: Distribution<T = T, U = ()>,
+    G0: Distribution<Value = T, Condition = ()>,
     T: RandomVariable,
 {
     alpha: f64,
@@ -70,7 +70,7 @@ where
 
 impl<G0, T> DirichletProcessParams<G0, T>
 where
-    G0: Distribution<T = T, U = ()>,
+    G0: Distribution<Value = T, Condition = ()>,
     T: RandomVariable,
 {
     pub fn new(alpha: f64, g0: BaselineMeasure<G0, T>) -> Result<Self, DistributionError> {

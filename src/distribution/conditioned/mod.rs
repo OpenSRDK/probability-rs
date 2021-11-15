@@ -8,7 +8,7 @@ use std::{
 #[derive(Clone)]
 pub struct ConditionedDistribution<'a, D, T, U1, U2>
 where
-    D: Distribution<T = T, U = U1>,
+    D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: RandomVariable,
     U2: RandomVariable,
@@ -19,7 +19,7 @@ where
 
 impl<'a, D, T, U1, U2> ConditionedDistribution<'a, D, T, U1, U2>
 where
-    D: Distribution<T = T, U = U1>,
+    D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: RandomVariable,
     U2: RandomVariable,
@@ -37,7 +37,7 @@ where
 
 impl<'a, D, T, U1, U2> Debug for ConditionedDistribution<'a, D, T, U1, U2>
 where
-    D: Distribution<T = T, U = U1>,
+    D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: RandomVariable,
     U2: RandomVariable,
@@ -53,22 +53,26 @@ where
 
 impl<'a, D, T, U1, U2> Distribution for ConditionedDistribution<'a, D, T, U1, U2>
 where
-    D: Distribution<T = T, U = U1>,
+    D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: RandomVariable,
     U2: RandomVariable,
 {
-    type T = T;
-    type U = U2;
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, crate::DistributionError> {
+    type Value = T;
+    type Condition = U2;
+    fn fk(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<f64, crate::DistributionError> {
         self.distribution.fk(x, &(self.condition)(theta)?)
     }
 
     fn sample(
         &self,
-        theta: &Self::U,
+        theta: &Self::Condition,
         rng: &mut dyn RngCore,
-    ) -> Result<Self::T, crate::DistributionError> {
+    ) -> Result<Self::Value, crate::DistributionError> {
         self.distribution.sample(&(self.condition)(theta)?, rng)
     }
 }
@@ -76,36 +80,36 @@ where
 pub trait ConditionableDistribution: Distribution + Sized {
     fn condition<'a, U2>(
         self,
-        condition: &'a (dyn Fn(&U2) -> Result<Self::U, DistributionError> + Send + Sync),
-    ) -> ConditionedDistribution<'a, Self, Self::T, Self::U, U2>
+        condition: &'a (dyn Fn(&U2) -> Result<Self::Condition, DistributionError> + Send + Sync),
+    ) -> ConditionedDistribution<'a, Self, Self::Value, Self::Condition, U2>
     where
         U2: RandomVariable;
 }
 
 impl<D, T, U1> ConditionableDistribution for D
 where
-    D: Distribution<T = T, U = U1>,
+    D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: RandomVariable,
 {
     fn condition<'a, U2>(
         self,
-        condition: &'a (dyn Fn(&U2) -> Result<Self::U, DistributionError> + Send + Sync),
-    ) -> ConditionedDistribution<'a, Self, Self::T, Self::U, U2>
+        condition: &'a (dyn Fn(&U2) -> Result<Self::Condition, DistributionError> + Send + Sync),
+    ) -> ConditionedDistribution<'a, Self, Self::Value, Self::Condition, U2>
     where
         U2: RandomVariable,
     {
-        ConditionedDistribution::<Self, Self::T, Self::U, U2>::new(self, condition)
+        ConditionedDistribution::<Self, Self::Value, Self::Condition, U2>::new(self, condition)
     }
 }
 
 impl<'a, D, T, U1, U2, Rhs, TRhs> Mul<Rhs> for ConditionedDistribution<'a, D, T, U1, U2>
 where
-    D: Distribution<T = T, U = U1>,
+    D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: RandomVariable,
     U2: RandomVariable,
-    Rhs: Distribution<T = TRhs, U = U2>,
+    Rhs: Distribution<Value = TRhs, Condition = U2>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, T, TRhs, U2>;
@@ -117,11 +121,11 @@ where
 
 impl<'a, D, T, U1, U2, Rhs, URhs> BitAnd<Rhs> for ConditionedDistribution<'a, D, T, U1, U2>
 where
-    D: Distribution<T = T, U = U1>,
+    D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: RandomVariable,
     U2: RandomVariable,
-    Rhs: Distribution<T = U2, U = URhs>,
+    Rhs: Distribution<Value = U2, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, T, U2, URhs>;

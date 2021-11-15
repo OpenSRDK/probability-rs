@@ -21,17 +21,21 @@ pub enum GammaError {
 }
 
 impl Distribution for Gamma {
-    type T = f64;
-    type U = GammaParams;
+    type Value = f64;
+    type Condition = GammaParams;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let shape = theta.shape();
         let scale = theta.scale();
 
         Ok(x.powf(shape - 1.0) * (-x / scale).exp())
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let shape = theta.shape();
         let scale = theta.scale();
 
@@ -77,7 +81,7 @@ impl GammaParams {
 
 impl<Rhs, TRhs> Mul<Rhs> for Gamma
 where
-    Rhs: Distribution<T = TRhs, U = GammaParams>,
+    Rhs: Distribution<Value = TRhs, Condition = GammaParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, f64, TRhs, GammaParams>;
@@ -89,7 +93,7 @@ where
 
 impl<Rhs, URhs> BitAnd<Rhs> for Gamma
 where
-    Rhs: Distribution<T = GammaParams, U = URhs>,
+    Rhs: Distribution<Value = GammaParams, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, f64, GammaParams, URhs>;

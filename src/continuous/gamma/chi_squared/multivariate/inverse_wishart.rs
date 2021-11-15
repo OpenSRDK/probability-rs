@@ -20,11 +20,11 @@ pub enum InverseWishartError {
 }
 
 impl Distribution for InverseWishart {
-    type T = Matrix;
-    type U = InverseWishartParams;
+    type Value = Matrix;
+    type Condition = InverseWishartParams;
 
     /// x must be cholesky decomposed
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let lpsi = theta.lpsi();
         let nu = theta.nu();
 
@@ -35,7 +35,11 @@ impl Distribution for InverseWishart {
     }
 
     /// output is cholesky decomposed
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let lpsi = theta.lpsi();
         let nu = theta.nu();
 
@@ -84,7 +88,7 @@ impl InverseWishartParams {
 
 impl<Rhs, TRhs> Mul<Rhs> for InverseWishart
 where
-    Rhs: Distribution<T = TRhs, U = InverseWishartParams>,
+    Rhs: Distribution<Value = TRhs, Condition = InverseWishartParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, Matrix, TRhs, InverseWishartParams>;
@@ -96,7 +100,7 @@ where
 
 impl<Rhs, URhs> BitAnd<Rhs> for InverseWishart
 where
-    Rhs: Distribution<T = InverseWishartParams, U = URhs>,
+    Rhs: Distribution<Value = InverseWishartParams, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, Matrix, InverseWishartParams, URhs>;

@@ -9,10 +9,10 @@ use std::{ops::BitAnd, ops::Mul};
 pub struct StudentT;
 
 impl Distribution for StudentT {
-    type T = f64;
-    type U = StudentTParams;
+    type Value = f64;
+    type Condition = StudentTParams;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let nu = theta.nu();
         let mu = theta.mu();
         let sigma = theta.sigma();
@@ -20,7 +20,11 @@ impl Distribution for StudentT {
         Ok((1.0 + ((x - mu) / sigma).powi(2) / nu).powf(-((nu + 1.0) / 2.0)))
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let nu = theta.nu();
 
         let student_t = match RandStudentT::new(nu) {
@@ -64,7 +68,7 @@ impl StudentTParams {
 
 impl<Rhs, TRhs> Mul<Rhs> for StudentT
 where
-    Rhs: Distribution<T = TRhs, U = StudentTParams>,
+    Rhs: Distribution<Value = TRhs, Condition = StudentTParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, f64, TRhs, StudentTParams>;
@@ -76,7 +80,7 @@ where
 
 impl<Rhs, URhs> BitAnd<Rhs> for StudentT
 where
-    Rhs: Distribution<T = StudentTParams, U = URhs>,
+    Rhs: Distribution<Value = StudentTParams, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, f64, StudentTParams, URhs>;

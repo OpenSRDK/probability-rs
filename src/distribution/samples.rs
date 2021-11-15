@@ -68,18 +68,18 @@ impl<T> Distribution for SamplesDistribution<T>
 where
     T: RandomVariable + Eq + Hash,
 {
-    type T = T;
-    type U = ();
+    type Value = T;
+    type Condition = ();
 
-    fn fk(&self, x: &Self::T, _: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, _: &Self::Condition) -> Result<f64, DistributionError> {
         Ok(*self.n_map.get(x).unwrap_or(&0) as f64 / self.n as f64)
     }
 
     fn sample(
         &self,
-        _theta: &Self::U,
+        _theta: &Self::Condition,
         rng: &mut dyn RngCore,
-    ) -> Result<Self::T, DistributionError> {
+    ) -> Result<Self::Value, DistributionError> {
         let keys = self.n_map.keys().collect::<Vec<_>>();
         let pi = keys
             .iter()
@@ -96,7 +96,7 @@ where
 impl<T, Rhs, TRhs> Mul<Rhs> for SamplesDistribution<T>
 where
     T: RandomVariable + Eq + Hash,
-    Rhs: Distribution<T = TRhs, U = ()>,
+    Rhs: Distribution<Value = TRhs, Condition = ()>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, T, TRhs, ()>;
@@ -109,7 +109,7 @@ where
 impl<T, Rhs, URhs> BitAnd<Rhs> for SamplesDistribution<T>
 where
     T: RandomVariable + Eq + Hash,
-    Rhs: Distribution<T = (), U = URhs>,
+    Rhs: Distribution<Value = (), Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, T, (), URhs>;

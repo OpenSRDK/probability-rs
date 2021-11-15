@@ -4,11 +4,11 @@ use rand::prelude::*;
 /// Sample b from posterior p(b|a) with likelihood p(a|b) and prior p(b)
 pub struct MetropolisSampler<'a, L, P, A, B, PD>
 where
-    L: Distribution<T = A, U = B>,
-    P: Distribution<T = B, U = ()>,
+    L: Distribution<Value = A, Condition = B>,
+    P: Distribution<Value = B, Condition = ()>,
     A: RandomVariable,
     B: RandomVariable,
-    PD: Distribution<T = B, U = B>,
+    PD: Distribution<Value = B, Condition = B>,
 {
     value: &'a A,
     likelihood: &'a L,
@@ -18,11 +18,11 @@ where
 
 impl<'a, L, P, A, B, PD> MetropolisSampler<'a, L, P, A, B, PD>
 where
-    L: Distribution<T = A, U = B>,
-    P: Distribution<T = B, U = ()>,
+    L: Distribution<Value = A, Condition = B>,
+    P: Distribution<Value = B, Condition = ()>,
     A: RandomVariable,
     B: RandomVariable,
-    PD: Distribution<T = B, U = B>,
+    PD: Distribution<Value = B, Condition = B>,
 {
     pub fn new(value: &'a A, likelihood: &'a L, prior: &'a P, proposal: &'a PD) -> Self {
         Self {

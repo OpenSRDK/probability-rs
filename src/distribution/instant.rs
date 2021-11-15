@@ -44,14 +44,18 @@ where
     T: RandomVariable,
     U: RandomVariable,
 {
-    type T = T;
-    type U = U;
+    type Value = T;
+    type Condition = U;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         (self.p)(x, theta)
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         (self.sample)(theta, rng)
     }
 }
@@ -60,7 +64,7 @@ impl<'a, T, U, Rhs, TRhs> Mul<Rhs> for InstantDistribution<'a, T, U>
 where
     T: RandomVariable,
     U: RandomVariable,
-    Rhs: Distribution<T = TRhs, U = U>,
+    Rhs: Distribution<Value = TRhs, Condition = U>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, T, TRhs, U>;
@@ -74,7 +78,7 @@ impl<'a, T, U, Rhs, URhs> BitAnd<Rhs> for InstantDistribution<'a, T, U>
 where
     T: RandomVariable,
     U: RandomVariable,
-    Rhs: Distribution<T = U, U = URhs>,
+    Rhs: Distribution<Value = U, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, T, U, URhs>;

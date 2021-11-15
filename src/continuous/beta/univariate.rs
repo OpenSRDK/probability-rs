@@ -17,17 +17,21 @@ pub enum BetaError {
 }
 
 impl Distribution for Beta {
-    type T = f64;
-    type U = BetaParams;
+    type Value = f64;
+    type Condition = BetaParams;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let alpha = theta.alpha();
         let beta = theta.beta();
 
         Ok(x.powf(alpha - 1.0) * (1.0 - x).powf(beta - 1.0))
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let alpha = theta.alpha();
         let beta = theta.beta();
 
@@ -73,7 +77,7 @@ impl BetaParams {
 
 impl<Rhs, TRhs> Mul<Rhs> for Beta
 where
-    Rhs: Distribution<T = TRhs, U = BetaParams>,
+    Rhs: Distribution<Value = TRhs, Condition = BetaParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, f64, TRhs, BetaParams>;
@@ -85,7 +89,7 @@ where
 
 impl<Rhs, URhs> BitAnd<Rhs> for Beta
 where
-    Rhs: Distribution<T = BetaParams, U = URhs>,
+    Rhs: Distribution<Value = BetaParams, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, f64, BetaParams, URhs>;

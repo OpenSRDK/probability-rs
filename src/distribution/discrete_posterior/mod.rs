@@ -7,8 +7,8 @@ use std::{collections::HashSet, hash::Hash, marker::PhantomData};
 #[derive(Clone, Debug)]
 pub struct DiscretePosterior<L, P, A, B>
 where
-    L: Distribution<T = A, U = B>,
-    P: Distribution<T = B, U = ()>,
+    L: Distribution<Value = A, Condition = B>,
+    P: Distribution<Value = B, Condition = ()>,
     A: RandomVariable,
     B: RandomVariable + Eq + Hash,
 {
@@ -20,8 +20,8 @@ where
 
 impl<L, P, A, B> DiscretePosterior<L, P, A, B>
 where
-    L: Distribution<T = A, U = B>,
-    P: Distribution<T = B, U = ()>,
+    L: Distribution<Value = A, Condition = B>,
+    P: Distribution<Value = B, Condition = ()>,
     A: RandomVariable,
     B: RandomVariable + Eq + Hash,
 {
@@ -56,23 +56,23 @@ where
 
 impl<L, P, A, B> Distribution for DiscretePosterior<L, P, A, B>
 where
-    L: Distribution<T = A, U = B>,
-    P: Distribution<T = B, U = ()>,
+    L: Distribution<Value = A, Condition = B>,
+    P: Distribution<Value = B, Condition = ()>,
     A: RandomVariable,
     B: RandomVariable + Eq + Hash,
 {
-    type T = B;
-    type U = A;
+    type Value = B;
+    type Condition = A;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         Ok(self.likelihood.fk(theta, x)? * self.prior.fk(x, &())?)
     }
 
     fn sample(
         &self,
-        theta: &Self::U,
+        theta: &Self::Condition,
         rng: &mut dyn rand::RngCore,
-    ) -> Result<Self::T, DistributionError> {
+    ) -> Result<Self::Value, DistributionError> {
         let weighted = self
             .range
             .par_iter()
