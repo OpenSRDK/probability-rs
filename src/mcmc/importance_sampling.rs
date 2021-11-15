@@ -32,8 +32,7 @@ where
     pub fn new(value: A, distribution: D, proposal: PD) -> Result<Self, DistributionError> {
         Ok(Self {
             value,
-            likelihood,
-            prior,
+            distribution,
             proposal,
         })
     }
