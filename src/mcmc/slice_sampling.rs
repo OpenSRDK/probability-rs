@@ -6,8 +6,8 @@ use rand::prelude::*;
 /// http://chasen.org/~daiti-m/diary/?201510
 pub struct SliceSampler<L, P, A>
 where
-    L: Distribution<T = A, U = f64>,
-    P: Distribution<T = f64, U = ()>,
+    L: Distribution<Value = A, Condition = f64>,
+    P: Distribution<Value = f64, Condition = ()>,
     A: RandomVariable,
 {
     value: A,
@@ -25,8 +25,8 @@ pub enum SliceSamplingError {
 
 impl<L, P, A> SliceSampler<L, P, A>
 where
-    L: Distribution<T = A, U = f64>,
-    P: Distribution<T = f64, U = ()>,
+    L: Distribution<Value = A, Condition = f64>,
+    P: Distribution<Value = f64, Condition = ()>,
     A: RandomVariable,
 {
     pub fn new(value: A, likelihood: L, prior: P) -> Result<Self, DistributionError> {

@@ -10,10 +10,10 @@ use std::{ops::BitAnd, ops::Mul};
 pub struct StickBreakingProcess;
 
 impl Distribution for StickBreakingProcess {
-    type T = Vec<f64>;
-    type U = StickBreakingProcessParams;
+    type Value = Vec<f64>;
+    type Condition = StickBreakingProcessParams;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let mut accumulated_w = 0.0;
         let mut accumulated_p = 1.0;
         let beta_params = BetaParams::new(1.0, theta.alpha)?;
@@ -28,7 +28,11 @@ impl Distribution for StickBreakingProcess {
         Ok(accumulated_p)
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         rng.gen_range(0..1);
         todo!("{:?}", theta);
     }
@@ -52,7 +56,7 @@ impl StickBreakingProcessParams {
 
 impl<Rhs, TRhs> Mul<Rhs> for StickBreakingProcess
 where
-    Rhs: Distribution<T = TRhs, U = StickBreakingProcessParams>,
+    Rhs: Distribution<Value = TRhs, Condition = StickBreakingProcessParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, Vec<f64>, TRhs, StickBreakingProcessParams>;
@@ -64,7 +68,7 @@ where
 
 impl<Rhs, URhs> BitAnd<Rhs> for StickBreakingProcess
 where
-    Rhs: Distribution<T = StickBreakingProcessParams, U = URhs>,
+    Rhs: Distribution<Value = StickBreakingProcessParams, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, Vec<f64>, StickBreakingProcessParams, URhs>;

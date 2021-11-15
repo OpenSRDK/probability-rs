@@ -24,10 +24,10 @@ pub enum NormalInverseWishartError {
 }
 
 impl Distribution for NormalInverseWishart {
-    type T = ExactMultivariateNormalParams;
-    type U = NormalInverseWishartParams;
+    type Value = ExactMultivariateNormalParams;
+    type Condition = NormalInverseWishartParams;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let mu0 = theta.mu0().clone();
         let lambda = theta.lambda();
         let lpsi = theta.lpsi().clone();
@@ -45,7 +45,11 @@ impl Distribution for NormalInverseWishart {
         )? * w_inv.fk(lsigma, &InverseWishartParams::new(lpsi, nu)?)?)
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let mu0 = theta.mu0().clone();
         let lambda = theta.lambda();
         let lpsi = theta.lpsi().clone();
@@ -117,7 +121,7 @@ impl NormalInverseWishartParams {
 
 impl<Rhs, TRhs> Mul<Rhs> for NormalInverseWishart
 where
-    Rhs: Distribution<T = TRhs, U = NormalInverseWishartParams>,
+    Rhs: Distribution<Value = TRhs, Condition = NormalInverseWishartParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<
@@ -135,7 +139,7 @@ where
 
 impl<Rhs, URhs> BitAnd<Rhs> for NormalInverseWishart
 where
-    Rhs: Distribution<T = NormalInverseWishartParams, U = URhs>,
+    Rhs: Distribution<Value = NormalInverseWishartParams, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output =

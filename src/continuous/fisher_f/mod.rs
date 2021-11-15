@@ -18,10 +18,10 @@ pub enum FisherFError {
 }
 
 impl Distribution for FisherF {
-    type T = f64;
-    type U = FisherFParams;
+    type Value = f64;
+    type Condition = FisherFParams;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let m = theta.m();
         let n = theta.n();
 
@@ -31,7 +31,11 @@ impl Distribution for FisherF {
         )
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let m = theta.m();
         let n = theta.n();
 
@@ -77,7 +81,7 @@ impl FisherFParams {
 
 impl<Rhs, TRhs> Mul<Rhs> for FisherF
 where
-    Rhs: Distribution<T = TRhs, U = FisherFParams>,
+    Rhs: Distribution<Value = TRhs, Condition = FisherFParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, f64, TRhs, FisherFParams>;
@@ -89,7 +93,7 @@ where
 
 impl<Rhs, URhs> BitAnd<Rhs> for FisherF
 where
-    Rhs: Distribution<T = FisherFParams, U = URhs>,
+    Rhs: Distribution<Value = FisherFParams, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, f64, FisherFParams, URhs>;

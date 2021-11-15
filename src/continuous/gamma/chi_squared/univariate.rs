@@ -15,16 +15,20 @@ pub enum ChiSquaredError {
 }
 
 impl Distribution for ChiSquared {
-    type T = f64;
-    type U = ChiSquaredParams;
+    type Value = f64;
+    type Condition = ChiSquaredParams;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let k = theta.k();
 
         Ok(x.powf(k / 2.0 - 1.0) * (-x / 2.0).exp())
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let k = theta.k();
 
         let chi_squared = match RandChiSquared::new(k) {
@@ -59,7 +63,7 @@ impl ChiSquaredParams {
 
 impl<Rhs, TRhs> Mul<Rhs> for ChiSquared
 where
-    Rhs: Distribution<T = TRhs, U = ChiSquaredParams>,
+    Rhs: Distribution<Value = TRhs, Condition = ChiSquaredParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, f64, TRhs, ChiSquaredParams>;
@@ -71,7 +75,7 @@ where
 
 impl<Rhs, URhs> BitAnd<Rhs> for ChiSquared
 where
-    Rhs: Distribution<T = ChiSquaredParams, U = URhs>,
+    Rhs: Distribution<Value = ChiSquaredParams, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, f64, ChiSquaredParams, URhs>;

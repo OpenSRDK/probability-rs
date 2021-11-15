@@ -10,7 +10,7 @@ use std::{
 #[derive(Clone, Debug)]
 pub struct SwitchedDistribution<'a, D, T, U>
 where
-    D: Distribution<T = T, U = U>,
+    D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
 {
@@ -28,7 +28,7 @@ pub enum SwitchedError {
 
 impl<'a, D, T, U> SwitchedDistribution<'a, D, T, U>
 where
-    D: Distribution<T = T, U = U>,
+    D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
 {
@@ -39,14 +39,14 @@ where
 
 impl<'a, D, T, U> Distribution for SwitchedDistribution<'a, D, T, U>
 where
-    D: Distribution<T = T, U = U>,
+    D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
 {
-    type T = T;
-    type U = SwitchedParams<U>;
+    type Value = T;
+    type Condition = SwitchedParams<U>;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let s = theta;
 
         match s {
@@ -60,7 +60,11 @@ where
         }
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let s = theta;
 
         match s {
@@ -77,7 +81,7 @@ where
 
 impl<'a, D, T, U> SwitchedDistribution<'a, D, T, U>
 where
-    D: Distribution<T = T, U = U>,
+    D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
 {
@@ -102,29 +106,29 @@ where
     fn switch<'a>(
         &'a self,
         map: &'a HashMap<u32, U>,
-    ) -> SwitchedDistribution<'a, Self, Self::T, Self::U>;
+    ) -> SwitchedDistribution<'a, Self, Self::Value, Self::Condition>;
 }
 
 impl<D, T, U> SwitchableDistribution<U> for D
 where
-    D: Distribution<T = T, U = U>,
+    D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
 {
     fn switch<'a>(
         &'a self,
         map: &'a HashMap<u32, U>,
-    ) -> SwitchedDistribution<'a, Self, Self::T, U> {
-        SwitchedDistribution::<Self, Self::T, U>::new(self, map)
+    ) -> SwitchedDistribution<'a, Self, Self::Value, U> {
+        SwitchedDistribution::<Self, Self::Value, U>::new(self, map)
     }
 }
 
 impl<'a, D, T, U, Rhs, TRhs> Mul<Rhs> for SwitchedDistribution<'a, D, T, U>
 where
-    D: Distribution<T = T, U = U>,
+    D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
-    Rhs: Distribution<T = TRhs, U = SwitchedParams<U>>,
+    Rhs: Distribution<Value = TRhs, Condition = SwitchedParams<U>>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, T, TRhs, SwitchedParams<U>>;
@@ -136,10 +140,10 @@ where
 
 impl<'a, D, T, U, Rhs, URhs> BitAnd<Rhs> for SwitchedDistribution<'a, D, T, U>
 where
-    D: Distribution<T = T, U = U>,
+    D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
-    Rhs: Distribution<T = SwitchedParams<U>, U = URhs>,
+    Rhs: Distribution<Value = SwitchedParams<U>, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, T, SwitchedParams<U>, URhs>;

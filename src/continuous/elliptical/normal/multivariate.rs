@@ -35,10 +35,10 @@ impl<T> Distribution for MultivariateNormal<T>
 where
     T: EllipticalParams,
 {
-    type T = Vec<f64>;
-    type U = T;
+    type Value = Vec<f64>;
+    type Condition = T;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let x_mu = theta.x_mu(x)?.col_mat();
         let n = x.len();
 
@@ -46,7 +46,11 @@ where
         Ok((-1.0 / 2.0 * (x_mu.t() * theta.sigma_inv_mul(x_mu)?)[(0, 0)] / (n as f64).exp()).exp())
     }
 
-    fn sample(&self, theta: &Self::U, rng: &mut dyn RngCore) -> Result<Self::T, DistributionError> {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
         let z = (0..theta.lsigma_cols())
             .into_iter()
             .map(|_| rng.sample(StandardNormal))
@@ -61,7 +65,7 @@ pub type ExactMultivariateNormalParams = ExactEllipticalParams;
 impl<T, Rhs, TRhs> Mul<Rhs> for MultivariateNormal<T>
 where
     T: EllipticalParams,
-    Rhs: Distribution<T = TRhs, U = T>,
+    Rhs: Distribution<Value = TRhs, Condition = T>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, Vec<f64>, TRhs, T>;
@@ -74,7 +78,7 @@ where
 impl<T, Rhs, URhs> BitAnd<Rhs> for MultivariateNormal<T>
 where
     T: EllipticalParams,
-    Rhs: Distribution<T = T, U = URhs>,
+    Rhs: Distribution<Value = T, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, Vec<f64>, T, URhs>;

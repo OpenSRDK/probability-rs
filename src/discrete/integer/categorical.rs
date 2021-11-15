@@ -20,10 +20,10 @@ pub enum CategoricalError {
 }
 
 impl Distribution for Categorical {
-    type T = usize;
-    type U = CategoricalParams;
+    type Value = usize;
+    type Condition = CategoricalParams;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let k = *x;
         if k < theta.p().len() {
             return Err(DistributionError::InvalidParameters(
@@ -35,9 +35,9 @@ impl Distribution for Categorical {
 
     fn sample(
         &self,
-        theta: &Self::U,
+        theta: &Self::Condition,
         rng: &mut dyn rand::RngCore,
-    ) -> Result<Self::T, DistributionError> {
+    ) -> Result<Self::Value, DistributionError> {
         let index = match WeightedIndex::new(theta.p.clone()) {
             Ok(v) => Ok(v),
             Err(e) => Err(DistributionError::Others(e.into())),
@@ -67,7 +67,7 @@ impl CategoricalParams {
 
 impl<Rhs, TRhs> Mul<Rhs> for Categorical
 where
-    Rhs: Distribution<T = TRhs, U = CategoricalParams>,
+    Rhs: Distribution<Value = TRhs, Condition = CategoricalParams>,
     TRhs: RandomVariable,
 {
     type Output = IndependentJoint<Self, Rhs, usize, TRhs, CategoricalParams>;
@@ -79,7 +79,7 @@ where
 
 impl<Rhs, URhs> BitAnd<Rhs> for Categorical
 where
-    Rhs: Distribution<T = CategoricalParams, U = URhs>,
+    Rhs: Distribution<Value = CategoricalParams, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output = DependentJoint<Self, Rhs, usize, CategoricalParams, URhs>;

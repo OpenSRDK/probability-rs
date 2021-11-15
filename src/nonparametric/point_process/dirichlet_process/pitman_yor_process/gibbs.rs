@@ -11,7 +11,7 @@ use std::{ops::BitAnd, ops::Mul};
 #[derive(Clone, Debug)]
 pub struct PitmanYorGibbs<'a, G0, TH>
 where
-    G0: Distribution<T = TH, U = ()>,
+    G0: Distribution<Value = TH, Condition = ()>,
     TH: RandomVariable,
 {
     phantom: &'a PhantomData<(G0, TH)>,
@@ -19,7 +19,7 @@ where
 
 impl<'a, G0, TH> PitmanYorGibbs<'a, G0, TH>
 where
-    G0: Distribution<T = TH, U = ()>,
+    G0: Distribution<Value = TH, Condition = ()>,
     TH: RandomVariable,
 {
     pub fn new() -> Self {
@@ -31,13 +31,13 @@ where
 
 impl<'a, G0, TH> Distribution for PitmanYorGibbs<'a, G0, TH>
 where
-    G0: Distribution<T = TH, U = ()>,
+    G0: Distribution<Value = TH, Condition = ()>,
     TH: RandomVariable,
 {
-    type T = PitmanYorGibbsSample;
-    type U = PitmanYorGibbsParams<'a, G0, TH>;
+    type Value = PitmanYorGibbsSample;
+    type Condition = PitmanYorGibbsParams<'a, G0, TH>;
 
-    fn fk(&self, x: &Self::T, theta: &Self::U) -> Result<f64, DistributionError> {
+    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let alpha = theta.base.alpha;
         let d = theta.base.d;
         let n = theta.n;
@@ -59,9 +59,9 @@ where
 
     fn sample(
         &self,
-        _theta: &Self::U,
+        _theta: &Self::Condition,
         _rng: &mut dyn RngCore,
-    ) -> Result<Self::T, DistributionError> {
+    ) -> Result<Self::Value, DistributionError> {
         todo!()
     }
 }
@@ -75,7 +75,7 @@ pub enum PitmanYorGibbsSample {
 #[derive(Clone, Debug)]
 pub struct PitmanYorGibbsParams<'a, G0, TH>
 where
-    G0: Distribution<T = TH, U = ()>,
+    G0: Distribution<Value = TH, Condition = ()>,
     TH: RandomVariable,
 {
     base: &'a PitmanYorProcessParams<G0, TH>,
@@ -85,7 +85,7 @@ where
 
 impl<'a, G0, TH> PitmanYorGibbsParams<'a, G0, TH>
 where
-    G0: Distribution<T = TH, U = ()>,
+    G0: Distribution<Value = TH, Condition = ()>,
     TH: RandomVariable,
 {
     /// - `d`: 0 ≦ d < 1. If it is zero, Pitman-Yor process means Chinese restaurant process.
@@ -100,9 +100,9 @@ where
 
 impl<'a, G0, TH, Rhs, TRhs> Mul<Rhs> for PitmanYorGibbs<'a, G0, TH>
 where
-    G0: Distribution<T = TH, U = ()>,
+    G0: Distribution<Value = TH, Condition = ()>,
     TH: RandomVariable,
-    Rhs: Distribution<T = TRhs, U = PitmanYorGibbsParams<'a, G0, TH>>,
+    Rhs: Distribution<Value = TRhs, Condition = PitmanYorGibbsParams<'a, G0, TH>>,
     TRhs: RandomVariable,
 {
     type Output =
@@ -115,9 +115,9 @@ where
 
 impl<'a, G0, TH, Rhs, URhs> BitAnd<Rhs> for PitmanYorGibbs<'a, G0, TH>
 where
-    G0: Distribution<T = TH, U = ()>,
+    G0: Distribution<Value = TH, Condition = ()>,
     TH: RandomVariable,
-    Rhs: Distribution<T = PitmanYorGibbsParams<'a, G0, TH>, U = URhs>,
+    Rhs: Distribution<Value = PitmanYorGibbsParams<'a, G0, TH>, Condition = URhs>,
     URhs: RandomVariable,
 {
     type Output =
