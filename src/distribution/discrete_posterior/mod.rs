@@ -72,7 +72,7 @@ where
         &self,
         theta: &Self::Condition,
         rng: &mut dyn rand::RngCore,
-    ) -> Result<Self::T, DistributionError> {
+    ) -> Result<Self::Value, DistributionError> {
         let weighted = self.weighted(theta)?;
 
         let index = self.index(&weighted)?.sample(rng);
