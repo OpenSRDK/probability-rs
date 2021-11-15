@@ -33,7 +33,7 @@ where
         })
     }
 
-    pub fn expectation(&self, f: impl Fn(&B) -> f64, x: &[T]) -> Result<f64, DistributionError> {
+    pub fn expectation(&self, f: impl Fn(&T) -> f64, x: &[T]) -> Result<f64, DistributionError> {
         let wi_fxi = x
             .iter()
             .map(|xi| -> Result<_, DistributionError> {
