@@ -1,45 +1,47 @@
 // Sampling Importance Resampling
+use crate::elliptical::*;
 use crate::rand::SeedableRng;
 use crate::{Distribution, DistributionError, RandomVariable, SamplesDistribution};
 use rand::rngs::StdRng;
 use std::hash::Hash;
-
+use std::iter::Sum;
+use std::marker::PhantomData;
+use std::ops::Div;
 pub struct ParticleFilter<Y, X, D1, D2, PD>
 where
     Y: RandomVariable,
-    X: RandomVariable + Eq + Hash,
+    X: RandomVariable + Eq + Hash + Sum + Div,
     D1: Distribution<Value = Y, Condition = X>,
     D2: Distribution<Value = X, Condition = X>,
     PD: Distribution<Value = X, Condition = X>,
 {
     value: Y,
-    state: X,
     distr_y: D1,
     distr_x: D2,
     proposal: PD,
+    phantom: PhantomData<X>,
 }
 
 impl<Y, X, D1, D2, PD> ParticleFilter<Y, X, D1, D2, PD>
 where
     Y: RandomVariable,
-    X: RandomVariable + Eq + Hash,
+    X: RandomVariable + Eq + Hash + Sum + Div,
     D1: Distribution<Value = Y, Condition = X>,
     D2: Distribution<Value = X, Condition = X>,
     PD: Distribution<Value = X, Condition = X>,
 {
     pub fn new(
         value: Y,
-        state: X,
         distr_y: D1,
         distr_x: D2,
         proposal: PD,
     ) -> Result<Self, DistributionError> {
         Ok(Self {
             value,
-            state,
             distr_y,
             distr_x,
             proposal,
+            phantom: PhantomData,
         })
     }
 
@@ -50,10 +52,17 @@ where
     ) -> Result<SamplesDistribution<X>, DistributionError> {
         let mut rng = StdRng::from_seed([1; 32]);
 
+        let x_initial = Normal.sample(&NormalParams::new(0.0, 1.0).unwrap(), &mut rng)?;
+        //mu はy[0]を取るのが良いのではないか。
+
+        let mut x = x_initial;
+
+        //for l in 0..y.len()+1{};
+
         let mut p = (0..particles)
             .into_iter()
             .map(|_i| -> Result<_, DistributionError> {
-                let pi = self.proposal.sample(&self.state, &mut rng)?;
+                let pi = self.proposal.sample(&x, &mut rng)?;
                 Ok(pi)
             })
             .collect::<Result<Vec<_>, _>>()?;
@@ -94,7 +103,10 @@ where
                 p_sample.append(&mut pi_sample);
             }
 
+            x = p_sample.iter().mean();
+
             let weighted_distr = SamplesDistribution::new(p_sample);
+
             p = (0..particles)
                 .into_iter()
                 .map(|_i| -> Result<_, DistributionError> {
