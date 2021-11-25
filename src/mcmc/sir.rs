@@ -1,7 +1,7 @@
 // Sampling Importance Resampling
 use crate::elliptical::*;
 use crate::rand::SeedableRng;
-use crate::{Distribution, DistributionError, RandomVariable, SamplesDistribution};
+use crate::{ContinuousSamplesDistribution, Distribution, DistributionError, RandomVariable};
 use rand::rngs::StdRng;
 use std::hash::Hash;
 use std::iter::Sum;
@@ -49,7 +49,7 @@ where
         &self,
         particles: usize,
         thr: f64,
-    ) -> Result<SamplesDistribution<X>, DistributionError> {
+    ) -> Result<ContinuousSamplesDistribution<X>, DistributionError> {
         let mut rng = StdRng::from_seed([1; 32]);
 
         let x_initial = Normal.sample(&NormalParams::new(0.0, 1.0).unwrap(), &mut rng)?;
@@ -103,9 +103,8 @@ where
                 p_sample.append(&mut pi_sample);
             }
 
-            x = p_sample.iter().mean();
-
-            let weighted_distr = SamplesDistribution::new(p_sample);
+            let weighted_distr = ContinuousSamplesDistribution::new(p_sample);
+            x = weighted_distr.samples().mean();
 
             p = (0..particles)
                 .into_iter()
@@ -116,7 +115,7 @@ where
                 .collect::<Result<Vec<_>, _>>()?;
         }
 
-        let x_distr = SamplesDistribution::new(p);
+        let x_distr = ContinuousSamplesDistribution::new(p);
 
         Ok(x_distr)
     }
