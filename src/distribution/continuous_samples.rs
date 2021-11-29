@@ -26,7 +26,7 @@ pub enum SamplesError {
 
 impl<T> ContinuousSamplesDistribution<T>
 where
-    T: RandomVariable + VectorSampleable + Sum + Div<f64, Output = T> + Meanable<T>,
+    T: RandomVariable + VectorSampleable + Sum + Div<f64, Output = T>,
 {
     pub fn new(samples: Vec<T>) -> Self {
         Self { samples }
@@ -36,7 +36,7 @@ where
         &self.samples
     }
 
-    pub fn samples_mut(&self) -> &mut Vec<T> {
+    pub fn samples_mut(&mut self) -> &mut Vec<T> {
         &mut self.samples
     }
 }
