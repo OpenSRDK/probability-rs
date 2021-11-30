@@ -8,39 +8,45 @@ use std::iter::Sum;
 use std::marker::PhantomData;
 use std::ops::Div;
 
-pub struct ParticleFilter<Y, X, D1, D2, PD>
+pub struct ParticleFilter<Y, X, DEY, DEX, PD>
 where
     Y: RandomVariable,
     X: RandomVariable + Eq + Hash + VectorSampleable + Sum + Div<f64, Output = X>,
-    D1: Distribution<Value = Y, Condition = X>,
-    D2: Distribution<Value = X, Condition = X>,
+    DEY: Distribution<Value = Y, Condition = ()>,
+    DEX: Distribution<Value = X, Condition = ()>,
     PD: Distribution<Value = X, Condition = X>,
 {
     observable: Vec<Y>,
-    distr_y: D1,
-    distr_x: D2,
+    f: impl Fn(X) -> X,
+    h: impl Fn(X) -> Y,
+    sys_noize: DEX,
+    obs_noize: DEY,
     proposal: PD,
     phantom: PhantomData<X>,
 }
 
-impl<Y, X, D1, D2, PD> ParticleFilter<Y, X, D1, D2, PD>
+impl<Y, X, DEY, DEX, PD> ParticleFilter<Y, X, DEY, DEX, PD>
 where
     Y: RandomVariable,
     X: RandomVariable + Eq + Hash + VectorSampleable + Sum + Div<f64, Output = X>,
-    D1: Distribution<Value = Y, Condition = X>,
-    D2: Distribution<Value = X, Condition = X>,
+    DEY: Distribution<Value = Y, Condition = ()>,
+    DEX: Distribution<Value = X, Condition = ()>,
     PD: Distribution<Value = X, Condition = X>,
 {
     pub fn new(
         observable: Vec<Y>,
-        distr_y: D1,
-        distr_x: D2,
+        f: impl Fn(X) -> X,
+        h: impl Fn(X) -> Y,
+        sys_noize: DEX,
+        obs_noize: DEY,
         proposal: PD,
     ) -> Result<Self, DistributionError> {
         Ok(Self {
             observable,
-            distr_y,
-            distr_x,
+            f,
+            h,
+            obs_noize,
+            sys_noize,
             proposal,
             phantom: PhantomData,
         })
@@ -124,5 +130,35 @@ where
             }
         }
         Ok(distr_vec)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::distribution::Distribution;
+    use crate::*;
+    use rand::prelude::*;
+
+    #[test]
+    fn it_works() {
+        // create test data
+        let x_sigma = 1.0;
+        let y_sigma = 2.0;
+        let mut rng = StdRng::from_seed([1; 32]);
+        let mut x_series = vec![];
+        let mut x_pre = 0.0;
+        let mut y_series = vec![];
+        for _i in 0..30 {
+            let x_params = NormalParams::new(x_pre, x_sigma).unwrap();
+            let x = Normal.sample(&x_params, &mut rng).unwrap();
+            x_series.append(&mut vec![x]);
+            x_pre = x;
+            let y_params = NormalParams::new(x, y_sigma).unwrap();
+            let y = Normal.sample(&y_params, &mut rng).unwrap();
+            y_series.append(&mut vec![y]);
+        }
+        // estimation by particlefilter
+        let x_distr = Normal;
+        let y_distr = Normal;
     }
 }
