@@ -5,50 +5,41 @@ use crate::{ContinuousSamplesDistribution, Distribution, DistributionError, Rand
 use rand::rngs::StdRng;
 use std::hash::Hash;
 use std::iter::Sum;
-use std::marker::PhantomData;
 use std::ops::Div;
 
-pub struct ParticleFilter<Y, X, DEY, DEX, PD>
+pub struct ParticleFilter<Y, X, DY, DX, PD>
 where
     Y: RandomVariable,
     X: RandomVariable + Eq + Hash + VectorSampleable + Sum + Div<f64, Output = X>,
-    DEY: Distribution<Value = Y, Condition = ()>,
-    DEX: Distribution<Value = X, Condition = ()>,
-    PD: Distribution<Value = X, Condition = X>,
+    DY: Distribution<Value = Y, Condition = X>,
+    DX: Distribution<Value = X, Condition = X>,
+    PD: Distribution<Value = X, Condition = (Vec<X>, Vec<Y>)>,
 {
     observable: Vec<Y>,
-    f: impl Fn(X) -> X,
-    h: impl Fn(X) -> Y,
-    sys_noize: DEX,
-    obs_noize: DEY,
+    distr_x: DX,
+    distr_y: DY,
     proposal: PD,
-    phantom: PhantomData<X>,
 }
 
-impl<Y, X, DEY, DEX, PD> ParticleFilter<Y, X, DEY, DEX, PD>
+impl<Y, X, DY, DX, PD> ParticleFilter<Y, X, DY, DX, PD>
 where
     Y: RandomVariable,
     X: RandomVariable + Eq + Hash + VectorSampleable + Sum + Div<f64, Output = X>,
-    DEY: Distribution<Value = Y, Condition = ()>,
-    DEX: Distribution<Value = X, Condition = ()>,
-    PD: Distribution<Value = X, Condition = X>,
+    DY: Distribution<Value = Y, Condition = X>,
+    DX: Distribution<Value = X, Condition = X>,
+    PD: Distribution<Value = X, Condition = (Vec<X>, Vec<Y>)>,
 {
     pub fn new(
         observable: Vec<Y>,
-        f: impl Fn(X) -> X,
-        h: impl Fn(X) -> Y,
-        sys_noize: DEX,
-        obs_noize: DEY,
+        distr_x: DX,
+        distr_y: DY,
         proposal: PD,
     ) -> Result<Self, DistributionError> {
         Ok(Self {
             observable,
-            f,
-            h,
-            obs_noize,
-            sys_noize,
+            distr_y,
+            distr_x,
             proposal,
-            phantom: PhantomData,
         })
     }
 
@@ -63,17 +54,31 @@ where
 
         let particles_len = particles_initial.len();
 
-        let mut p_previous = particles_initial;
+        let mut p_previous = particles_initial.clone();
 
         let w_initial = vec![1.0 / particles_len as f64; particles_len];
 
         let mut w_previous = w_initial;
 
+        let mut vecvec_p = (0..particles_len)
+            .into_iter()
+            .map(|i| -> Result<_, DistributionError> {
+                let vec_pi = vec![particles_initial[i].clone()];
+                Ok(vec_pi)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
         for t in 0..(self.observable).len() {
             let mut p = (0..particles_len)
                 .into_iter()
                 .map(|i| -> Result<_, DistributionError> {
-                    let pi = self.proposal.sample(&p_previous[i], &mut rng)?;
+                    let pi = self.proposal.sample(
+                        &(
+                            (vecvec_p[i][0..t]).to_vec(),
+                            (self.observable[0..t]).to_vec(),
+                        ),
+                        &mut rng,
+                    )?;
                     Ok(pi)
                 })
                 .collect::<Result<Vec<_>, _>>()?;
@@ -85,7 +90,13 @@ where
                         let wi_orig = w_previous[i]
                             * self.distr_y.fk(&self.observable[t], &p[i])?
                             * self.distr_x.fk(&p[i], &p_previous[i])?
-                            / self.proposal.fk(&p[i], &p_previous[i])?;
+                            / self.proposal.fk(
+                                &p[i],
+                                &(
+                                    (vecvec_p[i][0..t]).to_vec(),
+                                    (self.observable[0..t]).to_vec(),
+                                ),
+                            )?;
                         Ok(wi_orig)
                     })
                     .collect::<Result<Vec<_>, _>>()?;
@@ -127,6 +138,16 @@ where
                         Ok(pi)
                     })
                     .collect::<Result<Vec<_>, _>>()?;
+
+                vecvec_p = (0..particles_len)
+                    .into_iter()
+                    .map(|i| -> Result<_, DistributionError> {
+                        let mut vec_pi = vec![p[i].clone()];
+                        vecvec_p[i].to_vec().append(&mut vec_pi);
+                        let vecvec_pi = vecvec_p[i].clone();
+                        Ok(vecvec_pi)
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
             }
         }
         Ok(distr_vec)
@@ -158,7 +179,5 @@ mod tests {
             y_series.append(&mut vec![y]);
         }
         // estimation by particlefilter
-        let x_distr = Normal;
-        let y_distr = Normal;
     }
 }
