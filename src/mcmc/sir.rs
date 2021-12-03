@@ -157,8 +157,11 @@ where
 #[cfg(test)]
 mod tests {
     use crate::distribution::Distribution;
+    use crate::ConditionedDistribution;
     use crate::*;
+    use opensrdk_linear_algebra::mat;
     use rand::prelude::*;
+    use std::hash::Hash;
 
     #[test]
     fn it_works() {
@@ -179,5 +182,11 @@ mod tests {
             y_series.append(&mut vec![y]);
         }
         // estimation by particlefilter
+        let distr_x = Normal.condition(&|x: &f64| NormalParams::new(*x, x_sigma));
+        let distr_y = Normal.condition(&|y: &f64| NormalParams::new(*y, y_sigma));
+        let proposal = MultivariateNormal.condition(&|xy: &(Vec<f64>, Vec<f64>)| {
+            ExactMultivariateNormalParams: new(mat!(xy.0, xy.1), x_sigma)
+        });
+        let test = ParticleFilter::new(y_series, distr_x, distr_y, proposal);
     }
 }
