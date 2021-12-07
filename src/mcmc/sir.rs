@@ -3,14 +3,13 @@ use crate::rand::SeedableRng;
 use crate::VectorSampleable;
 use crate::{ContinuousSamplesDistribution, Distribution, DistributionError, RandomVariable};
 use rand::rngs::StdRng;
-use std::hash::Hash;
 use std::iter::Sum;
 use std::ops::Div;
 
 pub struct ParticleFilter<Y, X, DY, DX, PD>
 where
     Y: RandomVariable,
-    X: RandomVariable + Eq + Hash + VectorSampleable + Sum + Div<f64, Output = X>,
+    X: RandomVariable + PartialEq + VectorSampleable + Sum + Div<f64, Output = X>,
     DY: Distribution<Value = Y, Condition = X>,
     DX: Distribution<Value = X, Condition = X>,
     PD: Distribution<Value = X, Condition = (Vec<X>, Vec<Y>)>,
@@ -24,7 +23,7 @@ where
 impl<Y, X, DY, DX, PD> ParticleFilter<Y, X, DY, DX, PD>
 where
     Y: RandomVariable,
-    X: RandomVariable + Eq + Hash + VectorSampleable + Sum + Div<f64, Output = X>,
+    X: RandomVariable + PartialEq + VectorSampleable + Sum + Div<f64, Output = X>,
     DY: Distribution<Value = Y, Condition = X>,
     DX: Distribution<Value = X, Condition = X>,
     PD: Distribution<Value = X, Condition = (Vec<X>, Vec<Y>)>,
@@ -67,8 +66,9 @@ where
                 Ok(vec_pi)
             })
             .collect::<Result<Vec<_>, _>>()?;
+        //println!("{:#?}", vecvec_p);
 
-        for t in 0..(self.observable).len() {
+        for t in 0..((self.observable).len() - 1) {
             let mut p = (0..particles_len)
                 .into_iter()
                 .map(|i| -> Result<_, DistributionError> {
@@ -84,7 +84,7 @@ where
                 .collect::<Result<Vec<_>, _>>()?;
 
             loop {
-                let w_orig = (0..particles_len)
+                let w_orig = (0..particles_len - 1)
                     .into_iter()
                     .map(|i| -> Result<_, DistributionError> {
                         let wi_orig = w_previous[i]
@@ -101,7 +101,7 @@ where
                     })
                     .collect::<Result<Vec<_>, _>>()?;
 
-                let w = (0..particles_len)
+                let w = (0..particles_len - 1)
                     .into_iter()
                     .map(|i| -> Result<_, DistributionError> {
                         let wi =
@@ -131,7 +131,7 @@ where
                     break;
                 }
 
-                p = (0..particles_len)
+                p = (0..particles_len - 1)
                     .into_iter()
                     .map(|_i| -> Result<_, DistributionError> {
                         let pi = weighted_distr.sample(&(), &mut rng)?;
@@ -139,7 +139,7 @@ where
                     })
                     .collect::<Result<Vec<_>, _>>()?;
 
-                vecvec_p = (0..particles_len)
+                vecvec_p = (0..particles_len - 1)
                     .into_iter()
                     .map(|i| -> Result<_, DistributionError> {
                         let mut vec_pi = vec![p[i].clone()];
@@ -157,11 +157,9 @@ where
 #[cfg(test)]
 mod tests {
     use crate::distribution::Distribution;
-    use crate::ConditionedDistribution;
     use crate::*;
-    use opensrdk_linear_algebra::mat;
     use rand::prelude::*;
-    use std::hash::Hash;
+    use sir::ParticleFilter;
 
     #[test]
     fn it_works() {
@@ -169,10 +167,10 @@ mod tests {
         let x_sigma = 1.0;
         let y_sigma = 2.0;
         let mut rng = StdRng::from_seed([1; 32]);
-        let mut x_series = vec![];
+        let mut x_series = Vec::new();
         let mut x_pre = 0.0;
-        let mut y_series = vec![];
-        for _i in 0..30 {
+        let mut y_series = Vec::new();
+        for _i in 0..29 {
             let x_params = NormalParams::new(x_pre, x_sigma).unwrap();
             let x = Normal.sample(&x_params, &mut rng).unwrap();
             x_series.append(&mut vec![x]);
@@ -182,11 +180,26 @@ mod tests {
             y_series.append(&mut vec![y]);
         }
         // estimation by particlefilter
-        let distr_x = Normal.condition(&|x: &f64| NormalParams::new(*x, x_sigma));
-        let distr_y = Normal.condition(&|y: &f64| NormalParams::new(*y, y_sigma));
-        let proposal = MultivariateNormal.condition(&|xy: &(Vec<f64>, Vec<f64>)| {
-            ExactMultivariateNormalParams: new(mat!(xy.0, xy.1), x_sigma)
-        });
-        let test = ParticleFilter::new(y_series, distr_x, distr_y, proposal);
+        let fn_x = |x: &f64| NormalParams::new(*x, x_sigma);
+        let fn_y = |y: &f64| NormalParams::new(*y, y_sigma);
+        let fn_p = |xy: &(Vec<f64>, Vec<f64>)| NormalParams::new(xy.0[xy.0.len() - 1], x_sigma);
+        let distr_x = Normal.condition(&fn_x);
+        let distr_y = Normal.condition(&fn_y);
+        let proposal = Normal.condition(&fn_p);
+        let test = ParticleFilter::new(y_series, distr_x, distr_y, proposal).unwrap();
+        let p_initial = (0..100)
+            .into_iter()
+            .map(|_i| -> Result<_, DistributionError> {
+                let p = Normal
+                    .sample(&NormalParams::new(x_pre, x_sigma).unwrap(), &mut rng)
+                    .unwrap();
+                Ok(p)
+            })
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        //println!("{:#?}", p_initial);
+        let thr = 80.0;
+        let result = &test.filtering(p_initial, thr);
+        //println!("{:#?}", result);
     }
 }
