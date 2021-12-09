@@ -6,28 +6,27 @@ use std::{
 };
 
 #[derive(Clone)]
-pub struct ConditionedDistribution<'a, D, T, U1, U2>
+pub struct ConditionedDistribution<D, T, U1, U2, F>
 where
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: RandomVariable,
     U2: RandomVariable,
+    F: Fn(&U2) -> Result<U1, DistributionError>,
 {
     distribution: D,
-    condition: &'a (dyn Fn(&U2) -> Result<U1, DistributionError> + Send + Sync),
+    condition: F,
 }
 
-impl<'a, D, T, U1, U2> ConditionedDistribution<'a, D, T, U1, U2>
+impl<D, T, U1, U2> ConditionedDistribution<D, T, U1, U2>
 where
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: RandomVariable,
     U2: RandomVariable,
+    F: Fn(&U2) -> Result<U1, DistributionError>,
 {
-    pub fn new(
-        distribution: D,
-        condition: &'a (dyn Fn(&U2) -> Result<U1, DistributionError> + Send + Sync),
-    ) -> Self {
+    pub fn new(distribution: D, condition: F) -> Self {
         Self {
             distribution,
             condition,
@@ -35,12 +34,13 @@ where
     }
 }
 
-impl<'a, D, T, U1, U2> Debug for ConditionedDistribution<'a, D, T, U1, U2>
+impl<D, T, U1, U2, F> Debug for ConditionedDistribution<D, T, U1, U2, F>
 where
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: RandomVariable,
     U2: RandomVariable,
+    F: Fn(&U2) -> Result<U1, DistributionError>,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -51,12 +51,13 @@ where
     }
 }
 
-impl<'a, D, T, U1, U2> Distribution for ConditionedDistribution<'a, D, T, U1, U2>
+impl<D, T, U1, U2, F> Distribution for ConditionedDistribution<D, T, U1, U2, F>
 where
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: RandomVariable,
     U2: RandomVariable,
+    F: Fn(&U2) -> Result<U1, DistributionError>,
 {
     type Value = T;
     type Condition = U2;
