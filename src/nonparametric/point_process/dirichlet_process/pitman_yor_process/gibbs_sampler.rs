@@ -65,9 +65,9 @@ where
         let likelihood = self
             .likelihood
             .switch(switch.theta())
-            .condition(&likelihood_condition);
+            .condition(likelihood_condition);
         let prior_condition = self.gibbs_condition(switch.s_inv(), switch.s().len());
-        let prior = PitmanYorGibbs::new().condition(&prior_condition);
+        let prior = PitmanYorGibbs::new().condition(prior_condition);
 
         let posterior = DiscretePosterior::new(
             likelihood,

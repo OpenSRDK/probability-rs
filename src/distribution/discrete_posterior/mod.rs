@@ -95,8 +95,8 @@ mod tests {
         // range.insert(true);
         // range.insert(false);
         let model = DiscretePosterior::new(
-            Normal.condition(&|x: &bool| NormalParams::new(if *x { 10.0 } else { 0.0 }, 1.0)),
-            Bernoulli.condition(&|_x: &()| BernoulliParams::new(0.5)),
+            Normal.condition(|x: &bool| NormalParams::new(if *x { 10.0 } else { 0.0 }, 1.0)),
+            Bernoulli.condition(|_x: &()| BernoulliParams::new(0.5)),
             range,
         );
 
