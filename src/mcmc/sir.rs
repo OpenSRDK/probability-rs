@@ -66,16 +66,15 @@ where
                 Ok(vec_pi)
             })
             .collect::<Result<Vec<_>, _>>()?;
-        //println!("{:#?}", vecvec_p);
 
-        for t in 0..((self.observable).len() - 1) {
+        for t in 0..self.observable.len() {
             let mut p = (0..particles_len)
                 .into_iter()
                 .map(|i| -> Result<_, DistributionError> {
                     let pi = self.proposal.sample(
                         &(
-                            (vecvec_p[i][0..t]).to_vec(),
-                            (self.observable[0..t]).to_vec(),
+                            (&vecvec_p[i][0..t + 1]).to_vec(),
+                            (self.observable[0..t + 1]).to_vec(),
                         ),
                         &mut rng,
                     )?;
@@ -84,7 +83,7 @@ where
                 .collect::<Result<Vec<_>, _>>()?;
 
             loop {
-                let w_orig = (0..particles_len - 1)
+                let w_orig = (0..particles_len)
                     .into_iter()
                     .map(|i| -> Result<_, DistributionError> {
                         let wi_orig = w_previous[i]
@@ -93,24 +92,24 @@ where
                             / self.proposal.fk(
                                 &p[i],
                                 &(
-                                    (vecvec_p[i][0..t]).to_vec(),
-                                    (self.observable[0..t]).to_vec(),
+                                    (vecvec_p[i][0..t + 1]).to_vec(),
+                                    (self.observable[0..t + 1]).to_vec(),
                                 ),
                             )?;
                         Ok(wi_orig)
                     })
                     .collect::<Result<Vec<_>, _>>()?;
 
-                let w = (0..particles_len - 1)
+                let w = (0..particles_len)
                     .into_iter()
                     .map(|i| -> Result<_, DistributionError> {
-                        let wi =
-                            w_previous[i] / (w_orig.iter().map(|wi_orig| wi_orig).sum::<f64>());
+                        let wi = w_orig[i] / (w_orig.iter().map(|wi_orig| wi_orig).sum::<f64>());
                         Ok(wi)
                     })
                     .collect::<Result<Vec<_>, _>>()?;
 
                 let eff = 1.0 / (w.iter().map(|wi| wi.powi(2)).sum::<f64>());
+                println!("{:#?}", eff);
 
                 let mut p_sample = vec![];
 
@@ -126,26 +125,26 @@ where
 
                 if eff > thr {
                     distr_vec.append(&mut weighted_distr_vec);
+
+                    vecvec_p = (0..particles_len)
+                        .into_iter()
+                        .map(|i| -> Result<_, DistributionError> {
+                            let mut vec_pi = vec![p[i].clone()];
+                            vecvec_p[i].append(&mut vec_pi);
+                            let vecvec_pi = vecvec_p[i].clone();
+                            Ok(vecvec_pi)
+                        })
+                        .collect::<Result<Vec<_>, _>>()?;
                     p_previous = p;
                     w_previous = w;
                     break;
                 }
 
-                p = (0..particles_len - 1)
+                p = (0..particles_len)
                     .into_iter()
                     .map(|_i| -> Result<_, DistributionError> {
                         let pi = weighted_distr.sample(&(), &mut rng)?;
                         Ok(pi)
-                    })
-                    .collect::<Result<Vec<_>, _>>()?;
-
-                vecvec_p = (0..particles_len - 1)
-                    .into_iter()
-                    .map(|i| -> Result<_, DistributionError> {
-                        let mut vec_pi = vec![p[i].clone()];
-                        vecvec_p[i].to_vec().append(&mut vec_pi);
-                        let vecvec_pi = vecvec_p[i].clone();
-                        Ok(vecvec_pi)
                     })
                     .collect::<Result<Vec<_>, _>>()?;
             }
@@ -165,12 +164,13 @@ mod tests {
     fn it_works() {
         // create test data
         let x_sigma = 1.0;
-        let y_sigma = 2.0;
+        let y_sigma = 1.0;
+        let time = 20;
         let mut rng = StdRng::from_seed([1; 32]);
         let mut x_series = Vec::new();
         let mut x_pre = 0.0;
         let mut y_series = Vec::new();
-        for _i in 0..29 {
+        for _i in 0..time {
             let x_params = NormalParams::new(x_pre, x_sigma).unwrap();
             let x = Normal.sample(&x_params, &mut rng).unwrap();
             x_series.append(&mut vec![x]);
@@ -180,6 +180,7 @@ mod tests {
             y_series.append(&mut vec![y]);
         }
         // estimation by particlefilter
+        let p_num = 300;
         let fn_x = |x: &f64| NormalParams::new(*x, x_sigma);
         let fn_y = |y: &f64| NormalParams::new(*y, y_sigma);
         let fn_p = |xy: &(Vec<f64>, Vec<f64>)| NormalParams::new(xy.0[xy.0.len() - 1], x_sigma);
@@ -187,7 +188,7 @@ mod tests {
         let distr_y = Normal.condition(&fn_y);
         let proposal = Normal.condition(&fn_p);
         let test = ParticleFilter::new(y_series, distr_x, distr_y, proposal).unwrap();
-        let p_initial = (0..100)
+        let p_initial = (0..p_num)
             .into_iter()
             .map(|_i| -> Result<_, DistributionError> {
                 let p = Normal
@@ -197,9 +198,19 @@ mod tests {
             })
             .collect::<Result<Vec<_>, _>>()
             .unwrap();
-        //println!("{:#?}", p_initial);
-        let thr = 80.0;
-        let result = &test.filtering(p_initial, thr);
-        //println!("{:#?}", result);
+        let thr = p_num as f64 * 0.99;
+        let result = &test.filtering(p_initial, thr).unwrap();
+        let est_x = (0..time)
+            .into_iter()
+            .map(|i| -> Result<_, DistributionError> {
+                let a: f64 = result[i].samples().iter().sum();
+                let b: f64 = result[i].samples().len() as f64;
+                let x = a / b;
+                Ok(x)
+            })
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        println!("{:#?}", x_series);
+        println!("{:#?}", est_x);
     }
 }
