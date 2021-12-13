@@ -47,7 +47,7 @@ where
         particles_initial: Vec<X>,
         thr: f64,
     ) -> Result<Vec<ContinuousSamplesDistribution<X>>, DistributionError> {
-        let mut rng = StdRng::from_seed([1; 32]);
+        let mut rng = StdRng::from_seed([13; 32]);
 
         let mut distr_vec = vec![];
 
@@ -68,6 +68,7 @@ where
             .collect::<Result<Vec<_>, _>>()?;
 
         for t in 0..self.observable.len() {
+            println!("{:#?}", vecvec_p);
             let mut p = (0..particles_len)
                 .into_iter()
                 .map(|i| -> Result<_, DistributionError> {
@@ -165,8 +166,8 @@ mod tests {
         // create test data
         let x_sigma = 1.0;
         let y_sigma = 1.0;
-        let time = 20;
-        let mut rng = StdRng::from_seed([1; 32]);
+        let time = 2;
+        let mut rng = StdRng::from_seed([11; 32]);
         let mut x_series = Vec::new();
         let mut x_pre = 0.0;
         let mut y_series = Vec::new();
@@ -179,15 +180,15 @@ mod tests {
             let y = Normal.sample(&y_params, &mut rng).unwrap();
             y_series.append(&mut vec![y]);
         }
-        // estimation by particlefilter
-        let p_num = 300;
+        // estimation by particlefilterß
+        let p_num = 100;
         let fn_x = |x: &f64| NormalParams::new(*x, x_sigma);
         let fn_y = |y: &f64| NormalParams::new(*y, y_sigma);
         let fn_p = |xy: &(Vec<f64>, Vec<f64>)| NormalParams::new(xy.0[xy.0.len() - 1], x_sigma);
         let distr_x = Normal.condition(&fn_x);
         let distr_y = Normal.condition(&fn_y);
         let proposal = Normal.condition(&fn_p);
-        let test = ParticleFilter::new(y_series, distr_x, distr_y, proposal).unwrap();
+        let test = ParticleFilter::new(y_series.clone(), distr_x, distr_y, proposal).unwrap();
         let p_initial = (0..p_num)
             .into_iter()
             .map(|_i| -> Result<_, DistributionError> {
@@ -211,6 +212,10 @@ mod tests {
             .collect::<Result<Vec<_>, _>>()
             .unwrap();
         println!("{:#?}", x_series);
+        println!("{:#?}", x_series.len());
+        println!("{:#?}", y_series);
+        println!("{:#?}", y_series.len());
         println!("{:#?}", est_x);
+        println!("{:#?}", est_x.len());
     }
 }
