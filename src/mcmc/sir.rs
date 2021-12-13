@@ -68,7 +68,6 @@ where
             .collect::<Result<Vec<_>, _>>()?;
 
         for t in 0..self.observable.len() {
-            println!("{:#?}", vecvec_p);
             let mut p = (0..particles_len)
                 .into_iter()
                 .map(|i| -> Result<_, DistributionError> {
@@ -164,10 +163,10 @@ mod tests {
     #[test]
     fn it_works() {
         // create test data
-        let x_sigma = 1.0;
-        let y_sigma = 1.0;
-        let time = 2;
-        let mut rng = StdRng::from_seed([11; 32]);
+        let x_sigma = 2.0;
+        let y_sigma = 4.0;
+        let time = 30;
+        let mut rng = StdRng::from_seed([5; 32]);
         let mut x_series = Vec::new();
         let mut x_pre = 0.0;
         let mut y_series = Vec::new();
@@ -176,14 +175,14 @@ mod tests {
             let x = Normal.sample(&x_params, &mut rng).unwrap();
             x_series.append(&mut vec![x]);
             x_pre = x;
-            let y_params = NormalParams::new(x, y_sigma).unwrap();
+            let y_params = NormalParams::new(x.powi(3) * 0.3, y_sigma).unwrap();
             let y = Normal.sample(&y_params, &mut rng).unwrap();
             y_series.append(&mut vec![y]);
         }
-        // estimation by particlefilterß
+        // estimation by particlefilter
         let p_num = 100;
         let fn_x = |x: &f64| NormalParams::new(*x, x_sigma);
-        let fn_y = |y: &f64| NormalParams::new(*y, y_sigma);
+        let fn_y = |y: &f64| NormalParams::new(y.powi(3) * 0.3, y_sigma);
         let fn_p = |xy: &(Vec<f64>, Vec<f64>)| NormalParams::new(xy.0[xy.0.len() - 1], x_sigma);
         let distr_x = Normal.condition(&fn_x);
         let distr_y = Normal.condition(&fn_y);
