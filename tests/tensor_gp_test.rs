@@ -23,8 +23,9 @@ pub enum Type {
 }
 
 #[test]
-fn test_main() {
-    let normal = MultivariateNormal::new();
+fn test_main() {}
+
+fn model() {
     let mu = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
     let lsigma = mat!(
        1.0,  0.0,  0.0,  0.0,  0.0,  0.0;
@@ -34,6 +35,19 @@ fn test_main() {
       11.0, 12.0, 13.0, 14.0, 15.0,  0.0;
       16.0, 17.0, 18.0, 19.0, 20.0, 21.0
     );
-    let model =
-        normal.condition(|x: &Vec<f64>| ExactMultivariateNormalParams::new(vec![1.0; 6], lsigma));
+
+    let model = vec![Normal; 3].into_iter().joint();
+    let mut rng = StdRng::from_seed([1; 32]);
+}
+
+fn fk(x: Vec<f64>) -> Vec<f64> {
+    let params_z = ExactMultivariateNormalParams::new(y * one_vec, lsigma);
+    let params_y = ExactMultivariateNormalParams::new(0, karnels);
+    let distr_z = MultivariateNormal::new(params_z);
+    let distr_y = MultivariateNormal::new(params_y);
+    let distr_zy = independent_array_joint(distr_y, distr_z);
+    let pre_distr_sigma = InstantDistribution::new(p, sample);
+    let pre_distr_lsigma = NormalInverseWishart::new(mu0, lambda, lpsi, nu);
+    let distr = distr_zy * pre_distr_lsigma * pre_distr_sigma;
+    //　で、MCMC使ってy, sigma, lsigmaを求めてやる
 }
