@@ -1,19 +1,21 @@
 pub mod conditioned;
+pub mod continuous_samples;
 pub mod dependent_joint;
 pub mod discrete_posterior;
+pub mod discrete_samples;
 pub mod independent_array_joint;
 pub mod independent_joint;
 pub mod instant;
-pub mod samples;
 pub mod switched;
 
 pub use conditioned::*;
+pub use continuous_samples::*;
 pub use dependent_joint::*;
 pub use discrete_posterior::*;
+pub use discrete_samples::*;
 pub use independent_array_joint::*;
 pub use independent_joint::*;
 pub use instant::*;
-pub use samples::*;
 pub use switched::*;
 
 use opensrdk_kernel_method::KernelError;
