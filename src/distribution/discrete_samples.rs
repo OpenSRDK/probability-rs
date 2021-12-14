@@ -10,7 +10,7 @@ use std::{
 };
 
 #[derive(Clone, Debug)]
-pub struct SamplesDistribution<T>
+pub struct DiscreteSamplesDistribution<T>
 where
     T: RandomVariable + Eq + Hash,
 {
@@ -24,7 +24,7 @@ pub enum SamplesError {
     SamplesAreEmpty,
 }
 
-impl<T> SamplesDistribution<T>
+impl<T> DiscreteSamplesDistribution<T>
 where
     T: RandomVariable + Eq + Hash,
 {
@@ -64,7 +64,7 @@ where
     }
 }
 
-impl<T> Distribution for SamplesDistribution<T>
+impl<T> Distribution for DiscreteSamplesDistribution<T>
 where
     T: RandomVariable + Eq + Hash,
 {
@@ -93,7 +93,7 @@ where
     }
 }
 
-impl<T, Rhs, TRhs> Mul<Rhs> for SamplesDistribution<T>
+impl<T, Rhs, TRhs> Mul<Rhs> for DiscreteSamplesDistribution<T>
 where
     T: RandomVariable + Eq + Hash,
     Rhs: Distribution<Value = TRhs, Condition = ()>,
@@ -106,7 +106,7 @@ where
     }
 }
 
-impl<T, Rhs, URhs> BitAnd<Rhs> for SamplesDistribution<T>
+impl<T, Rhs, URhs> BitAnd<Rhs> for DiscreteSamplesDistribution<T>
 where
     T: RandomVariable + Eq + Hash,
     Rhs: Distribution<Value = (), Condition = URhs>,
