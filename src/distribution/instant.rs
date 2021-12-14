@@ -1,48 +1,59 @@
 use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
+use std::marker::PhantomData;
 use std::{
     fmt::Debug,
     ops::{BitAnd, Mul},
 };
 
 #[derive(Clone)]
-pub struct InstantDistribution<'a, T, U>
+pub struct InstantDistribution<T, U, FF, FS>
 where
     T: RandomVariable,
     U: RandomVariable,
+    FF: Fn(&T, &U) -> Result<f64, DistributionError> + Clone + Send + Sync,
+    FS: Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Clone + Send + Sync,
 {
-    p: &'a (dyn Fn(&T, &U) -> Result<f64, DistributionError> + Send + Sync),
-    sample: &'a (dyn Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Send + Sync),
+    p: FF,
+    sample: FS,
+    phantom: PhantomData<(T, U)>,
 }
 
-impl<'a, T, U> InstantDistribution<'a, T, U>
+impl<T, U, FF, FS> InstantDistribution<T, U, FF, FS>
 where
     T: RandomVariable,
     U: RandomVariable,
+    FF: Fn(&T, &U) -> Result<f64, DistributionError> + Clone + Send + Sync,
+    FS: Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Clone + Send + Sync,
 {
-    pub fn new(
-        p: &'a (dyn Fn(&T, &U) -> Result<f64, DistributionError> + Send + Sync),
-        sample: &'a (dyn Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Send + Sync),
-    ) -> Self {
-        Self { p, sample }
+    pub fn new(p: FF, sample: FS) -> Self {
+        Self {
+            p,
+            sample,
+            phantom: PhantomData,
+        }
     }
 }
 
-impl<'a, T, U> Debug for InstantDistribution<'a, T, U>
+impl<T, U, FF, FS> Debug for InstantDistribution<T, U, FF, FS>
 where
     T: RandomVariable,
     U: RandomVariable,
+    FF: Fn(&T, &U) -> Result<f64, DistributionError> + Clone + Send + Sync,
+    FS: Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Clone + Send + Sync,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Instant")
     }
 }
 
-impl<'a, T, U> Distribution for InstantDistribution<'a, T, U>
+impl<T, U, FF, FS> Distribution for InstantDistribution<T, U, FF, FS>
 where
     T: RandomVariable,
     U: RandomVariable,
+    FF: Fn(&T, &U) -> Result<f64, DistributionError> + Clone + Send + Sync,
+    FS: Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Clone + Send + Sync,
 {
     type Value = T;
     type Condition = U;
@@ -60,12 +71,14 @@ where
     }
 }
 
-impl<'a, T, U, Rhs, TRhs> Mul<Rhs> for InstantDistribution<'a, T, U>
+impl<T, U, Rhs, TRhs, FF, FS> Mul<Rhs> for InstantDistribution<T, U, FF, FS>
 where
     T: RandomVariable,
     U: RandomVariable,
     Rhs: Distribution<Value = TRhs, Condition = U>,
     TRhs: RandomVariable,
+    FF: Fn(&T, &U) -> Result<f64, DistributionError> + Clone + Send + Sync,
+    FS: Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Clone + Send + Sync,
 {
     type Output = IndependentJoint<Self, Rhs, T, TRhs, U>;
 
@@ -74,12 +87,14 @@ where
     }
 }
 
-impl<'a, T, U, Rhs, URhs> BitAnd<Rhs> for InstantDistribution<'a, T, U>
+impl<T, U, Rhs, URhs, FF, FS> BitAnd<Rhs> for InstantDistribution<T, U, FF, FS>
 where
     T: RandomVariable,
     U: RandomVariable,
     Rhs: Distribution<Value = U, Condition = URhs>,
     URhs: RandomVariable,
+    FF: Fn(&T, &U) -> Result<f64, DistributionError> + Clone + Send + Sync,
+    FS: Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Clone + Send + Sync,
 {
     type Output = DependentJoint<Self, Rhs, T, U, URhs>;
 

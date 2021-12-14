@@ -2,45 +2,48 @@ use crate::{DependentJoint, Distribution, DistributionError, IndependentJoint, R
 use rand::prelude::*;
 use std::{
     fmt::Debug,
+    marker::PhantomData,
     ops::{BitAnd, Mul},
 };
 
 #[derive(Clone)]
-pub struct ConditionedDistribution<'a, D, T, U1, U2>
+pub struct ConditionedDistribution<D, T, U1, U2, F>
 where
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: RandomVariable,
     U2: RandomVariable,
+    F: Fn(&U2) -> Result<U1, DistributionError> + Clone + Send + Sync,
 {
     distribution: D,
-    condition: &'a (dyn Fn(&U2) -> Result<U1, DistributionError> + Send + Sync),
+    condition: F,
+    phantom: PhantomData<U2>,
 }
 
-impl<'a, D, T, U1, U2> ConditionedDistribution<'a, D, T, U1, U2>
+impl<D, T, U1, U2, F> ConditionedDistribution<D, T, U1, U2, F>
 where
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: RandomVariable,
     U2: RandomVariable,
+    F: Fn(&U2) -> Result<U1, DistributionError> + Clone + Send + Sync,
 {
-    pub fn new(
-        distribution: D,
-        condition: &'a (dyn Fn(&U2) -> Result<U1, DistributionError> + Send + Sync),
-    ) -> Self {
+    pub fn new(distribution: D, condition: F) -> Self {
         Self {
             distribution,
             condition,
+            phantom: PhantomData,
         }
     }
 }
 
-impl<'a, D, T, U1, U2> Debug for ConditionedDistribution<'a, D, T, U1, U2>
+impl<D, T, U1, U2, F> Debug for ConditionedDistribution<D, T, U1, U2, F>
 where
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: RandomVariable,
     U2: RandomVariable,
+    F: Fn(&U2) -> Result<U1, DistributionError> + Clone + Send + Sync,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -51,12 +54,13 @@ where
     }
 }
 
-impl<'a, D, T, U1, U2> Distribution for ConditionedDistribution<'a, D, T, U1, U2>
+impl<D, T, U1, U2, F> Distribution for ConditionedDistribution<D, T, U1, U2, F>
 where
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: RandomVariable,
     U2: RandomVariable,
+    F: Fn(&U2) -> Result<U1, DistributionError> + Clone + Send + Sync,
 {
     type Value = T;
     type Condition = U2;
@@ -78,12 +82,13 @@ where
 }
 
 pub trait ConditionableDistribution: Distribution + Sized {
-    fn condition<'a, U2>(
+    fn condition<U2, F>(
         self,
-        condition: &'a (dyn Fn(&U2) -> Result<Self::Condition, DistributionError> + Send + Sync),
-    ) -> ConditionedDistribution<'a, Self, Self::Value, Self::Condition, U2>
+        condition: F,
+    ) -> ConditionedDistribution<Self, Self::Value, Self::Condition, U2, F>
     where
-        U2: RandomVariable;
+        U2: RandomVariable,
+        F: Fn(&U2) -> Result<Self::Condition, DistributionError> + Clone + Send + Sync;
 }
 
 impl<D, T, U1> ConditionableDistribution for D
@@ -92,18 +97,19 @@ where
     T: RandomVariable,
     U1: RandomVariable,
 {
-    fn condition<'a, U2>(
+    fn condition<U2, F>(
         self,
-        condition: &'a (dyn Fn(&U2) -> Result<Self::Condition, DistributionError> + Send + Sync),
-    ) -> ConditionedDistribution<'a, Self, Self::Value, Self::Condition, U2>
+        condition: F,
+    ) -> ConditionedDistribution<Self, Self::Value, Self::Condition, U2, F>
     where
         U2: RandomVariable,
+        F: Fn(&U2) -> Result<Self::Condition, DistributionError> + Clone + Send + Sync,
     {
-        ConditionedDistribution::<Self, Self::Value, Self::Condition, U2>::new(self, condition)
+        ConditionedDistribution::<Self, Self::Value, Self::Condition, U2, F>::new(self, condition)
     }
 }
 
-impl<'a, D, T, U1, U2, Rhs, TRhs> Mul<Rhs> for ConditionedDistribution<'a, D, T, U1, U2>
+impl<D, T, U1, U2, Rhs, TRhs, F> Mul<Rhs> for ConditionedDistribution<D, T, U1, U2, F>
 where
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
@@ -111,6 +117,7 @@ where
     U2: RandomVariable,
     Rhs: Distribution<Value = TRhs, Condition = U2>,
     TRhs: RandomVariable,
+    F: Fn(&U2) -> Result<U1, DistributionError> + Clone + Send + Sync,
 {
     type Output = IndependentJoint<Self, Rhs, T, TRhs, U2>;
 
@@ -119,7 +126,7 @@ where
     }
 }
 
-impl<'a, D, T, U1, U2, Rhs, URhs> BitAnd<Rhs> for ConditionedDistribution<'a, D, T, U1, U2>
+impl<D, T, U1, U2, Rhs, URhs, F> BitAnd<Rhs> for ConditionedDistribution<D, T, U1, U2, F>
 where
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
@@ -127,6 +134,7 @@ where
     U2: RandomVariable,
     Rhs: Distribution<Value = U2, Condition = URhs>,
     URhs: RandomVariable,
+    F: Fn(&U2) -> Result<U1, DistributionError> + Clone + Send + Sync,
 {
     type Output = DependentJoint<Self, Rhs, T, U2, URhs>;
 

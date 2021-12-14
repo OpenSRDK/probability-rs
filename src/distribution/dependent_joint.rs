@@ -93,7 +93,7 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let model = Normal.condition(&|x: &f64| NormalParams::new(1.0, x.powi(2) + 1.0)) & Normal;
+        let model = Normal.condition(|x: &f64| NormalParams::new(1.0, x.powi(2) + 1.0)) & Normal;
         let mut rng = StdRng::from_seed([1; 32]);
 
         let x = model
