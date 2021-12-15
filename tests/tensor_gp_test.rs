@@ -8,7 +8,7 @@ extern crate rayon;
 
 use crate::opensrdk_probability::*;
 use opensrdk_kernel_method::*;
-use opensrdk_linear_algebra::mat;
+use opensrdk_linear_algebra::{mat, Matrix, Vector};
 use opensrdk_probability::nonparametric::*;
 use plotters::{coord::Shift, prelude::*};
 use rand::prelude::*;
@@ -40,12 +40,25 @@ fn model() {
     let mut rng = StdRng::from_seed([1; 32]);
 }
 
-fn fk(x: Vec<f64>) -> Vec<f64> {
-    let params_z = ExactMultivariateNormalParams::new(y * one_vec, lsigma);
-    let params_y = ExactMultivariateNormalParams::new(0, karnels);
-    let distr_z = MultivariateNormal::new(params_z);
-    let distr_y = MultivariateNormal::new(params_y);
-    let distr_zy = independent_array_joint(distr_y, distr_z);
+fn fk(x: Vec<T>, z: Vec<Vec<f64>>) -> Result<Vec<f64>, DistributionError> {
+    let zi_len = z[0].len();
+    let n = x.len();
+    let y_zero = vec![0.0; n];
+    let kernel = RBF + Periodic;
+    let theta = vec![1.0; kernel.params_len()];
+    let sigma = 1.0;
+
+    let lsigma = Matrix::from(zi_len, vec![1.0; zi_len * zi_len])?;
+    let distr_zi = MultivariateNormal::new().condition(|yi: &f64| {
+        ExactMultivariateNormalParams::new((*yi * vec![1.0; zi_len].col_mat()).vec(), lsigma)
+    });
+    let distr_z = vec![distr_zi; n].into_iter().joint();
+    let params_y = BaseEllipticalProcessParams::new(kernel, x, theta, sigma)?.exact(&y_zero)?;
+    let distr_y = MultivariateNormal::new().condition(|_: &()| {
+        BaseEllipticalProcessParams::new(kernel, x, theta, sigma)?.exact(&y_zero)
+    });
+    let distr_zy = distr_z & distr_y;
+
     let pre_distr_sigma = InstantDistribution::new(p, sample);
     let pre_distr_lsigma = NormalInverseWishart::new(mu0, lambda, lpsi, nu);
     let distr = distr_zy * pre_distr_lsigma * pre_distr_sigma;
