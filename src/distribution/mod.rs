@@ -5,6 +5,7 @@ pub mod discrete_posterior;
 pub mod discrete_samples;
 pub mod independent_array_joint;
 pub mod independent_joint;
+pub mod independent_value_array_joint;
 pub mod instant;
 pub mod switched;
 
@@ -15,6 +16,7 @@ pub use discrete_posterior::*;
 pub use discrete_samples::*;
 pub use independent_array_joint::*;
 pub use independent_joint::*;
+pub use independent_value_array_joint::*;
 pub use instant::*;
 pub use switched::*;
 

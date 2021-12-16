@@ -45,7 +45,7 @@ where
         s_inv: &'a HashMap<u32, HashSet<usize>>,
         n: usize,
     ) -> impl Fn(&()) -> Result<PitmanYorGibbsParams<'a, G0, U>, DistributionError> {
-        move |_| Ok(PitmanYorGibbsParams::new(self.base, s_inv, n))
+        |_| Ok(PitmanYorGibbsParams::new(self.base, s_inv, n))
     }
 
     fn sample_s(
@@ -90,7 +90,7 @@ where
     ) -> Result<U, DistributionError> {
         let x_likelihood = vec![self.likelihood.clone(); x_in_k.len()]
             .into_iter()
-            .joint();
+            .only_value_joint();
 
         let mh_sampler =
             MetropolisHastingsSampler::new(x_in_k, &x_likelihood, &self.base.g0.distr, proposal);

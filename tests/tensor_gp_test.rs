@@ -47,7 +47,6 @@ fn fk(x: Vec<T>, z: Vec<Vec<f64>>) -> Result<Vec<f64>, DistributionError> {
     let kernel = RBF + Periodic;
     let theta = vec![1.0; kernel.params_len()];
     let sigma = 1.0;
-
     let lsigma = Matrix::from(zi_len, vec![1.0; zi_len * zi_len])?;
     let distr_zi = MultivariateNormal::new().condition(|yi: &f64| {
         ExactMultivariateNormalParams::new((*yi * vec![1.0; zi_len].col_mat()).vec(), lsigma)
@@ -59,8 +58,32 @@ fn fk(x: Vec<T>, z: Vec<Vec<f64>>) -> Result<Vec<f64>, DistributionError> {
     });
     let distr_zy = distr_z & distr_y;
 
-    let pre_distr_sigma = InstantDistribution::new(p, sample);
+    let pre_distr_sigma = InstantDistribution::new(
+        |x: &f64, _theta: &()| {
+            let mu = x.mean();
+            if x < 0 {
+                let p = 0;
+            } else {
+                let p = (-(x - mu).powi(2) / (2.0 * sigma.powi(2))).exp() * 2;
+            }
+            Ok(p)
+        },
+        |_theta| {
+            let mut rng = StdRng::from_seed([1; 32]);
+            Normal
+                .sample(
+                    &NormalParams::new(10.0, (10.0f64 * 0.1).abs()).unwrap(),
+                    rng,
+                )
+                .abs();
+        },
+    );
+
+    let mu0 = ;
+    let lambda = ;
+    let lpsi = Matrix::from(zi_len, vec![1.0; zi_len * zi_len])?;
+    let nu = ;
     let pre_distr_lsigma = NormalInverseWishart::new(mu0, lambda, lpsi, nu);
-    let distr = distr_zy * pre_distr_lsigma * pre_distr_sigma;
+    let distr = distr_zy & pre_distr_lsigma & pre_distr_sigma;
     //　で、MCMC使ってy, sigma, lsigmaを求めてやる
 }

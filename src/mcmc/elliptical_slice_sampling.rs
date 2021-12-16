@@ -87,20 +87,20 @@ mod tests {
     #[test]
     fn it_works() {
         let distr = InstantDistribution::new(
-            &|x: &f64, theta: &f64| {
+            |x: &f64, theta: &f64| {
                 let mu = *theta;
                 Ok(1.0 / (2.0 * PI * 10.0f64.powi(2)).sqrt()
                     * (-(x - mu).powi(2) / (2.0 * 10.0f64.powi(2))).exp())
             },
-            &|theta, rng| Normal.sample(&NormalParams::new(*theta, 10.0).unwrap(), rng),
+            |theta: &f64, rng| Normal.sample(&NormalParams::new(*theta, 10.0).unwrap(), rng),
         );
         let distr_2 = InstantDistribution::new(
-            &|x: &f64, _theta: &()| {
+            |x: &f64, _theta: &()| {
                 let mu: f64 = 10.0;
                 Ok(1.0 / (2.0 * PI * 10.0f64.powi(2)).sqrt()
                     * (-(x - mu).powi(2) / (2.0 * 10.0f64.powi(2))).exp())
             },
-            &|_theta, rng| {
+            |_theta, rng| {
                 Normal.sample(
                     &NormalParams::new(10.0, (10.0f64 * 0.1).abs()).unwrap(),
                     rng,

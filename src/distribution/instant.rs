@@ -15,7 +15,7 @@ where
     FF: Fn(&T, &U) -> Result<f64, DistributionError> + Clone + Send + Sync,
     FS: Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Clone + Send + Sync,
 {
-    p: FF,
+    fk: FF,
     sample: FS,
     phantom: PhantomData<(T, U)>,
 }
@@ -27,9 +27,9 @@ where
     FF: Fn(&T, &U) -> Result<f64, DistributionError> + Clone + Send + Sync,
     FS: Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Clone + Send + Sync,
 {
-    pub fn new(p: FF, sample: FS) -> Self {
+    pub fn new(fk: FF, sample: FS) -> Self {
         Self {
-            p,
+            fk,
             sample,
             phantom: PhantomData,
         }
@@ -59,7 +59,7 @@ where
     type Condition = U;
 
     fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
-        (self.p)(x, theta)
+        (self.fk)(x, theta)
     }
 
     fn sample(
