@@ -46,6 +46,8 @@ fn fk(x: Vec<T>, z: Vec<Vec<f64>>) -> Result<Vec<f64>, DistributionError> {
     let y_zero = vec![0.0; n];
     let kernel = RBF + Periodic;
     let theta = vec![1.0; kernel.params_len()];
+
+    // sigma, lsigmaをconditionを使って受け取る形に変更する
     let sigma = 1.0;
     let lsigma = Matrix::from(zi_len, vec![1.0; zi_len * zi_len])?;
     let distr_zi = MultivariateNormal::new().condition(|yi: &f64| {
@@ -78,11 +80,10 @@ fn fk(x: Vec<T>, z: Vec<Vec<f64>>) -> Result<Vec<f64>, DistributionError> {
                 .abs();
         },
     );
-
-    let mu0 = ;
-    let lambda = ;
+    let mu0 = z.iter().mean().collect::<Result<Vec<f64>, _>>().unwrap();
+    let lambda = 1.0;
     let lpsi = Matrix::from(zi_len, vec![1.0; zi_len * zi_len])?;
-    let nu = ;
+    let nu = zi_len as f64;
     let pre_distr_lsigma = NormalInverseWishart::new(mu0, lambda, lpsi, nu);
     let distr = distr_zy & pre_distr_lsigma & pre_distr_sigma;
     //　で、MCMC使ってy, sigma, lsigmaを求めてやる
