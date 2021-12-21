@@ -80,7 +80,7 @@ fn fk(x: Vec<f64>, z: Matrix) -> Result<Vec<f64>, DistributionError> {
         },
     );
 
-    let mu0 = z.iter().mean().collect::<Result<Vec<f64>, _>>().unwrap();
+    let mu0 = z.mean().collect::<Result<Vec<f64>, _>>().unwrap();
     let lambda = 1.0;
     let lpsi = Matrix::from(zi_len, vec![1.0; zi_len * zi_len])?;
     let nu = zi_len as f64;
@@ -91,12 +91,12 @@ fn fk(x: Vec<f64>, z: Matrix) -> Result<Vec<f64>, DistributionError> {
 }
 
 fn mean(z: Matrix) -> Vec<f64> {
-    let zt = z.t();
-    let sum = Matrix::new(1, zt.rows());
-    for i in 0..zt.cols() {
-        sum += zt[i];
-    }
-    sum / zt.cols();
+    // let zt = z.t();
+    // let sum = Matrix::new(1, zt.rows());
+    // for i in 0..zt.cols() {
+    //     sum += zt[i];
+    // }
+    // sum / zt.cols();
 
     let zt = z.t();
     let z_len = zt.rows();
