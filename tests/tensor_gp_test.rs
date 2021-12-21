@@ -104,8 +104,9 @@ fn mean(z: Matrix) -> Vec<f64> {
         .into_iter()
         .map(|i| -> Result<_, DistributionError> {
             let mut zi_vec = zt[i].to_vec();
-            let ave_zi = &zi_vec.sum() / &zi_vec.len();
+            let ave_zi = zi_vec.iter().sum() / zi_vec.len();
             Ok(ave_zi)
         })
-        .collect::<Result<Vec<_>, _>>();
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap()
 }
