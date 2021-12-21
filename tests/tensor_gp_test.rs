@@ -40,7 +40,7 @@ fn model() {
     let mut rng = StdRng::from_seed([1; 32]);
 }
 
-fn fk(x: Vec<T>, z: Vec<Vec<f64>>) -> Result<Vec<f64>, DistributionError> {
+fn fk(x: Vec<f64>, z: Vec<Vec<f64>>) -> Result<Vec<f64>, DistributionError> {
     let zi_len = z[0].len();
     let n = x.len();
     let y_zero = vec![0.0; n];
@@ -50,27 +50,27 @@ fn fk(x: Vec<T>, z: Vec<Vec<f64>>) -> Result<Vec<f64>, DistributionError> {
     // sigma, lsigmaをconditionを使って受け取る形に変更する
     let sigma = 1.0;
     let lsigma = Matrix::from(zi_len, vec![1.0; zi_len * zi_len])?;
-    let distr_zi = MultivariateNormal::new().condition(|yi: &f64| {
+    let distr_zi = MultivariateNormal::new().condition(&|yi: &f64| {
         ExactMultivariateNormalParams::new((*yi * vec![1.0; zi_len].col_mat()).vec(), lsigma)
     });
     let distr_z = vec![distr_zi; n].into_iter().joint();
     let params_y = BaseEllipticalProcessParams::new(kernel, x, theta, sigma)?.exact(&y_zero)?;
-    let distr_y = MultivariateNormal::new().condition(|_: &()| {
+    let distr_y = MultivariateNormal::new().condition(&|_: &()| {
         BaseEllipticalProcessParams::new(kernel, x, theta, sigma)?.exact(&y_zero)
     });
     let distr_zy = distr_z & distr_y;
 
     let pre_distr_sigma = InstantDistribution::new(
-        |x: &f64, _theta: &()| {
-            let mu = x.mean();
-            if x < 0 {
-                let p = 0;
+        &|x: &f64, _theta: &()| {
+            let mu = *x.mean();
+            if *x < 0.0 {
+                let p = 0.0;
             } else {
                 let p = (-(x - mu).powi(2) / (2.0 * sigma.powi(2))).exp() * 2;
             }
             Ok(p)
         },
-        |_theta| {
+        &|_theta| {
             let mut rng = StdRng::from_seed([1; 32]);
             Normal
                 .sample(
