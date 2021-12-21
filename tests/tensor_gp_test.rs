@@ -40,8 +40,8 @@ fn model() {
     let mut rng = StdRng::from_seed([1; 32]);
 }
 
-fn fk(x: Vec<f64>, z: Vec<Vec<f64>>) -> Result<Vec<f64>, DistributionError> {
-    let zi_len = z[0].len();
+fn fk(x: Vec<f64>, z: Matrix) -> Result<Vec<f64>, DistributionError> {
+    let zi_len = z.cols();
     let n = x.len();
     let y_zero = vec![0.0; n];
     let kernel = RBF + Periodic;
@@ -60,26 +60,26 @@ fn fk(x: Vec<f64>, z: Vec<Vec<f64>>) -> Result<Vec<f64>, DistributionError> {
     });
     let distr_zy = distr_z & distr_y;
 
+    let mut rng = StdRng::from_seed([1; 32]);
     let pre_distr_sigma = InstantDistribution::new(
         &|x: &f64, _theta: &()| {
-            let mu = *x.mean();
-            if *x < 0.0 {
-                let p = 0.0;
+            let p = if *x < 0.0 {
+                0.0
             } else {
-                let p = (-(x - mu).powi(2) / (2.0 * sigma.powi(2))).exp() * 2;
-            }
+                Normal.fk(x, &NormalParams::new(1.0, 2.0)?)?
+            };
             Ok(p)
         },
-        &|_theta| {
-            let mut rng = StdRng::from_seed([1; 32]);
-            Normal
+        &|_theta, rng| {
+            Ok(Normal
                 .sample(
                     &NormalParams::new(10.0, (10.0f64 * 0.1).abs()).unwrap(),
-                    rng,
-                )
-                .abs();
+                    &mut rng,
+                )?
+                .abs())
         },
     );
+
     let mu0 = z.iter().mean().collect::<Result<Vec<f64>, _>>().unwrap();
     let lambda = 1.0;
     let lpsi = Matrix::from(zi_len, vec![1.0; zi_len * zi_len])?;
@@ -87,4 +87,25 @@ fn fk(x: Vec<f64>, z: Vec<Vec<f64>>) -> Result<Vec<f64>, DistributionError> {
     let pre_distr_lsigma = NormalInverseWishart::new(mu0, lambda, lpsi, nu);
     let distr = distr_zy & pre_distr_lsigma & pre_distr_sigma;
     //　で、MCMC使ってy, sigma, lsigmaを求めてやる
+    Ok(mu0)
+}
+
+fn mean(z: Matrix) -> Vec<f64> {
+    let zt = z.t();
+    let sum = Matrix::new(1, zt.rows());
+    for i in 0..zt.cols() {
+        sum += zt[i];
+    }
+    sum / zt.cols();
+
+    let zt = z.t();
+    let z_len = zt.rows();
+    (0..z_len)
+        .into_iter()
+        .map(|i| -> Result<_, DistributionError> {
+            let mut zi_vec = zt[i].to_vec();
+            let ave_zi = &zi_vec.sum() / &zi_vec.len();
+            Ok(ave_zi)
+        })
+        .collect::<Result<Vec<_>, _>>();
 }
