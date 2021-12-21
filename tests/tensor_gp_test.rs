@@ -84,7 +84,8 @@ fn fk(x: Vec<f64>, z: Matrix) -> Result<Vec<f64>, DistributionError> {
     let lambda = 1.0;
     let lpsi = Matrix::from(zi_len, vec![1.0; zi_len * zi_len])?;
     let nu = zi_len as f64;
-    let pre_distr_lsigma = NormalInverseWishart::new(mu0, lambda, lpsi, nu);
+    let pre_distr_lsigma_params = NormalInverseWishartParams::new(mu0, lambda, lpsi, nu).unwrap();
+    // pre_distr_lsigmaもinstantdistribution使って作成してやる必要がある？
     let distr = distr_zy & pre_distr_lsigma & pre_distr_sigma;
     //　で、MCMC使ってy, sigma, lsigmaを求めてやる
     Ok(mu0)
