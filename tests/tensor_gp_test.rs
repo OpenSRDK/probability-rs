@@ -39,11 +39,12 @@ fn fk(x: Vec<Vec<f64>>, z: Matrix) -> Result<Vec<f64>, DistributionError> {
     let distr_y = MultivariateNormal::new().condition(&|sigma: &f64| {
         BaseEllipticalProcessParams::new(kernel, x, theta, *sigma)?.exact(&y_zero)
     });
+    // expected struct `Vec<f64>` found struct `Vec<(f64, Matrix)>`
     let distr_zy = distr_z & distr_y;
 
     let mut rng = StdRng::from_seed([1; 32]);
     let prior_distr_sigma = InstantDistribution::new(
-        &|x: &f64, _theta: &()| {
+        |x: &f64, _theta: &()| {
             let p = if *x < 0.0 {
                 0.0
             } else {
@@ -51,7 +52,7 @@ fn fk(x: Vec<Vec<f64>>, z: Matrix) -> Result<Vec<f64>, DistributionError> {
             };
             Ok(p)
         },
-        &|_theta, rng| {
+        |_theta, rng| {
             Ok(Normal
                 .sample(
                     &NormalParams::new(10.0, (10.0f64 * 0.1).abs()).unwrap(),
@@ -69,6 +70,7 @@ fn fk(x: Vec<Vec<f64>>, z: Matrix) -> Result<Vec<f64>, DistributionError> {
     let prior_distr = prior_distr_lsigma * prior_distr_sigma;
     let sigma0 = 1.0;
     let lsigma0 = Matrix::from(zi_len, vec![1.0; zi_len * zi_len])?;
+    // expected struct `Vec<(f64, Matrix)>` found struct `Vec<f64>`
     let sampler =
         MetropolisHastingsSampler::new((sigma0, lsigma0), &distr_zy, &prior_distr, proposal);
     Ok(mu0)
