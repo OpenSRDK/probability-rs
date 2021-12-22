@@ -4,7 +4,7 @@ use rand::prelude::*;
 use std::iter::Iterator;
 use std::{ops::BitAnd, ops::Mul};
 
-/// p(x1, …, xn) = Π p(xi)
+/// p(x|a) = Π p(xi|a)
 #[derive(Clone, Debug)]
 pub struct IndependentValueArrayJoint<D, T, U>
 where

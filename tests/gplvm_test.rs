@@ -25,9 +25,12 @@ pub enum Type {
 #[test]
 fn test_main() {}
 
-fn fk(x: Vec<Vec<f64>>, z: Matrix) -> Result<Vec<f64>, DistributionError> {
+fn fk(z: Matrix) -> Result<Vec<f64>, DistributionError> {
+    let n = z.rows();
+    let x_len = 4usize;
+    let prior_distr_xi = vec![Normal; x_len].into_iter().joint();
+    let prior_distr_x = vec![prior_distr_xi; n].into_iter().joint();
     let zi_len = z.cols();
-    let n = x.len();
     let y_zero = vec![0.0; n];
     let kernel = RBF + Periodic;
     let theta = vec![1.0; kernel.params_len()];
@@ -36,8 +39,8 @@ fn fk(x: Vec<Vec<f64>>, z: Matrix) -> Result<Vec<f64>, DistributionError> {
         ExactMultivariateNormalParams::new((*yi * vec![1.0; zi_len].col_mat()).vec(), *lsigma)
     });
     let distr_z = vec![distr_zi; n].into_iter().joint();
-    let distr_y = MultivariateNormal::new().condition(&|sigma: &f64| {
-        BaseEllipticalProcessParams::new(kernel, x, theta, *sigma)?.exact(&y_zero)
+    let distr_y = MultivariateNormal::new().condition(&|(x, sigma): &(Vec<Vec<f64>>, f64)| {
+        BaseEllipticalProcessParams::new(kernel, *x, theta, *sigma)?.exact(&y_zero)
     });
     let distr_zy = distr_z & distr_y;
 
@@ -66,11 +69,14 @@ fn fk(x: Vec<Vec<f64>>, z: Matrix) -> Result<Vec<f64>, DistributionError> {
     let lpsi = Matrix::from(zi_len, vec![1.0; zi_len * zi_len])?;
     let nu = zi_len as f64;
     let prior_distr_lsigma = NormalInverseWishart;
-    let prior_distr = prior_distr_lsigma * prior_distr_sigma;
+
+    let prior_distr = prior_distr_lsigma * prior_distr_sigma * prior_distr_x;
+    //　で、MCMC使ってy, sigma, lsigmaを求めてやる
+    let x0 = vec![0.0; 4];
     let sigma0 = 1.0;
     let lsigma0 = Matrix::from(zi_len, vec![1.0; zi_len * zi_len])?;
     let sampler =
-        MetropolisHastingsSampler::new((sigma0, lsigma0), &distr_zy, &prior_distr, proposal);
+        MetropolisHastingsSampler::new((x0, sigma0, lsigma0), &distr_zy, &prior_distr, proposal);
     Ok(mu0)
 }
 

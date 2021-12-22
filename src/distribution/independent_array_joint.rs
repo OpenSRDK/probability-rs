@@ -4,7 +4,7 @@ use rand::prelude::*;
 use std::iter::Iterator;
 use std::{ops::BitAnd, ops::Mul};
 
-/// p(x1, …, xn) = Π p(xi)
+/// p(x|a) = Π p(xi|ai)
 #[derive(Clone, Debug)]
 pub struct IndependentArrayJoint<D, T, U>
 where
@@ -81,6 +81,7 @@ where
     T: RandomVariable,
     U: RandomVariable,
 {
+    /// p(x|a) = Π p(xi|ai)
     fn joint(self) -> IndependentArrayJoint<D, T, U>;
 }
 
