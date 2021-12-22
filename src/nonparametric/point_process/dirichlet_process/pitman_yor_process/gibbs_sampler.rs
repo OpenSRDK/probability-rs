@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use crate::*;
 use crate::{nonparametric::*, Distribution};
@@ -40,14 +40,6 @@ where
         }
     }
 
-    fn gibbs_condition(
-        &'a self,
-        s_inv: &'a HashMap<u32, HashSet<usize>>,
-        n: usize,
-    ) -> impl Fn(&()) -> Result<PitmanYorGibbsParams<'a, G0, U>, DistributionError> {
-        |_| Ok(PitmanYorGibbsParams::new(self.base, s_inv, n))
-    }
-
     fn sample_s(
         &self,
         x: &T,
@@ -66,7 +58,8 @@ where
             .likelihood
             .switch(switch.theta())
             .condition(likelihood_condition);
-        let prior_condition = |_| {
+      
+        let prior_condition = |_: &()| {
             Ok(PitmanYorGibbsParams::new(
                 self.base,
                 switch.s_inv(),
