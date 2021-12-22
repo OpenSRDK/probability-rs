@@ -58,6 +58,7 @@ where
             .likelihood
             .switch(switch.theta())
             .condition(likelihood_condition);
+      
         let prior_condition = |_: &()| {
             Ok(PitmanYorGibbsParams::new(
                 self.base,
