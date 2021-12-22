@@ -40,7 +40,7 @@ fn model() {
     let mut rng = StdRng::from_seed([1; 32]);
 }
 
-fn fk(x: Vec<f64>, z: Matrix) -> Result<Vec<f64>, DistributionError> {
+fn fk(x: Vec<Vec<f64>>, z: Matrix) -> Result<Vec<f64>, DistributionError> {
     let zi_len = z.cols();
     let n = x.len();
     let y_zero = vec![0.0; n];
@@ -54,7 +54,6 @@ fn fk(x: Vec<f64>, z: Matrix) -> Result<Vec<f64>, DistributionError> {
         ExactMultivariateNormalParams::new((*yi * vec![1.0; zi_len].col_mat()).vec(), lsigma)
     });
     let distr_z = vec![distr_zi; n].into_iter().joint();
-    let params_y = BaseEllipticalProcessParams::new(kernel, x, theta, sigma)?.exact(&y_zero)?;
     let distr_y = MultivariateNormal::new().condition(&|_: &()| {
         BaseEllipticalProcessParams::new(kernel, x, theta, sigma)?.exact(&y_zero)
     });
@@ -80,7 +79,7 @@ fn fk(x: Vec<f64>, z: Matrix) -> Result<Vec<f64>, DistributionError> {
         },
     );
 
-    let mu0 = z.mean().collect::<Result<Vec<f64>, _>>().unwrap();
+    let mu0 = mean_fn(z);
     let lambda = 1.0;
     let lpsi = Matrix::from(zi_len, vec![1.0; zi_len * zi_len])?;
     let nu = zi_len as f64;
@@ -91,7 +90,7 @@ fn fk(x: Vec<f64>, z: Matrix) -> Result<Vec<f64>, DistributionError> {
     Ok(mu0)
 }
 
-fn mean(z: Matrix) -> Vec<f64> {
+fn mean_fn(z: Matrix) -> Vec<f64> {
     // let zt = z.t();
     // let sum = Matrix::new(1, zt.rows());
     // for i in 0..zt.cols() {
@@ -105,7 +104,7 @@ fn mean(z: Matrix) -> Vec<f64> {
         .into_iter()
         .map(|i| -> Result<_, DistributionError> {
             let mut zi_vec = zt[i].to_vec();
-            let ave_zi = zi_vec.iter().sum() / zi_vec.len();
+            let ave_zi = zi_vec.iter().sum::<f64>() / zi_vec.len() as f64;
             Ok(ave_zi)
         })
         .collect::<Result<Vec<_>, _>>()
