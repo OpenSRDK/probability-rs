@@ -46,7 +46,7 @@ fn fk(z: Matrix) -> Result<Vec<f64>, DistributionError> {
 
     let mut rng = StdRng::from_seed([1; 32]);
     let prior_distr_sigma = InstantDistribution::new(
-        &|x: &f64, _theta: &()| {
+        |x: &f64, _theta: &()| {
             let p = if *x < 0.0 {
                 0.0
             } else {
@@ -54,7 +54,7 @@ fn fk(z: Matrix) -> Result<Vec<f64>, DistributionError> {
             };
             Ok(p)
         },
-        &|_theta, rng| {
+        |_theta, rng| {
             Ok(Normal
                 .sample(
                     &NormalParams::new(10.0, (10.0f64 * 0.1).abs()).unwrap(),
