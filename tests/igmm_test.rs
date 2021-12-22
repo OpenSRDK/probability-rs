@@ -54,8 +54,8 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
     let d = 0.1;
 
     let g0 = BaselineMeasure::new(InstantDistribution::new(
-        &|_: &ExactEllipticalParams, _: &()| Ok(0.1),
-        &|_, rng| {
+        |_: &ExactEllipticalParams, _: &()| Ok(0.1),
+        |_, rng| {
             ExactEllipticalParams::new(
                 vec![
                     30.0 * rng.gen_range(-1.0..=1.0),
@@ -69,7 +69,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
     let pyp_params = PitmanYorProcessParams::new(alpha, d, g0.clone())?;
 
     let mh_proposal = InstantDistribution::new(
-        &|x: &ExactEllipticalParams, theta: &ExactEllipticalParams| {
+        |x: &ExactEllipticalParams, theta: &ExactEllipticalParams| {
             Ok(MultivariateNormal::new().fk(
                 &x.mu(),
                 &ExactEllipticalParams::new(
@@ -78,7 +78,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
                 )?,
             )?)
         },
-        &|theta, rng| {
+        |theta, rng| {
             let mu = MultivariateNormal::new().sample(
                 &ExactEllipticalParams::new(
                     theta.mu().clone(),
