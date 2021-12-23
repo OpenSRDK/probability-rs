@@ -32,11 +32,20 @@ fn fk(x: Vec<Vec<f64>>, z: Matrix) -> Result<Vec<f64>, DistributionError> {
     let kernel = RBF + Periodic;
     let theta = vec![1.0; kernel.params_len()];
 
+    // let lsigma = Matrix::from(zi_len, vec![1.0; zi_len * zi_len])?;
+    // let distr_zi = MultivariateNormal::new().condition(|yi: &f64| {
+    //     ExactMultivariateNormalParams::new((*yi * vec![1.0; zi_len].col_mat()).vec(), lsigma)
+    // });
     let distr_zi = MultivariateNormal::new().condition(&|(yi, lsigma): &(f64, Matrix)| {
         ExactMultivariateNormalParams::new((*yi * vec![1.0; zi_len].col_mat()).vec(), *lsigma)
     });
-    let distr_z = vec![distr_zi; n].into_iter().joint();
-    let distr_y = MultivariateNormal::new().condition(&|sigma: &f64| {
+    let distr_z = vec![distr_zi; n]
+        .into_iter()
+        .joint()
+        .condition(&|(y, lsigma): &(Vec<f64>, Matrix)| {
+            Ok(y.iter().map(|yi| (*yi, lsigma.clone())).collect::<Vec<_>>())
+        });
+    let distr_y = MultivariateNormal::new().condition(&|(sigma, lsigma): &(f64, Matrix)| {
         BaseEllipticalProcessParams::new(kernel, x, theta, *sigma)?.exact(&y_zero)
     });
     // expected struct `Vec<f64>` found struct `Vec<(f64, Matrix)>`
@@ -66,13 +75,14 @@ fn fk(x: Vec<Vec<f64>>, z: Matrix) -> Result<Vec<f64>, DistributionError> {
     let lambda = 1.0;
     let lpsi = Matrix::from(zi_len, vec![1.0; zi_len * zi_len])?;
     let nu = zi_len as f64;
-    let prior_distr_lsigma = NormalInverseWishart;
+    let prior_distr_lsigma = NormalInverseWishart
+        .condition(|_: &()| NormalInverseWishartParams::new(mu0, lambda, lpsi, nu));
     let prior_distr = prior_distr_lsigma * prior_distr_sigma;
     let sigma0 = 1.0;
     let lsigma0 = Matrix::from(zi_len, vec![1.0; zi_len * zi_len])?;
     // expected struct `Vec<(f64, Matrix)>` found struct `Vec<f64>`
-    let sampler =
-        MetropolisHastingsSampler::new((sigma0, lsigma0), &distr_zy, &prior_distr, proposal);
+
+    let sampler = EllipticalSliceSampler::new((sigma0, lsigma0), &distr_zy, &prior_distr);
     Ok(mu0)
 }
 

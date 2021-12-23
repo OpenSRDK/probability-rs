@@ -35,10 +35,15 @@ fn fk(z: Matrix) -> Result<Vec<f64>, DistributionError> {
     let kernel = RBF + Periodic;
     let theta = vec![1.0; kernel.params_len()];
 
-    let distr_zi = MultivariateNormal::new().condition(&|(yi, lsigma): &(f64, Matrix)| {
-        ExactMultivariateNormalParams::new((*yi * vec![1.0; zi_len].col_mat()).vec(), *lsigma)
+    let lsigma = Matrix::from(zi_len, vec![1.0; zi_len * zi_len])?;
+    let distr_zi = MultivariateNormal::new().condition(|yi: &f64| {
+        ExactMultivariateNormalParams::new((*yi * vec![1.0; zi_len].col_mat()).vec(), lsigma)
     });
+    // let distr_zi = MultivariateNormal::new().condition(&|(yi, lsigma): &(f64, Matrix)| {
+    //     ExactMultivariateNormalParams::new((*yi * vec![1.0; zi_len].col_mat()).vec(), *lsigma)
+    // });
     let distr_z = vec![distr_zi; n].into_iter().joint();
+
     let distr_y = MultivariateNormal::new().condition(&|(x, sigma): &(Vec<Vec<f64>>, f64)| {
         BaseEllipticalProcessParams::new(kernel, *x, theta, *sigma)?.exact(&y_zero)
     });
@@ -75,8 +80,7 @@ fn fk(z: Matrix) -> Result<Vec<f64>, DistributionError> {
     let x0 = vec![0.0; 4];
     let sigma0 = 1.0;
     let lsigma0 = Matrix::from(zi_len, vec![1.0; zi_len * zi_len])?;
-    let sampler =
-        MetropolisHastingsSampler::new((x0, sigma0, lsigma0), &distr_zy, &prior_distr, proposal);
+    let sampler = EllipticalSliceSampler::new((x0, sigma0, lsigma0), &distr_zy, &prior_distr);
     Ok(mu0)
 }
 
