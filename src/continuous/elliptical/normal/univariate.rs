@@ -1,4 +1,4 @@
-use crate::VectorSampleable;
+use crate::TransformVec;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use crate::{DistributionError, NormalError};
 use rand::prelude::*;
@@ -97,15 +97,15 @@ impl Default for NormalParams {
     }
 }
 
-impl VectorSampleable for NormalParams {
+impl TransformVec for NormalParams {
     type T = ();
 
     fn transform_vec(self) -> (Vec<f64>, Self::T) {
         (vec![self.mu, self.sigma], ())
     }
 
-    fn restore(v: (Vec<f64>, Self::T)) -> Self {
-        Self::new(v.0[0], v.0[1]).unwrap()
+    fn restore(v: Vec<f64>, _: Self::T) -> Self {
+        Self::new(v[0], v[1]).unwrap()
     }
 }
 
