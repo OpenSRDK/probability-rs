@@ -1,15 +1,13 @@
-// Sampling Importance Resampling
 use crate::rand::SeedableRng;
 use crate::TransformVec;
 use crate::{ContinuousSamplesDistribution, Distribution, DistributionError, RandomVariable};
 use rand::rngs::StdRng;
-use std::iter::Sum;
-use std::ops::Div;
 
+// Sampling Importance Resampling
 pub struct ParticleFilter<Y, X, DY, DX, PD>
 where
     Y: RandomVariable,
-    X: RandomVariable + PartialEq + TransformVec + Sum + Div<f64, Output = X>,
+    X: RandomVariable + PartialEq + TransformVec,
     DY: Distribution<Value = Y, Condition = X>,
     DX: Distribution<Value = X, Condition = X>,
     PD: Distribution<Value = X, Condition = (Vec<X>, Vec<Y>)>,
@@ -23,7 +21,7 @@ where
 impl<Y, X, DY, DX, PD> ParticleFilter<Y, X, DY, DX, PD>
 where
     Y: RandomVariable,
-    X: RandomVariable + PartialEq + TransformVec + Sum + Div<f64, Output = X>,
+    X: RandomVariable + PartialEq + TransformVec,
     DY: Distribution<Value = Y, Condition = X>,
     DX: Distribution<Value = X, Condition = X>,
     PD: Distribution<Value = X, Condition = (Vec<X>, Vec<Y>)>,
