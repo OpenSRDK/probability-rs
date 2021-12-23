@@ -8,6 +8,7 @@ pub mod independent_joint;
 pub mod independent_value_array_joint;
 pub mod instant;
 pub mod switched;
+pub mod transform;
 
 pub use conditioned::*;
 pub use continuous_samples::*;
@@ -19,6 +20,7 @@ pub use independent_joint::*;
 pub use independent_value_array_joint::*;
 pub use instant::*;
 pub use switched::*;
+pub use transform::*;
 
 use opensrdk_kernel_method::KernelError;
 use opensrdk_linear_algebra::MatrixError;
