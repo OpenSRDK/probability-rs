@@ -1,4 +1,4 @@
-use super::VectorSampleable;
+use super::TransformVec;
 use crate::{Distribution, RandomVariable};
 use rand::prelude::*;
 use rayon::prelude::*;
@@ -11,7 +11,7 @@ where
     L: Distribution<Value = A, Condition = B>,
     P: Distribution<Value = B, Condition = ()>,
     A: RandomVariable,
-    B: VectorSampleable,
+    B: TransformVec,
 {
     value: &'a A,
     likelihood: &'a L,
@@ -23,7 +23,7 @@ where
     L: Distribution<Value = A, Condition = B>,
     P: Distribution<Value = B, Condition = ()>,
     A: RandomVariable,
-    B: VectorSampleable,
+    B: TransformVec,
 {
     pub fn new(value: &'a A, likelihood: &'a L, prior: &'a P) -> Self {
         Self {
@@ -60,7 +60,7 @@ where
             let mut buf = b.transform_vec();
             buf.0 = Self::step(buf.0, theta, &nu.0);
 
-            b = B::restore(buf);
+            b = B::restore(buf.0, buf.1);
             if rho < self.likelihood.fk(self.value, &b)? {
                 break;
             }

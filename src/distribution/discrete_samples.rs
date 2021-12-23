@@ -1,5 +1,6 @@
-use crate::{Categorical, CategoricalParams, DistributionError};
+use crate::{Categorical, CategoricalParams, DistributionError, TransformVec};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use opensrdk_linear_algebra::*;
 use rand::prelude::*;
 use rayon::prelude::*;
 use std::collections::HashMap;
@@ -19,9 +20,11 @@ where
 }
 
 #[derive(thiserror::Error, Debug)]
-pub enum SamplesError {
+pub enum DiscreteSamplesError {
     #[error("Samples are empty")]
     SamplesAreEmpty,
+    #[error("TransformVec info mismatch")]
+    TransformVecInfoMismatch,
 }
 
 impl<T> DiscreteSamplesDistribution<T>
@@ -44,9 +47,9 @@ where
     }
 
     pub fn mode<'a>(&'a self) -> Result<&'a T, DistributionError> {
-        if self.n_map.len() == 0 {
+        if self.n == 0 {
             return Err(DistributionError::InvalidParameters(
-                SamplesError::SamplesAreEmpty.into(),
+                DiscreteSamplesError::SamplesAreEmpty.into(),
             ));
         }
         Ok(self
@@ -61,6 +64,34 @@ where
                     .map(|(k, _)| k)
                     .collect::<Vec<_>>()[0],
             ))
+    }
+}
+
+impl<T> DiscreteSamplesDistribution<T>
+where
+    T: RandomVariable + Eq + Hash + TransformVec,
+{
+    pub fn mean(&self) -> Result<T, DistributionError> {
+        let n = self.n;
+        if n == 0 {
+            return Err(DistributionError::InvalidParameters(
+                DiscreteSamplesError::SamplesAreEmpty.into(),
+            ));
+        }
+        let vec = self.n_map.iter().collect::<Vec<_>>();
+        let (sum, info) = vec[0].0.clone().transform_vec();
+        let mut sum = sum.col_mat();
+        for i in 1..n {
+            let (v, info_i) = vec[i].0.clone().transform_vec();
+            if info != info_i {
+                return Err(DistributionError::Others(
+                    DiscreteSamplesError::TransformVecInfoMismatch.into(),
+                ));
+            }
+            sum = sum + (*vec[i].1 as f64) * v.col_mat();
+        }
+
+        Ok(T::restore(sum.vec(), info))
     }
 }
 

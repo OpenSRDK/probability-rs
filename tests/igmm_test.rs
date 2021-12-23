@@ -136,7 +136,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
 
                         let matrix = (1.0 - w) * old_theta_k.clone().transform_vec().0.col_mat()
                             + w * theta_k.clone().transform_vec().0.col_mat();
-                        *theta_k = ExactMultivariateNormalParams::restore((matrix.vec(), 2));
+                        *theta_k = ExactMultivariateNormalParams::restore(matrix.vec(), 2);
                     }
                     None => {}
                 };
