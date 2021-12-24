@@ -1,5 +1,6 @@
 pub mod conditioned;
 pub mod continuous_samples;
+pub mod degenerate;
 pub mod dependent_joint;
 pub mod discrete_posterior;
 pub mod discrete_samples;
@@ -12,6 +13,7 @@ pub mod transformed;
 
 pub use conditioned::*;
 pub use continuous_samples::*;
+pub use degenerate::*;
 pub use dependent_joint::*;
 pub use discrete_posterior::*;
 pub use discrete_samples::*;
