@@ -64,6 +64,7 @@ where
 {
     type Value = T;
     type Condition = U2;
+
     fn fk(
         &self,
         x: &Self::Value,
