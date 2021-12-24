@@ -59,6 +59,32 @@ where
         Ok((self.distribution.sample(&theta.0, rng)?, theta.1.clone()))
     }
 }
+pub trait TransformableDistribution: Distribution + Sized {
+    /// .
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Example template not implemented for trait functions
+    /// ```
+    fn transform<V>(self) -> TransformedDistribution<Self, Self::Value, Self::Condition, V>
+    where
+        V: RandomVariable;
+}
+
+impl<D, T, U1> TransformableDistribution for D
+where
+    D: Distribution<Value = T, Condition = U1>,
+    T: RandomVariable,
+    U1: RandomVariable,
+{
+    fn transform<V>(self) -> TransformedDistribution<Self, Self::Value, Self::Condition, V>
+    where
+        V: RandomVariable,
+    {
+        TransformedDistribution::<Self, Self::Value, Self::Condition, V>::new(self)
+    }
+}
 
 impl<D, T, U, V, Rhs, TRhs> Mul<Rhs> for TransformedDistribution<D, T, U, V>
 where
