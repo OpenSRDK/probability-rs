@@ -57,3 +57,27 @@ impl TransformVec for Matrix {
         Matrix::from(info, v).unwrap()
     }
 }
+
+impl<T, U> TransformVec for (T, U)
+where
+    T: TransformVec,
+    U: TransformVec,
+{
+    type T = (usize, T::T, U::T);
+
+    fn transform_vec(self) -> (Vec<f64>, Self::T) {
+        let t = self.0.transform_vec();
+        let u = self.1.transform_vec();
+        let len = t.0.len();
+
+        ([t.0, u.0].concat(), (len, t.1, u.1))
+    }
+
+    fn restore(v: Vec<f64>, info: Self::T) -> Self {
+        let (len, t_1, u_1) = info;
+        let t_0 = v[0..len].to_vec();
+        let u_0 = v[len..].to_vec();
+
+        (T::restore(t_0, t_1), U::restore(u_0, u_1))
+    }
+}
