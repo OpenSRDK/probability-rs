@@ -1,5 +1,5 @@
 use crate::{
-    CauchyError, DependentJoint, Distribution, IndependentJoint, RandomVariable, VectorSampleable,
+    CauchyError, DependentJoint, Distribution, IndependentJoint, RandomVariable, TransformVec,
 };
 use crate::{DistributionError, StudentT, StudentTParams};
 use rand::prelude::*;
@@ -80,13 +80,15 @@ where
     }
 }
 
-impl VectorSampleable for CauchyParams {
+impl TransformVec for CauchyParams {
     type T = ();
+
     fn transform_vec(self) -> (Vec<f64>, Self::T) {
         (vec![self.mu, self.sigma], ())
     }
-    fn restore(v: (Vec<f64>, Self::T)) -> Self {
-        Self::new(v.0[0], v.0[1]).unwrap()
+
+    fn restore(v: Vec<f64>, _: Self::T) -> Self {
+        Self::new(v[0], v[1]).unwrap()
     }
 }
 

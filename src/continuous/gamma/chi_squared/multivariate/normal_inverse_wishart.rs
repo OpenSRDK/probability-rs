@@ -82,16 +82,22 @@ impl NormalInverseWishartParams {
         lambda: f64,
         lpsi: Matrix,
         nu: f64,
-    ) -> Result<Self, NormalInverseWishartError> {
+    ) -> Result<Self, DistributionError> {
         let n = mu0.len();
         if n != lpsi.rows() || n != lpsi.cols() {
-            return Err(NormalInverseWishartError::DimensionMismatch.into());
+            return Err(DistributionError::InvalidParameters(
+                NormalInverseWishartError::DimensionMismatch.into(),
+            ));
         }
         if lambda <= 0.0 {
-            return Err(NormalInverseWishartError::DimensionMismatch.into());
+            return Err(DistributionError::InvalidParameters(
+                NormalInverseWishartError::DimensionMismatch.into(),
+            ));
         }
         if nu <= n as f64 - 1.0 {
-            return Err(NormalInverseWishartError::NuMustBeGTEDimension.into());
+            return Err(DistributionError::InvalidParameters(
+                NormalInverseWishartError::DimensionMismatch.into(),
+            ));
         }
 
         Ok(Self {

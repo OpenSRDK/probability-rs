@@ -4,9 +4,9 @@ use rand::prelude::*;
 use std::iter::Iterator;
 use std::{ops::BitAnd, ops::Mul};
 
-/// p(x1, …, xn) = Π p(xi)
+/// p(x|a) = Π p(xi|a)
 #[derive(Clone, Debug)]
-pub struct IndependentArrayJoint<D, T, U>
+pub struct IndependentValueArrayJoint<D, T, U>
 where
     D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
@@ -15,7 +15,7 @@ where
     distributions: Vec<D>,
 }
 
-impl<D, T, U> Distribution for IndependentArrayJoint<D, T, U>
+impl<D, T, U> Distribution for IndependentValueArrayJoint<D, T, U>
 where
     D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
@@ -43,7 +43,7 @@ where
     }
 }
 
-impl<D, T, U, Rhs, TRhs> Mul<Rhs> for IndependentArrayJoint<D, T, U>
+impl<D, T, U, Rhs, TRhs> Mul<Rhs> for IndependentValueArrayJoint<D, T, U>
 where
     D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
@@ -58,7 +58,7 @@ where
     }
 }
 
-impl<D, T, U, Rhs, URhs> BitAnd<Rhs> for IndependentArrayJoint<D, T, U>
+impl<D, T, U, Rhs, URhs> BitAnd<Rhs> for IndependentValueArrayJoint<D, T, U>
 where
     D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
@@ -73,26 +73,26 @@ where
     }
 }
 
-pub trait DistributionProduct<D, T, U>
+pub trait DistributionValueProduct<D, T, U>
 where
     D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
 {
-    fn joint(self) -> IndependentArrayJoint<D, T, U>;
+    fn only_value_joint(self) -> IndependentValueArrayJoint<D, T, U>;
 }
 
-impl<I, D, T, U> DistributionProduct<D, T, U> for I
+impl<I, D, T, U> DistributionValueProduct<D, T, U> for I
 where
     I: Iterator<Item = D>,
     D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
 {
-    fn joint(self) -> IndependentArrayJoint<D, T, U> {
+    fn only_value_joint(self) -> IndependentValueArrayJoint<D, T, U> {
         let distributions = self.collect::<Vec<_>>();
 
-        IndependentArrayJoint::<D, T, U> { distributions }
+        IndependentValueArrayJoint::<D, T, U> { distributions }
     }
 }
 
@@ -103,7 +103,7 @@ mod tests {
     use rand::prelude::*;
     #[test]
     fn it_works() {
-        let model = vec![Normal; 3].into_iter().joint();
+        let model = vec![Normal; 3].into_iter().only_value_joint();
 
         let mut rng = StdRng::from_seed([1; 32]);
 

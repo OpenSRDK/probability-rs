@@ -1,10 +1,9 @@
 use crate::mcmc::*;
 use crate::{Categorical, CategoricalParams, DistributionError};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use opensrdk_linear_algebra::*;
 use rand::prelude::*;
 use std::hash::Hash;
-use std::iter::Sum;
-use std::ops::Div;
 use std::{
     fmt::Debug,
     ops::{BitAnd, Mul},
@@ -19,14 +18,16 @@ where
 }
 
 #[derive(thiserror::Error, Debug)]
-pub enum SamplesError {
+pub enum ContinuousSamplesError {
     #[error("Samples are empty")]
     SamplesAreEmpty,
+    #[error("TransformVec info mismatch")]
+    TransformVecInfoMismatch,
 }
 
 impl<T> ContinuousSamplesDistribution<T>
 where
-    T: RandomVariable + VectorSampleable + Sum + Div<f64, Output = T>,
+    T: RandomVariable + TransformVec,
 {
     pub fn new(samples: Vec<T>) -> Self {
         Self { samples }
@@ -38,6 +39,28 @@ where
 
     pub fn samples_mut(&mut self) -> &mut Vec<T> {
         &mut self.samples
+    }
+
+    pub fn mean(&self) -> Result<T, DistributionError> {
+        let n = self.samples.len();
+        if n == 0 {
+            return Err(DistributionError::Others(
+                ContinuousSamplesError::SamplesAreEmpty.into(),
+            ));
+        }
+        let (sum, info) = self.samples[0].clone().transform_vec();
+        let mut sum = sum.col_mat();
+        for i in 1..n {
+            let (v, info_i) = self.samples[i].clone().transform_vec();
+            if info != info_i {
+                return Err(DistributionError::Others(
+                    ContinuousSamplesError::TransformVecInfoMismatch.into(),
+                ));
+            }
+            sum = sum + v.col_mat();
+        }
+
+        Ok(T::restore(sum.vec(), info))
     }
 }
 

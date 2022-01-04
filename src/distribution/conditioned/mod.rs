@@ -64,6 +64,7 @@ where
 {
     type Value = T;
     type Condition = U2;
+
     fn fk(
         &self,
         x: &Self::Value,
@@ -82,6 +83,13 @@ where
 }
 
 pub trait ConditionableDistribution: Distribution + Sized {
+    /// .
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Example template not implemented for trait functions
+    /// ```
     fn condition<U2, F>(
         self,
         condition: F,

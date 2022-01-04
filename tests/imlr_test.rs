@@ -59,8 +59,8 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
     let d = 0.1;
 
     let g0 = BaselineMeasure::new(InstantDistribution::new(
-        &|_: _, _: &()| Ok(0.1),
-        &|_, rng| {
+        |_: _, _: &()| Ok(0.1),
+        |_, rng| {
             Ok((
                 30.0 * rng.gen_range(-1.0..=1.0),
                 30.0 * rng.gen_range(-1.0..=1.0),
@@ -71,7 +71,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
     let pyp_params = PitmanYorProcessParams::new(alpha_pyp, d, g0.clone())?;
 
     let mh_proposal = InstantDistribution::new(
-        &|x: &(f64, f64), theta: &(f64, f64)| {
+        |x: &(f64, f64), theta: &(f64, f64)| {
             Ok(MultivariateNormal::new().fk(
                 &vec![x.0, x.1],
                 &ExactEllipticalParams::new(
@@ -80,7 +80,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
                 )?,
             )?)
         },
-        &|theta, rng| {
+        |theta, rng| {
             let x = MultivariateNormal::new().sample(
                 &ExactEllipticalParams::new(
                     vec![theta.0, theta.1].clone(),
@@ -111,7 +111,7 @@ fn it_works() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let likelihood =
-        InstantDistribution::new(&instant_p, &|_theta: &(f64, f64), _rng| Ok((0.0, 0.0)));
+        InstantDistribution::new(instant_p, |_theta: &(f64, f64), _rng| Ok((0.0, 0.0)));
     let mut modification_count = HashMap::<u32, usize>::new();
 
     for iter in 0..ITER {

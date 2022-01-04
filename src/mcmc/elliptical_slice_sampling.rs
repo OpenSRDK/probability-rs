@@ -1,4 +1,4 @@
-use super::VectorSampleable;
+use super::TransformVec;
 use crate::{Distribution, RandomVariable};
 use rand::prelude::*;
 use rayon::prelude::*;
@@ -11,7 +11,7 @@ where
     L: Distribution<Value = A, Condition = B>,
     P: Distribution<Value = B, Condition = ()>,
     A: RandomVariable,
-    B: VectorSampleable,
+    B: TransformVec,
 {
     value: &'a A,
     likelihood: &'a L,
@@ -23,7 +23,7 @@ where
     L: Distribution<Value = A, Condition = B>,
     P: Distribution<Value = B, Condition = ()>,
     A: RandomVariable,
-    B: VectorSampleable,
+    B: TransformVec,
 {
     pub fn new(value: &'a A, likelihood: &'a L, prior: &'a P) -> Self {
         Self {
@@ -60,7 +60,7 @@ where
             let mut buf = b.transform_vec();
             buf.0 = Self::step(buf.0, theta, &nu.0);
 
-            b = B::restore(buf);
+            b = B::restore(buf.0, buf.1);
             if rho < self.likelihood.fk(self.value, &b)? {
                 break;
             }
@@ -87,20 +87,20 @@ mod tests {
     #[test]
     fn it_works() {
         let distr = InstantDistribution::new(
-            &|x: &f64, theta: &f64| {
+            |x: &f64, theta: &f64| {
                 let mu = *theta;
                 Ok(1.0 / (2.0 * PI * 10.0f64.powi(2)).sqrt()
                     * (-(x - mu).powi(2) / (2.0 * 10.0f64.powi(2))).exp())
             },
-            &|theta, rng| Normal.sample(&NormalParams::new(*theta, 10.0).unwrap(), rng),
+            |theta: &f64, rng| Normal.sample(&NormalParams::new(*theta, 10.0).unwrap(), rng),
         );
         let distr_2 = InstantDistribution::new(
-            &|x: &f64, _theta: &()| {
+            |x: &f64, _theta: &()| {
                 let mu: f64 = 10.0;
                 Ok(1.0 / (2.0 * PI * 10.0f64.powi(2)).sqrt()
                     * (-(x - mu).powi(2) / (2.0 * 10.0f64.powi(2))).exp())
             },
-            &|_theta, rng| {
+            |_theta, rng| {
                 Normal.sample(
                     &NormalParams::new(10.0, (10.0f64 * 0.1).abs()).unwrap(),
                     rng,
