@@ -39,18 +39,25 @@ fn fk(x: Vec<Vec<f64>>, z: Matrix) -> Result<Vec<f64>, DistributionError> {
     let distr_zi = MultivariateNormal::new().condition(&|(yi, lsigma): &(f64, Matrix)| {
         ExactMultivariateNormalParams::new((*yi * vec![1.0; zi_len].col_mat()).vec(), *lsigma)
     });
+    let test = distr_zi.sample()?;
+    //EllipticalParamsにsampleしてる？
     let distr_z = vec![distr_zi; n]
         .into_iter()
         .joint()
         .condition(&|(y, lsigma): &(Vec<f64>, Matrix)| {
             Ok(y.iter().map(|yi| (*yi, lsigma.clone())).collect::<Vec<_>>())
         });
-    let distr_y = MultivariateNormal::new().condition(|sigma: &f64| {
+    let distr_y = MultivariateNormal::new().condition(&|sigma: &f64| {
         BaseEllipticalProcessParams::new(kernel, x, theta, *sigma)?.exact(&y_zero)
     });
     let distr_yt = distr_y.transform::<Matrix>();
     // expected struct `Vec<f64>` found struct `Vec<(f64, Matrix)>`
     let distr_zy = distr_z & distr_yt;
+    let distr_zy = DependentJoint::new(distr_z, distr_yt);
+    let vec = vec![1.0; 3];
+    let test = distr_z.sample(vec)?;
+    let test = distr_y.sample(vec)?;
+    let test = distr_zy.sample(vec)?;
 
     let mut rng = StdRng::from_seed([1; 32]);
     let prior_distr_sigma = InstantDistribution::new(
@@ -83,7 +90,7 @@ fn fk(x: Vec<Vec<f64>>, z: Matrix) -> Result<Vec<f64>, DistributionError> {
     let lsigma0 = Matrix::from(zi_len, vec![1.0; zi_len * zi_len])?;
     // expected struct `Vec<(f64, Matrix)>` found struct `Vec<f64>`
 
-    let sampler = EllipticalSliceSampler::new((sigma0, lsigma0), &distr_zy, &prior_distr);
+    let sampler = EllipticalSliceSampler::new(&(sigma0, lsigma0), &distr_zy, &prior_distr);
     Ok(mu0)
 }
 
