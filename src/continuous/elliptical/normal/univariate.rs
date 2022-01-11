@@ -1,5 +1,7 @@
 use crate::TransformVec;
-use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{
+    DependentJoint, DifferentiableDistribution, Distribution, IndependentJoint, RandomVariable,
+};
 use crate::{DistributionError, NormalError};
 use rand::prelude::*;
 use rand_distr::Normal as RandNormal;
@@ -106,6 +108,13 @@ impl TransformVec for NormalParams {
 
     fn restore(v: Vec<f64>, _: Self::T) -> Self {
         Self::new(v[0], v[1]).unwrap()
+    }
+}
+
+impl DifferentiableDistribution for Normal {
+    fn log_diff(&self, x: &Self::Value, theta: &Self::Condition) -> Vec<f64> {
+        println!("OMMC");
+        vec![1.0; 1]
     }
 }
 
