@@ -113,8 +113,8 @@ impl TransformVec for NormalParams {
 
 impl DifferentiableDistribution for Normal {
     fn log_diff(&self, x: &Self::Value, theta: &Self::Condition) -> Vec<f64> {
-        println!("OMMC");
-        vec![1.0; 1]
+        let f = (theta.mu() - x) / theta.sigma().powi(2);
+        vec![f; 1]
     }
 }
 
