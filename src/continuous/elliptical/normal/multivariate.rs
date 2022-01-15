@@ -90,10 +90,14 @@ where
 }
 
 impl ValueDifferentiableDistribution for MultivariateNormal {
-    fn ln_diff_value(&self, x: &Self::Value, theta: &Self::Condition) -> Vec<f64> {
+    fn ln_diff_value(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
         let sigma = theta.lsigma() * theta.lsigma().t();
         let f = -1.0 * x.clone().row_mat() * sigma;
-        f.vec()
+        Ok(f.vec())
     }
 }
 #[cfg(test)]

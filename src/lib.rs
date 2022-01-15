@@ -15,8 +15,10 @@ pub mod discrete;
 pub mod distribution;
 pub mod mcmc;
 pub mod nonparametric;
+pub mod variational;
 
 pub use continuous::*;
 pub use discrete::*;
 pub use distribution::*;
 pub use mcmc::*;
+pub use variational::*;

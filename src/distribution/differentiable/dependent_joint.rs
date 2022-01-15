@@ -1,5 +1,5 @@
 use crate::{
-    ConditionDifferentiableDistribution, DependentJoint, Distribution,
+    ConditionDifferentiableDistribution, DependentJoint, Distribution, RandomVariable,
     ValueDifferentiableDistribution,
 };
 
@@ -35,5 +35,6 @@ where
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, crate::DistributionError> {
+        todo!()
     }
 }
