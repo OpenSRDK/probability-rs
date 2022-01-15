@@ -7,6 +7,8 @@ use std::{
     ops::{BitAnd, Mul},
 };
 
-pub trait DifferentiableDistribution: Distribution {
-    fn log_diff(&self, x: &Self::Value, theta: &Self::Condition) -> Vec<f64>;
-}
+pub mod condition;
+pub mod value;
+
+pub use condition::*;
+pub use value::*;

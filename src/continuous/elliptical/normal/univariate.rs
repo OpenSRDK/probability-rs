@@ -1,6 +1,6 @@
 use crate::TransformVec;
 use crate::{
-    DependentJoint, DifferentiableDistribution, Distribution, IndependentJoint, RandomVariable,
+    DependentJoint, Distribution, IndependentJoint, RandomVariable, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, NormalError};
 use rand::prelude::*;
@@ -111,8 +111,8 @@ impl TransformVec for NormalParams {
     }
 }
 
-impl DifferentiableDistribution for Normal {
-    fn log_diff(&self, x: &Self::Value, theta: &Self::Condition) -> Vec<f64> {
+impl ValueDifferentiableDistribution for Normal {
+    fn ln_diff_value(&self, x: &Self::Value, theta: &Self::Condition) -> Vec<f64> {
         let f = (theta.mu() - x) / theta.sigma().powi(2);
         vec![f; 1]
     }

@@ -1,6 +1,6 @@
 use crate::{
-    DependentJoint, DifferentiableDistribution, Distribution, ExactEllipticalParams,
-    IndependentJoint, RandomVariable,
+    DependentJoint, Distribution, ExactEllipticalParams, IndependentJoint, RandomVariable,
+    ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, EllipticalParams};
 use opensrdk_linear_algebra::{Matrix, Vector};
@@ -89,8 +89,8 @@ where
     }
 }
 
-impl DifferentiableDistribution for MultivariateNormal {
-    fn log_diff(&self, x: &Self::Value, theta: &Self::Condition) -> Vec<f64> {
+impl ValueDifferentiableDistribution for MultivariateNormal {
+    fn ln_diff_value(&self, x: &Self::Value, theta: &Self::Condition) -> Vec<f64> {
         let sigma = theta.lsigma() * theta.lsigma().t();
         let f = -1.0 * x.clone().row_mat() * sigma;
         f.vec()
@@ -99,7 +99,8 @@ impl DifferentiableDistribution for MultivariateNormal {
 #[cfg(test)]
 mod tests {
     use crate::{
-        DifferentiableDistribution, Distribution, ExactMultivariateNormalParams, MultivariateNormal,
+        Distribution, ExactMultivariateNormalParams, MultivariateNormal,
+        ValueDifferentiableDistribution,
     };
     use opensrdk_linear_algebra::*;
     use rand::prelude::*;
@@ -142,7 +143,7 @@ mod tests {
 
         let x = vec![0.0, 1.0];
 
-        let f = normal.log_diff(&x, &ExactMultivariateNormalParams::new(mu, lsigma).unwrap());
+        let f = normal.ln_diff_value(&x, &ExactMultivariateNormalParams::new(mu, lsigma).unwrap());
         println!("{:#?}", f);
     }
 }
