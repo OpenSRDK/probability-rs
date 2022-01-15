@@ -1,39 +1,51 @@
-use crate::{ContinuousUniform, Distribution, DistributionError, RandomVariable};
+use crate::{
+    ConditionDifferentiableDistribution, ContinuousUniform, Distribution, DistributionError,
+    RandomVariable, ValueDifferentiableDistribution,
+};
 use rand::prelude::*;
 
 /// Sample b from posterior p(b|a) with likelihood p(a|b) and prior p(b)
-pub struct HamiltonianSampler<T, D>
+pub struct HamiltonianSampler<'a, L, P, A, B>
 where
-    T: RandomVariable,
-    D: Distribution<Value = T, Condition = ()>,
+    L: Distribution<Value = A, Condition = B> + ConditionDifferentiableDistribution,
+    P: Distribution<Value = B, Condition = ()> + ValueDifferentiableDistribution,
+    A: RandomVariable,
+    B: RandomVariable,
 {
-    distribution: D,
+    value: &'a A,
+    likelihood: &'a L,
+    prior: &'a P,
 }
 
 #[derive(thiserror::Error, Debug)]
-pub enum ImportanceSamplingError {
+pub enum HamiltonianSamplingError {
     #[error("out of range")]
     OutOfRange,
     #[error("Unknown error")]
     Unknown,
 }
 
-impl<T, D> HamiltonianSampler<T, D>
+impl<'a, L, P, A, B> HamiltonianSampler<'a, L, P, A, B>
 where
-    T: RandomVariable,
-    D: Distribution<Value = T, Condition = ()>,
+    L: Distribution<Value = A, Condition = B> + ConditionDifferentiableDistribution,
+    P: Distribution<Value = B, Condition = ()> + ValueDifferentiableDistribution,
+    A: RandomVariable,
+    B: RandomVariable,
 {
-    pub fn new(distribution: D) -> Result<Self, DistributionError> {
-        Ok(Self { distribution })
+    pub fn new(value: &'a A, likelihood: &'a L, prior: &'a P) -> Self {
+        Self {
+            value,
+            likelihood,
+            prior,
+        }
     }
 
-    pub fn sample(
-        //&self,
-        theta: f64, //D::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Vec<(f64, f64)>, DistributionError> {
-        let hamiltonian = sample(theta, rng)?;
-        Ok(hamiltonian)
+    pub fn sample(&self, rng: &mut dyn RngCore) -> Result<B, DistributionError> {
+        // (self.likelihood.fk(self.value, hoge)? * self.likelihood.fk(hoge, &())?).ln();
+        // is ln probability density function kernel of posterior
+        // self.likelihood.ln_diff_condition(self.value, hoge)?.col_mat() + self.prior.ln_diff_value(hoge, &())?.col_mat();
+        // is ln diff of posterior
+        todo!()
     }
 }
 
