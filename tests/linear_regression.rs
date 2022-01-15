@@ -15,13 +15,6 @@ use rand::{prelude::*, seq::index::sample};
 use rand_distr::StandardNormal;
 use std::{convert::identity, time::Instant};
 
-#[derive(Clone, Copy)]
-pub enum Type {
-    Exact,
-    Sparse,
-    KissLove,
-}
-
 #[test]
 fn test_main() {}
 
