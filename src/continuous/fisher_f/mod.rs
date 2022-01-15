@@ -2,10 +2,10 @@ use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::FisherF as RandFisherF;
-use special::Beta;
 use std::{ops::BitAnd, ops::Mul};
 
 /// Fisher-F distribution
+/// TODO: Delete `special` package
 #[derive(Clone, Debug)]
 pub struct FisherF;
 
@@ -25,10 +25,7 @@ impl Distribution for FisherF {
         let m = theta.m();
         let n = theta.n();
 
-        Ok(
-            (((m * x).powf(m) * n.powf(n)) / ((m * x + n).powf(m + n))).sqrt()
-                / (x * Beta::ln_beta(m / 2.0, n / 2.0).exp()),
-        )
+        Ok((((m * x).powf(m) * n.powf(n)) / ((m * x + n).powf(m + n))).sqrt())
     }
 
     fn sample(
