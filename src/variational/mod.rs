@@ -1,3 +1,5 @@
+pub mod stein;
+
 use crate::{ConditionDifferentiableDistribution, Distribution, DistributionError, RandomVariable};
 use opensrdk_linear_algebra::Vector;
 

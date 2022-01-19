@@ -1,0 +1,56 @@
+use crate::{ContinuousSamplesDistribution, Distribution, DistributionError, RandomVariable};
+use opensrdk_kernel_method::Kernel;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
+
+pub struct SteinVariational<'a, L, P, A, B, K>
+where
+    L: Distribution<Value = A, Condition = B>,
+    P: Distribution<Value = B, Condition = ()>,
+    A: RandomVariable,
+    B: RandomVariable,
+    K: Kernel<Vec<f64>>,
+{
+    value: &'a A,
+    likelihood: &'a L,
+    prior: &'a P,
+    kernel: &'a K,
+    kernel_params: &'a [f64],
+    samples: &'a mut ContinuousSamplesDistribution<Vec<f64>>,
+}
+
+impl<'a, L, P, A, B, K> SteinVariational<'a, L, P, A, B, K>
+where
+    L: Distribution<Value = A, Condition = B>,
+    P: Distribution<Value = B, Condition = ()>,
+    A: RandomVariable,
+    B: RandomVariable,
+    K: Kernel<Vec<f64>>,
+{
+    pub fn new(
+        value: &'a A,
+        likelihood: &'a L,
+        prior: &'a P,
+        kernel: &'a K,
+        kernel_params: &'a [f64],
+        samples: &'a mut ContinuousSamplesDistribution<Vec<f64>>,
+    ) -> Self {
+        Self {
+            value,
+            likelihood,
+            prior,
+            kernel,
+            kernel_params,
+            samples,
+        }
+    }
+
+    pub fn direction(&self, x: Vec<f64>) -> Result<f64, DistributionError> {
+        let n = self.samples.samples().len();
+        let phi = (0..n)
+            .into_par_iter()
+            .map(|j| self.samples.samples()[j])
+            .map(|xj| self.kernel.value(self.kernel_params, &x, &xj).unwrap())
+            .sum::<f64>();
+        Ok(phi)
+    }
+}
