@@ -1,5 +1,6 @@
 use crate::{ContinuousSamplesDistribution, Distribution, DistributionError, RandomVariable};
-use opensrdk_kernel_method::Kernel;
+use opensrdk_kernel_method::*;
+use opensrdk_linear_algebra::*;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 pub struct SteinVariational<'a, L, P, A, B, K>
@@ -8,7 +9,7 @@ where
     P: Distribution<Value = B, Condition = ()>,
     A: RandomVariable,
     B: RandomVariable,
-    K: Kernel<Vec<f64>>,
+    K: PositiveDefiniteKernel<Vec<f64>> + ValueDifferentiable<Vec<f64>>,
 {
     value: &'a A,
     likelihood: &'a L,
@@ -24,7 +25,7 @@ where
     P: Distribution<Value = B, Condition = ()>,
     A: RandomVariable,
     B: RandomVariable,
-    K: Kernel<Vec<f64>>,
+    K: PositiveDefiniteKernel<Vec<f64>> + ValueDifferentiable<Vec<f64>>,
 {
     pub fn new(
         value: &'a A,
@@ -51,6 +52,28 @@ where
             .map(|j| &self.samples.samples()[j])
             .map(|xj| self.kernel.value(self.kernel_params, &x, &xj).unwrap())
             .sum::<f64>();
+        let ln_kernel = (0..n)
+            .into_par_iter()
+            .map(|j| &self.samples.samples()[j])
+            .map(|xj| {
+                self.kernel
+                    .ln_diff_value(self.kernel_params, &x, &xj)
+                    .unwrap()
+                    .0
+                    .col_mat()
+            })
+            .reduce(|| mat!(0.0), |sum, x| sum + x);
+        // let ln_probability = (0..n)
+        //     .into_par_iter()
+        //     .map(|j| &self.samples.samples()[j])
+        //     .map(|xj| {
+        //         Ok(self.likelihood.fk(&x, theta)? * self.prior.fk(&x, theta)?)
+        //             .ln_diff_value(self.kernel_params, &x, &xj)
+        //             .unwrap()
+        //             .0
+        //             .col_mat()
+        //     })
+        //     .reduce(|| mat!(0.0), |sum, x| sum + x);
         Ok(phi)
     }
 }
