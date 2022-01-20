@@ -48,7 +48,7 @@ where
         let n = self.samples.samples().len();
         let phi = (0..n)
             .into_par_iter()
-            .map(|j| self.samples.samples()[j])
+            .map(|j| &self.samples.samples()[j])
             .map(|xj| self.kernel.value(self.kernel_params, &x, &xj).unwrap())
             .sum::<f64>();
         Ok(phi)
