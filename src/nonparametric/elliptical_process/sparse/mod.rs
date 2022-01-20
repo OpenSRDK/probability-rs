@@ -14,7 +14,7 @@ use opensrdk_linear_algebra::matrix::ge::sy_he::po::trf::POTRF;
 #[derive(Clone, Debug)]
 pub struct SparseEllipticalProcessParams<K, T>
 where
-    K: Kernel<T>,
+    K: PositiveDefiniteKernel<T>,
     T: RandomVariable,
 {
     base: BaseEllipticalProcessParams<K, T>,
@@ -32,7 +32,7 @@ where
 
 impl<K, T> SparseEllipticalProcessParams<K, T>
 where
-    K: Kernel<T>,
+    K: PositiveDefiniteKernel<T>,
     T: RandomVariable,
 {
     fn new(
@@ -130,7 +130,7 @@ where
 
 impl<K, T> BaseEllipticalProcessParams<K, T>
 where
-    K: Kernel<T>,
+    K: PositiveDefiniteKernel<T>,
     T: RandomVariable,
 {
     /// Elliptical Process with approximation called the Fully Independent Training Conditional (FITC) for scalability.
@@ -149,7 +149,7 @@ where
 
 impl<K, T> EllipticalParams for SparseEllipticalProcessParams<K, T>
 where
-    K: Kernel<T>,
+    K: PositiveDefiniteKernel<T>,
     T: RandomVariable,
 {
     fn mu(&self) -> &Vec<f64> {
@@ -171,7 +171,7 @@ where
 
 impl<K, T> EllipticalProcessParams<K, T> for SparseEllipticalProcessParams<K, T>
 where
-    K: Kernel<T>,
+    K: PositiveDefiniteKernel<T>,
     T: RandomVariable,
 {
     fn mahalanobis_squared(&self) -> f64 {

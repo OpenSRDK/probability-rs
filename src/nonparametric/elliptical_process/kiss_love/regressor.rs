@@ -4,12 +4,12 @@ use crate::{
     nonparametric::regressor::GaussianProcessRegressor, ExactEllipticalParams, RandomVariable,
 };
 use crate::{DistributionError, ExactMultivariateNormalParams};
-use opensrdk_kernel_method::{Convolutable, Convolutional, Kernel};
+use opensrdk_kernel_method::{Convolutable, Convolutional, PositiveDefiniteKernel};
 use opensrdk_linear_algebra::*;
 
 impl<K, T> GaussianProcessRegressor<Convolutional<K>, T> for KissLoveEllipticalProcessParams<K, T>
 where
-    K: Kernel<Vec<f64>>,
+    K: PositiveDefiniteKernel<Vec<f64>>,
     T: RandomVariable + Convolutable,
 {
     fn gp_predict_multivariate(
