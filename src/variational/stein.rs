@@ -1,28 +1,28 @@
-use crate::{ContinuousSamplesDistribution, Distribution, DistributionError, RandomVariable};
+use crate::{
+    ContinuousSamplesDistribution, Distribution, DistributionError, RandomVariable,
+    ValueDifferentiableDistribution,
+};
 use opensrdk_kernel_method::*;
 use opensrdk_linear_algebra::*;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
-pub struct SteinVariational<'a, L, P, A, B, K>
+pub struct SteinVariational<'a, L, A, B, K>
 where
-    L: Distribution<Value = A, Condition = B>,
-    P: Distribution<Value = B, Condition = ()>,
+    L: Distribution<Value = A, Condition = B> + ValueDifferentiableDistribution,
     A: RandomVariable,
     B: RandomVariable,
     K: PositiveDefiniteKernel<Vec<f64>> + ValueDifferentiable<Vec<f64>>,
 {
     value: &'a A,
     likelihood: &'a L,
-    prior: &'a P,
     kernel: &'a K,
     kernel_params: &'a [f64],
     samples: &'a mut ContinuousSamplesDistribution<Vec<f64>>,
 }
 
-impl<'a, L, P, A, B, K> SteinVariational<'a, L, P, A, B, K>
+impl<'a, L, A, B, K> SteinVariational<'a, L, A, B, K>
 where
-    L: Distribution<Value = A, Condition = B>,
-    P: Distribution<Value = B, Condition = ()>,
+    L: Distribution<Value = A, Condition = B> + ValueDifferentiableDistribution,
     A: RandomVariable,
     B: RandomVariable,
     K: PositiveDefiniteKernel<Vec<f64>> + ValueDifferentiable<Vec<f64>>,
@@ -30,7 +30,6 @@ where
     pub fn new(
         value: &'a A,
         likelihood: &'a L,
-        prior: &'a P,
         kernel: &'a K,
         kernel_params: &'a [f64],
         samples: &'a mut ContinuousSamplesDistribution<Vec<f64>>,
@@ -38,39 +37,35 @@ where
         Self {
             value,
             likelihood,
-            prior,
             kernel,
             kernel_params,
             samples,
         }
     }
 
-    pub fn direction(&self, x: &Vec<f64>, theta: &B) -> Result<f64, DistributionError> {
+    pub fn direction(&self, x: &Vec<f64>, theta: &B) -> Result<Vec<f64>, DistributionError> {
         let n = self.samples.samples().len();
         let phi = (0..n)
             .into_par_iter()
             .map(|j| &self.samples.samples()[j])
-            .map(|xj| self.kernel.value(self.kernel_params, &x, &xj).unwrap())
-            .sum::<f64>();
-        // カーネルの微分
-        let ln_kernel = (0..n)
-            .into_par_iter()
-            .map(|j| &self.samples.samples()[j])
             .map(|xj| {
-                self.kernel
+                let kernel = self.kernel.value(self.kernel_params, &x, &xj).unwrap();
+                let kernel_diff = self
+                    .kernel
                     .ln_diff_value(self.kernel_params, &x, &xj)
                     .unwrap()
                     .0
-                    .col_mat()
+                    .col_mat();
+                let l_diff = self
+                    .likelihood
+                    .ln_diff_value(self.value, theta)
+                    .unwrap()
+                    .col_mat();
+                let p_diff = l_diff;
+                kernel * p_diff + kernel_diff
             })
             .reduce(|| mat!(0.0), |sum, x| sum + x);
-        // 確率密度関数の微分
-        let ln_probability = (0..n)
-            .into_par_iter()
-            .map(|j| &self.samples.samples()[j])
-            .map(|xj| 
-                (self.likelihood.fk(self.value, theta)? * self.prior.fk(theta, &())?)
-            )
-        Ok(phi)
+
+        Ok(phi.vec())
     }
 }
