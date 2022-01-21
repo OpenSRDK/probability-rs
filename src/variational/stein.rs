@@ -45,13 +45,14 @@ where
         }
     }
 
-    pub fn direction(&self, x: Vec<f64>) -> Result<f64, DistributionError> {
+    pub fn direction(&self, x: &Vec<f64>, theta: &B) -> Result<f64, DistributionError> {
         let n = self.samples.samples().len();
         let phi = (0..n)
             .into_par_iter()
             .map(|j| &self.samples.samples()[j])
             .map(|xj| self.kernel.value(self.kernel_params, &x, &xj).unwrap())
             .sum::<f64>();
+        // カーネルの微分
         let ln_kernel = (0..n)
             .into_par_iter()
             .map(|j| &self.samples.samples()[j])
@@ -63,17 +64,13 @@ where
                     .col_mat()
             })
             .reduce(|| mat!(0.0), |sum, x| sum + x);
-        // let ln_probability = (0..n)
-        //     .into_par_iter()
-        //     .map(|j| &self.samples.samples()[j])
-        //     .map(|xj| {
-        //         Ok(self.likelihood.fk(&x, theta)? * self.prior.fk(&x, theta)?)
-        //             .ln_diff_value(self.kernel_params, &x, &xj)
-        //             .unwrap()
-        //             .0
-        //             .col_mat()
-        //     })
-        //     .reduce(|| mat!(0.0), |sum, x| sum + x);
+        // 確率密度関数の微分
+        let ln_probability = (0..n)
+            .into_par_iter()
+            .map(|j| &self.samples.samples()[j])
+            .map(|xj| 
+                (self.likelihood.fk(self.value, theta)? * self.prior.fk(theta, &())?)
+            )
         Ok(phi)
     }
 }
