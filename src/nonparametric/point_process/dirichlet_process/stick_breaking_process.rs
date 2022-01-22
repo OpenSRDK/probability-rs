@@ -54,6 +54,18 @@ impl StickBreakingProcessParams {
     }
 }
 
+impl RandomVariable for StickBreakingProcessParams {
+    type RestoreInfo = ();
+
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
+        todo!()
+    }
+
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+        todo!()
+    }
+}
+
 impl<Rhs, TRhs> Mul<Rhs> for StickBreakingProcess
 where
     Rhs: Distribution<Value = TRhs, Condition = StickBreakingProcessParams>,

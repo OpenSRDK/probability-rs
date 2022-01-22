@@ -1,3 +1,7 @@
+pub mod params;
+
+pub use params::*;
+
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use crate::{DiscreteDistribution, DistributionError};
 use rand::prelude::*;
@@ -41,25 +45,6 @@ impl Distribution for Geometric {
 }
 
 impl DiscreteDistribution for Geometric {}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct GeometricParams {
-    p: f64,
-}
-
-impl GeometricParams {
-    pub fn new(p: f64) -> Result<Self, GeometricError> {
-        if p < 0.0 || 1.0 < p {
-            return Err(GeometricError::PMustBeProbability.into());
-        }
-
-        Ok(Self { p })
-    }
-
-    pub fn p(&self) -> f64 {
-        self.p
-    }
-}
 
 impl<Rhs, TRhs> Mul<Rhs> for Geometric
 where

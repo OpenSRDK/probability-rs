@@ -13,7 +13,7 @@ pub use regressor::*;
 pub use sparse::*;
 
 use crate::{DistributionError, EllipticalParams, RandomVariable};
-use opensrdk_kernel_method::Kernel;
+use opensrdk_kernel_method::*;
 
 #[derive(thiserror::Error, Debug)]
 pub enum EllipticalProcessError {
@@ -32,7 +32,7 @@ pub enum EllipticalProcessError {
 #[derive(Clone, Debug)]
 pub struct BaseEllipticalProcessParams<K, T>
 where
-    K: Kernel<T>,
+    K: PositiveDefiniteKernel<T>,
     T: RandomVariable,
 {
     kernel: K,
@@ -43,7 +43,7 @@ where
 
 impl<K, T> BaseEllipticalProcessParams<K, T>
 where
-    K: Kernel<T>,
+    K: PositiveDefiniteKernel<T>,
     T: RandomVariable,
 {
     /// - `kernel`: Kernel function
@@ -73,7 +73,7 @@ where
 
 pub trait EllipticalProcessParams<K, T>: EllipticalParams
 where
-    K: Kernel<T>,
+    K: PositiveDefiniteKernel<T>,
     T: RandomVariable,
 {
     fn mahalanobis_squared(&self) -> f64;

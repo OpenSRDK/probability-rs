@@ -2,7 +2,7 @@ use super::axis::*;
 use crate::DistributionError;
 use crate::{nonparametric::kernel_matrix, opensrdk_linear_algebra::*};
 use opensrdk_kernel_method::KernelError;
-use opensrdk_kernel_method::{Convolutable, Kernel};
+use opensrdk_kernel_method::{Convolutable, PositiveDefiniteKernel};
 use rayon::prelude::*;
 
 #[derive(thiserror::Error, Debug)]
@@ -73,7 +73,7 @@ impl Grid {
 
     pub fn kuu(
         &self,
-        kernel: &impl Kernel<Vec<f64>>,
+        kernel: &impl PositiveDefiniteKernel<Vec<f64>>,
         params: &[f64],
     ) -> Result<KroneckerMatrices, KernelError> {
         let d = self.axes.len();

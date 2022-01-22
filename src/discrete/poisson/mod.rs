@@ -1,3 +1,7 @@
+pub mod params;
+
+pub use params::*;
+
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use crate::{DiscreteDistribution, DistributionError};
 use rand::prelude::*;
@@ -48,25 +52,6 @@ impl Distribution for Poisson {
 }
 
 impl DiscreteDistribution for Poisson {}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct PoissonParams {
-    lambda: f64,
-}
-
-impl PoissonParams {
-    pub fn new(lambda: f64) -> Result<Self, PoissonError> {
-        if lambda <= 0.0 {
-            return Err(PoissonError::LambdaMustBePositive.into());
-        }
-
-        Ok(Self { lambda })
-    }
-
-    pub fn lambda(&self) -> f64 {
-        self.lambda
-    }
-}
 
 impl<Rhs, TRhs> Mul<Rhs> for Poisson
 where

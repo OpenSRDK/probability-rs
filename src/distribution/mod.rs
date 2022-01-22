@@ -5,10 +5,12 @@ pub mod dependent_joint;
 pub mod differentiable;
 pub mod discrete_posterior;
 pub mod discrete_samples;
+pub mod event;
 pub mod independent_array_joint;
 pub mod independent_joint;
 pub mod independent_value_array_joint;
 pub mod instant;
+pub mod random_variable;
 pub mod switched;
 pub mod transformed;
 
@@ -19,10 +21,12 @@ pub use dependent_joint::*;
 pub use differentiable::*;
 pub use discrete_posterior::*;
 pub use discrete_samples::*;
+pub use event::*;
 pub use independent_array_joint::*;
 pub use independent_joint::*;
 pub use independent_value_array_joint::*;
 pub use instant::*;
+pub use random_variable::*;
 pub use switched::*;
 pub use transformed::*;
 
@@ -30,9 +34,6 @@ use opensrdk_kernel_method::KernelError;
 use opensrdk_linear_algebra::MatrixError;
 use rand::prelude::*;
 use std::{error::Error, fmt::Debug};
-
-pub trait RandomVariable: Clone + Debug + Send + Sync {}
-impl<T> RandomVariable for T where T: Clone + Debug + Send + Sync {}
 
 #[derive(thiserror::Error, Debug)]
 pub enum DistributionError {
@@ -42,6 +43,8 @@ pub enum DistributionError {
     MatrixError(MatrixError),
     #[error("Kernel error")]
     KernelError(KernelError),
+    #[error("Invalid restore vector")]
+    InvalidRestoreVector,
     #[error("Others")]
     Others(Box<dyn Error + Send + Sync>),
 }
@@ -68,7 +71,7 @@ impl From<Box<dyn Error + Send + Sync>> for DistributionError {
 /// - `fk`: The kernel part of probability density function `f`. The kernel means that it doesn't need normalization term of probability density function.
 pub trait Distribution: Clone + Debug + Send + Sync {
     type Value: RandomVariable;
-    type Condition: RandomVariable;
+    type Condition: Clone + Debug + Send + Sync;
 
     fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError>;
     fn sample(

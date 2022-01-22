@@ -4,12 +4,13 @@ use crate::{
     nonparametric::regressor::GaussianProcessRegressor, ExactEllipticalParams, RandomVariable,
 };
 use crate::{DistributionError, ExactMultivariateNormalParams};
-use opensrdk_kernel_method::{Convolutable, Convolutional, Kernel};
+use opensrdk_kernel_method::{Convolutable, Convolutional, PositiveDefiniteKernel};
+use opensrdk_linear_algebra::pp::trf::PPTRF;
 use opensrdk_linear_algebra::*;
 
 impl<K, T> GaussianProcessRegressor<Convolutional<K>, T> for KissLoveEllipticalProcessParams<K, T>
 where
-    K: Kernel<Vec<f64>>,
+    K: PositiveDefiniteKernel<Vec<f64>>,
     T: RandomVariable + Convolutable,
 {
     fn gp_predict_multivariate(
@@ -53,7 +54,8 @@ where
                     Ok(((a.0.col_mat() + b.0.col_mat()).vec(), a.1 + b.1))
                 },
             )?;
+        let lsigma_p = SymmetricPackedMatrix::from_mat(&lsigma).unwrap();
 
-        ExactMultivariateNormalParams::new(mu, lsigma)
+        ExactMultivariateNormalParams::new(mu, PPTRF(lsigma_p))
     }
 }

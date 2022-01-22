@@ -1,5 +1,5 @@
-use crate::DistributionError;
 use crate::{Distribution, IndependentJoint, RandomVariable};
+use crate::{DistributionError, Event};
 use rand::prelude::*;
 use std::{ops::BitAnd, ops::Mul};
 
@@ -10,8 +10,8 @@ where
     L: Distribution<Value = T, Condition = UL>,
     R: Distribution<Value = UL, Condition = UR>,
     T: RandomVariable,
-    UL: RandomVariable,
-    UR: RandomVariable,
+    UL: Event,
+    UR: Event,
 {
     lhs: L,
     rhs: R,
@@ -22,8 +22,8 @@ where
     L: Distribution<Value = T, Condition = UL>,
     R: Distribution<Value = UL, Condition = UR>,
     T: RandomVariable,
-    UL: RandomVariable,
-    UR: RandomVariable,
+    UL: Event,
+    UR: Event,
 {
     pub fn new(lhs: L, rhs: R) -> Self {
         Self { lhs, rhs }
@@ -36,7 +36,7 @@ where
     R: Distribution<Value = UL, Condition = UR>,
     T: RandomVariable,
     UL: RandomVariable,
-    UR: RandomVariable,
+    UR: Event,
 {
     type Value = (T, UL);
     type Condition = UR;

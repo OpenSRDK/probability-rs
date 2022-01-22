@@ -1,6 +1,8 @@
 pub mod chi_squared;
+pub mod params;
 
 pub use chi_squared::*;
+pub use params::*;
 
 use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
@@ -45,37 +47,6 @@ impl Distribution for Gamma {
         }?;
 
         Ok(rng.sample(gamma))
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct GammaParams {
-    shape: f64,
-    scale: f64,
-}
-
-impl GammaParams {
-    pub fn new(shape: f64, scale: f64) -> Result<Self, DistributionError> {
-        if shape <= 0.0 {
-            return Err(DistributionError::InvalidParameters(
-                GammaError::ShapeMustBePositive.into(),
-            ));
-        }
-        if scale <= 0.0 {
-            return Err(DistributionError::InvalidParameters(
-                GammaError::ScaleMustBePositive.into(),
-            ));
-        }
-
-        Ok(Self { shape, scale })
-    }
-
-    pub fn shape(&self) -> f64 {
-        self.shape
-    }
-
-    pub fn scale(&self) -> f64 {
-        self.scale
     }
 }
 
