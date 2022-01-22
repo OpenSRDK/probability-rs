@@ -72,6 +72,18 @@ pub enum PitmanYorGibbsSample {
     New,
 }
 
+impl RandomVariable for PitmanYorGibbsSample {
+    type RestoreInfo = bool;
+
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
+        todo!()
+    }
+
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+        todo!()
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct PitmanYorGibbsParams<'a, G0, TH>
 where
@@ -95,6 +107,22 @@ where
         n: usize,
     ) -> Self {
         Self { base, s_inv, n }
+    }
+}
+
+impl<'a, G0, TH> RandomVariable for PitmanYorGibbsParams<'a, G0, TH>
+where
+    G0: Distribution<Value = TH, Condition = ()>,
+    TH: RandomVariable,
+{
+    type RestoreInfo = ();
+
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
+        todo!()
+    }
+
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+        todo!()
     }
 }
 

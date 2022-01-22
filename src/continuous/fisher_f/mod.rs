@@ -4,6 +4,10 @@ use rand::prelude::*;
 use rand_distr::FisherF as RandFisherF;
 use std::{ops::BitAnd, ops::Mul};
 
+pub mod params;
+
+pub use params::*;
+
 /// Fisher-F distribution
 /// TODO: Delete `special` package
 #[derive(Clone, Debug)]
@@ -42,37 +46,6 @@ impl Distribution for FisherF {
         }?;
 
         Ok(rng.sample(fisher_f))
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct FisherFParams {
-    m: f64,
-    n: f64,
-}
-
-impl FisherFParams {
-    pub fn new(m: f64, n: f64) -> Result<Self, DistributionError> {
-        if m <= 0.0 {
-            return Err(DistributionError::InvalidParameters(
-                FisherFError::MMustBePositive.into(),
-            ));
-        }
-        if n <= 0.0 {
-            return Err(DistributionError::InvalidParameters(
-                FisherFError::NMustBePositive.into(),
-            ));
-        }
-
-        Ok(Self { m, n })
-    }
-
-    pub fn m(&self) -> f64 {
-        self.m
-    }
-
-    pub fn n(&self) -> f64 {
-        self.n
     }
 }
 

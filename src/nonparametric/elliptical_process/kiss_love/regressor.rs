@@ -5,6 +5,7 @@ use crate::{
 };
 use crate::{DistributionError, ExactMultivariateNormalParams};
 use opensrdk_kernel_method::{Convolutable, Convolutional, PositiveDefiniteKernel};
+use opensrdk_linear_algebra::pp::trf::PPTRF;
 use opensrdk_linear_algebra::*;
 
 impl<K, T> GaussianProcessRegressor<Convolutional<K>, T> for KissLoveEllipticalProcessParams<K, T>
@@ -53,7 +54,8 @@ where
                     Ok(((a.0.col_mat() + b.0.col_mat()).vec(), a.1 + b.1))
                 },
             )?;
+        let lsigma_p = SymmetricPackedMatrix::from_mat(&lsigma).unwrap();
 
-        ExactMultivariateNormalParams::new(mu, lsigma)
+        ExactMultivariateNormalParams::new(mu, PPTRF(lsigma_p))
     }
 }

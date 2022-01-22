@@ -247,6 +247,22 @@ where
     }
 }
 
+impl<K, T> RandomVariable for KissLoveEllipticalProcessParams<K, T>
+where
+    K: PositiveDefiniteKernel<Vec<f64>>,
+    T: RandomVariable + Convolutable,
+{
+    type RestoreInfo = ();
+
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
+        todo!()
+    }
+
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+        todo!()
+    }
+}
+
 impl<K, T> EllipticalParams for KissLoveEllipticalProcessParams<K, T>
 where
     K: PositiveDefiniteKernel<Vec<f64>>,

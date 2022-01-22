@@ -11,7 +11,7 @@ pub struct TransformedDistribution<D, T, U, V>
 where
     D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
-    U: RandomVariable,
+    U: Clone + Debug + Send + Sync,
     V: RandomVariable,
 {
     distribution: D,
@@ -22,7 +22,7 @@ impl<D, T, U, V> TransformedDistribution<D, T, U, V>
 where
     D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
-    U: RandomVariable,
+    U: Clone + Debug + Send + Sync,
     V: RandomVariable,
 {
     pub fn new(distribution: D) -> Self {

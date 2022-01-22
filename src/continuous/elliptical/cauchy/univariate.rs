@@ -1,6 +1,4 @@
-use crate::{
-    CauchyError, DependentJoint, Distribution, IndependentJoint, RandomVariable, TransformVec,
-};
+use crate::{CauchyParams, DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use crate::{DistributionError, StudentT, StudentTParams};
 use rand::prelude::*;
 use std::{ops::BitAnd, ops::Mul};
@@ -14,7 +12,7 @@ impl Distribution for Cauchy {
     type Condition = CauchyParams;
 
     fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
-        let studentt_params = StudentTParams::new(1.0, theta.mu, theta.sigma)?;
+        let studentt_params = StudentTParams::new(1.0, theta.mu(), theta.sigma())?;
 
         StudentT.fk(x, &studentt_params)
     }
@@ -24,35 +22,9 @@ impl Distribution for Cauchy {
         theta: &Self::Condition,
         rng: &mut dyn RngCore,
     ) -> Result<Self::Value, DistributionError> {
-        let studentt_params = StudentTParams::new(1.0, theta.mu, theta.sigma)?;
+        let studentt_params = StudentTParams::new(1.0, theta.mu(), theta.sigma())?;
 
         StudentT.sample(&studentt_params, rng)
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct CauchyParams {
-    mu: f64,
-    sigma: f64,
-}
-
-impl CauchyParams {
-    pub fn new(mu: f64, sigma: f64) -> Result<Self, DistributionError> {
-        if sigma <= 0.0 {
-            return Err(DistributionError::InvalidParameters(
-                CauchyError::SigmaMustBePositive.into(),
-            ));
-        }
-
-        Ok(Self { mu, sigma })
-    }
-
-    pub fn mu(&self) -> f64 {
-        self.mu
-    }
-
-    pub fn sigma(&self) -> f64 {
-        self.sigma
     }
 }
 
@@ -77,18 +49,6 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
-    }
-}
-
-impl TransformVec for CauchyParams {
-    type T = ();
-
-    fn transform_vec(self) -> (Vec<f64>, Self::T) {
-        (vec![self.mu, self.sigma], ())
-    }
-
-    fn restore(v: Vec<f64>, _: Self::T) -> Self {
-        Self::new(v[0], v[1]).unwrap()
     }
 }
 

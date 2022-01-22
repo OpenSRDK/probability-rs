@@ -84,6 +84,18 @@ impl DirichletParams {
     }
 }
 
+impl RandomVariable for DirichletParams {
+    type RestoreInfo = usize;
+
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
+        todo!()
+    }
+
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+        todo!()
+    }
+}
+
 impl<Rhs, TRhs> Mul<Rhs> for Dirichlet
 where
     Rhs: Distribution<Value = TRhs, Condition = DirichletParams>,

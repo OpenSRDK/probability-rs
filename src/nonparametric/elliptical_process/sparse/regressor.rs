@@ -6,6 +6,8 @@ use crate::{
     ExactEllipticalParams, RandomVariable,
 };
 use opensrdk_kernel_method::PositiveDefiniteKernel;
+use opensrdk_linear_algebra::pp::trf::PPTRF;
+use opensrdk_linear_algebra::SymmetricPackedMatrix;
 
 impl<K, T> GaussianProcessRegressor<K, T> for SparseEllipticalProcessParams<K, T>
 where
@@ -31,7 +33,8 @@ where
 
         let mean = self.mu[0] + &kxsu * &self.s_inv_kux_omega_y;
         let covariance = kxsxs - qxsxs + kxsu_s_inv_kuxs;
+        let cov_p = SymmetricPackedMatrix::from_mat(&covariance).unwrap();
 
-        ExactEllipticalParams::new(mean.vec(), covariance.potrf()?.0)
+        ExactEllipticalParams::new(mean.vec(), PPTRF(cov_p))
     }
 }

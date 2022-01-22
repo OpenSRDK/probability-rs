@@ -1,4 +1,4 @@
-use crate::DistributionError;
+use crate::{ChiSquaredParams, DistributionError};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::ChiSquared as RandChiSquared;
@@ -37,27 +37,6 @@ impl Distribution for ChiSquared {
         }?;
 
         Ok(rng.sample(chi_squared))
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct ChiSquaredParams {
-    k: f64,
-}
-
-impl ChiSquaredParams {
-    pub fn new(k: f64) -> Result<Self, DistributionError> {
-        if k <= 0.0 {
-            return Err(DistributionError::InvalidParameters(
-                ChiSquaredError::KMustBePositive.into(),
-            ));
-        }
-
-        Ok(Self { k })
-    }
-
-    pub fn k(&self) -> f64 {
-        self.k
     }
 }
 

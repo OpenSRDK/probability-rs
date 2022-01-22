@@ -2,6 +2,7 @@ use crate::{
     DependentJoint, Distribution, ExactEllipticalParams, IndependentJoint, RandomVariable,
 };
 use crate::{DistributionError, EllipticalParams};
+use opensrdk_linear_algebra::pp::trf::PPTRF;
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
 use rand_distr::StudentT as RandStudentT;
@@ -94,7 +95,7 @@ impl ExactMultivariateStudentTParams {
     /// # Multivariate student t
     /// `L` is needed as second argument under decomposition `Sigma = L * L^T`
     /// lsigma = sigma.potrf()?;
-    pub fn new(nu: f64, mu: Vec<f64>, lsigma: Matrix) -> Result<Self, DistributionError> {
+    pub fn new(nu: f64, mu: Vec<f64>, lsigma: PPTRF) -> Result<Self, DistributionError> {
         let elliptical = ExactEllipticalParams::new(mu, lsigma)?;
 
         Ok(Self { nu, elliptical })
@@ -104,8 +105,20 @@ impl ExactMultivariateStudentTParams {
         self.elliptical.mu()
     }
 
-    pub fn lsigma(&self) -> &Matrix {
+    pub fn lsigma(&self) -> &PPTRF {
         self.elliptical.lsigma()
+    }
+}
+
+impl RandomVariable for ExactMultivariateStudentTParams {
+    type RestoreInfo = usize;
+
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
+        todo!()
+    }
+
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+        todo!()
     }
 }
 
@@ -150,7 +163,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::{Distribution, ExactMultivariateStudentTParams, MultivariateStudentT};
-    use opensrdk_linear_algebra::*;
+    use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
     use rand::prelude::*;
     #[test]
     fn it_works() {
@@ -158,19 +171,20 @@ mod tests {
         let mut rng = StdRng::from_seed([1; 32]);
 
         let mu = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
-        let lsigma = mat!(
+        let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
            1.0,  0.0,  0.0,  0.0,  0.0,  0.0;
            2.0,  3.0,  0.0,  0.0,  0.0,  0.0;
            4.0,  5.0,  6.0,  0.0,  0.0,  0.0;
            7.0,  8.0,  9.0, 10.0,  0.0,  0.0;
           11.0, 12.0, 13.0, 14.0, 15.0,  0.0;
           16.0, 17.0, 18.0, 19.0, 20.0, 21.0
-        );
+        ))
+        .unwrap();
         println!("{:#?}", lsigma);
 
         let x = student_t
             .sample(
-                &ExactMultivariateStudentTParams::new(1.0, mu, lsigma).unwrap(),
+                &ExactMultivariateStudentTParams::new(1.0, mu, PPTRF(lsigma)).unwrap(),
                 &mut rng,
             )
             .unwrap();

@@ -1,5 +1,4 @@
 use crate::rand::SeedableRng;
-use crate::TransformVec;
 use crate::{ContinuousSamplesDistribution, Distribution, DistributionError, RandomVariable};
 use rand::rngs::StdRng;
 
@@ -7,7 +6,7 @@ use rand::rngs::StdRng;
 pub struct ParticleFilter<Y, X, DY, DX, PD>
 where
     Y: RandomVariable,
-    X: RandomVariable + PartialEq + TransformVec,
+    X: RandomVariable + PartialEq,
     DY: Distribution<Value = Y, Condition = X>,
     DX: Distribution<Value = X, Condition = X>,
     PD: Distribution<Value = X, Condition = (Vec<X>, Vec<Y>)>,
@@ -21,7 +20,7 @@ where
 impl<Y, X, DY, DX, PD> ParticleFilter<Y, X, DY, DX, PD>
 where
     Y: RandomVariable,
-    X: RandomVariable + PartialEq + TransformVec,
+    X: RandomVariable + PartialEq,
     DY: Distribution<Value = Y, Condition = X>,
     DX: Distribution<Value = X, Condition = X>,
     PD: Distribution<Value = X, Condition = (Vec<X>, Vec<Y>)>,
