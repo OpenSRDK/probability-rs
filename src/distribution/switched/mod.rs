@@ -1,5 +1,9 @@
-use crate::DistributionError;
+pub mod params;
+
+pub use params::*;
+
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{DistributionError, Event};
 use rand::prelude::*;
 use std::{
     collections::HashMap,
@@ -12,7 +16,7 @@ pub struct SwitchedDistribution<'a, D, T, U>
 where
     D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
-    U: RandomVariable,
+    U: Clone + Debug + Send + Sync,
 {
     distribution: &'a D,
     map: &'a HashMap<u32, U>,
@@ -30,10 +34,14 @@ impl<'a, D, T, U> SwitchedDistribution<'a, D, T, U>
 where
     D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
-    U: RandomVariable,
+    U: Event,
 {
     pub fn new(distribution: &'a D, map: &'a HashMap<u32, U>) -> Self {
         Self { distribution, map }
+    }
+
+    pub fn distribution(&self) -> &D {
+        &self.distribution
     }
 }
 
@@ -41,7 +49,7 @@ impl<'a, D, T, U> Distribution for SwitchedDistribution<'a, D, T, U>
 where
     D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
-    U: RandomVariable,
+    U: Event,
 {
     type Value = T;
     type Condition = SwitchedParams<U>;
@@ -79,29 +87,9 @@ where
     }
 }
 
-impl<'a, D, T, U> SwitchedDistribution<'a, D, T, U>
-where
-    D: Distribution<Value = T, Condition = U>,
-    T: RandomVariable,
-    U: RandomVariable,
-{
-    pub fn distribution(&self) -> &D {
-        &self.distribution
-    }
-}
-
-#[derive(Clone, Debug)]
-pub enum SwitchedParams<U>
-where
-    U: RandomVariable,
-{
-    Key(u32),
-    Direct(U),
-}
-
 pub trait SwitchableDistribution<U>: Distribution + Sized
 where
-    U: RandomVariable,
+    U: Event,
 {
     fn switch<'a>(
         &'a self,
@@ -113,7 +101,7 @@ impl<D, T, U> SwitchableDistribution<U> for D
 where
     D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
-    U: RandomVariable,
+    U: Event,
 {
     fn switch<'a>(
         &'a self,
@@ -127,7 +115,7 @@ impl<'a, D, T, U, Rhs, TRhs> Mul<Rhs> for SwitchedDistribution<'a, D, T, U>
 where
     D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
-    U: RandomVariable,
+    U: Event,
     Rhs: Distribution<Value = TRhs, Condition = SwitchedParams<U>>,
     TRhs: RandomVariable,
 {
@@ -142,9 +130,9 @@ impl<'a, D, T, U, Rhs, URhs> BitAnd<Rhs> for SwitchedDistribution<'a, D, T, U>
 where
     D: Distribution<Value = T, Condition = U>,
     T: RandomVariable,
-    U: RandomVariable,
+    U: Event,
     Rhs: Distribution<Value = SwitchedParams<U>, Condition = URhs>,
-    URhs: RandomVariable,
+    URhs: Event,
 {
     type Output = DependentJoint<Self, Rhs, T, SwitchedParams<U>, URhs>;
 

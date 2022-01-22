@@ -1,6 +1,6 @@
-use super::wishart::{Wishart, WishartParams};
-use crate::DistributionError;
-use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use super::wishart::Wishart;
+use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable, WishartParams};
+use crate::{DistributionError, InverseWishartParams};
 use opensrdk_linear_algebra::{matrix::ge::sy_he::po::trf::POTRF, *};
 use rand::prelude::*;
 use std::{ops::BitAnd, ops::Mul};
@@ -51,38 +51,6 @@ impl Distribution for InverseWishart {
         let x_inv = POTRF(x).potri()?;
 
         Ok(x_inv)
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct InverseWishartParams {
-    lpsi: Matrix,
-    nu: f64,
-}
-
-impl InverseWishartParams {
-    pub fn new(lpsi: Matrix, nu: f64) -> Result<Self, DistributionError> {
-        let p = lpsi.rows();
-        if p != lpsi.cols() {
-            return Err(DistributionError::InvalidParameters(
-                InverseWishartError::DimensionMismatch.into(),
-            ));
-        }
-        if nu <= p as f64 - 1.0 as f64 {
-            return Err(DistributionError::InvalidParameters(
-                InverseWishartError::NuMustBeGTEDimension.into(),
-            ));
-        }
-
-        Ok(Self { lpsi, nu })
-    }
-
-    pub fn lpsi(&self) -> &Matrix {
-        &self.lpsi
-    }
-
-    pub fn nu(&self) -> f64 {
-        self.nu
     }
 }
 

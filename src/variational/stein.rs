@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, ContinuousSamplesDistribution, Distribution,
-    DistributionError, RandomVariable, TransformVec, ValueDifferentiableDistribution,
+    DistributionError, RandomVariable, ValueDifferentiableDistribution,
 };
 use opensrdk_kernel_method::*;
 use opensrdk_linear_algebra::*;
@@ -12,7 +12,7 @@ where
     L: Distribution<Value = A, Condition = B> + ConditionDifferentiableDistribution,
     P: Distribution<Value = B, Condition = ()> + ValueDifferentiableDistribution,
     A: RandomVariable,
-    B: RandomVariable + TransformVec,
+    B: RandomVariable,
     K: PositiveDefiniteKernel<Vec<f64>> + ValueDifferentiable<Vec<f64>>,
 {
     value: &'a A,
@@ -28,7 +28,7 @@ where
     L: Distribution<Value = A, Condition = B> + ConditionDifferentiableDistribution,
     P: Distribution<Value = B, Condition = ()> + ValueDifferentiableDistribution,
     A: RandomVariable,
-    B: RandomVariable + TransformVec,
+    B: RandomVariable,
     K: PositiveDefiniteKernel<Vec<f64>> + ValueDifferentiable<Vec<f64>>,
 {
     pub fn new(

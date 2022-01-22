@@ -1,4 +1,4 @@
-use crate::{Categorical, CategoricalParams, DistributionError, TransformVec};
+use crate::{Categorical, CategoricalParams, DistributionError};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
@@ -69,7 +69,7 @@ where
 
 impl<T> DiscreteSamplesDistribution<T>
 where
-    T: RandomVariable + Eq + Hash + TransformVec,
+    T: RandomVariable + Eq + Hash,
 {
     pub fn mean(&self) -> Result<T, DistributionError> {
         let n = self.n;

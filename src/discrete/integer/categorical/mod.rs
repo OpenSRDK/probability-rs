@@ -1,3 +1,7 @@
+pub mod params;
+
+pub use params::*;
+
 use crate::*;
 use crate::{Distribution, DistributionError};
 use rand::distributions::WeightedIndex;
@@ -38,7 +42,7 @@ impl Distribution for Categorical {
         theta: &Self::Condition,
         rng: &mut dyn rand::RngCore,
     ) -> Result<Self::Value, DistributionError> {
-        let index = match WeightedIndex::new(theta.p.clone()) {
+        let index = match WeightedIndex::new(theta.p().clone()) {
             Ok(v) => Ok(v),
             Err(e) => Err(DistributionError::Others(e.into())),
         }?
@@ -49,21 +53,6 @@ impl Distribution for Categorical {
 }
 
 impl DiscreteDistribution for Categorical {}
-
-#[derive(Clone, Debug)]
-pub struct CategoricalParams {
-    p: Vec<f64>,
-}
-
-impl CategoricalParams {
-    pub fn new(p: Vec<f64>) -> Result<Self, DistributionError> {
-        Ok(Self { p })
-    }
-
-    pub fn p(&self) -> &Vec<f64> {
-        &self.p
-    }
-}
 
 impl<Rhs, TRhs> Mul<Rhs> for Categorical
 where

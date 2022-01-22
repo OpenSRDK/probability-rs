@@ -4,6 +4,10 @@ use rand::prelude::*;
 use rand_distr::Exp as RandExp;
 use std::{ops::BitAnd, ops::Mul};
 
+pub mod params;
+
+pub use params::*;
+
 /// Exponential distribution
 #[derive(Clone, Debug)]
 pub struct Exp;
@@ -37,27 +41,6 @@ impl Distribution for Exp {
         }?;
 
         Ok(rng.sample(exp))
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct ExpParams {
-    lambda: f64,
-}
-
-impl ExpParams {
-    pub fn new(lambda: f64) -> Result<Self, DistributionError> {
-        if lambda <= 0.0 {
-            return Err(DistributionError::InvalidParameters(
-                ExpError::LambdaMustBePositive.into(),
-            ));
-        }
-
-        Ok(Self { lambda })
-    }
-
-    pub fn lambda(&self) -> f64 {
-        self.lambda
     }
 }
 

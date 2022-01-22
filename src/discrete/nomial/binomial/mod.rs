@@ -1,3 +1,7 @@
+pub mod params;
+
+pub use params::*;
+
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use crate::{DiscreteDistribution, DistributionError};
 use num_integer::binomial;
@@ -46,32 +50,6 @@ impl Distribution for Binomial {
 }
 
 impl DiscreteDistribution for Binomial {}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct BinomialParams {
-    n: u64,
-    p: f64,
-}
-
-impl BinomialParams {
-    pub fn new(n: u64, p: f64) -> Result<Self, DistributionError> {
-        if p < 0.0 || 1.0 < p {
-            return Err(DistributionError::InvalidParameters(
-                BinominalError::PMustBeProbability.into(),
-            ));
-        }
-
-        Ok(Self { n, p })
-    }
-
-    pub fn n(&self) -> u64 {
-        self.n
-    }
-
-    pub fn p(&self) -> f64 {
-        self.p
-    }
-}
 
 impl<Rhs, TRhs> Mul<Rhs> for Binomial
 where

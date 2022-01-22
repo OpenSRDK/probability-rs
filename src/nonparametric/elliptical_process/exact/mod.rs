@@ -77,6 +77,22 @@ where
     }
 }
 
+impl<K, T> RandomVariable for ExactEllipticalProcessParams<K, T>
+where
+    K: PositiveDefiniteKernel<T>,
+    T: RandomVariable,
+{
+    type RestoreInfo = ();
+
+    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
+        todo!()
+    }
+
+    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
+        todo!()
+    }
+}
+
 impl<K, T> EllipticalParams for ExactEllipticalProcessParams<K, T>
 where
     K: PositiveDefiniteKernel<T>,

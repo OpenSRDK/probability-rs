@@ -1,4 +1,3 @@
-use super::TransformVec;
 use crate::{Distribution, RandomVariable};
 use rand::prelude::*;
 use rayon::prelude::*;
@@ -11,7 +10,7 @@ where
     L: Distribution<Value = A, Condition = B>,
     P: Distribution<Value = B, Condition = ()>,
     A: RandomVariable,
-    B: TransformVec,
+    B: RandomVariable,
 {
     value: &'a A,
     likelihood: &'a L,
@@ -23,7 +22,7 @@ where
     L: Distribution<Value = A, Condition = B>,
     P: Distribution<Value = B, Condition = ()>,
     A: RandomVariable,
-    B: TransformVec,
+    B: RandomVariable,
 {
     pub fn new(value: &'a A, likelihood: &'a L, prior: &'a P) -> Self {
         Self {

@@ -1,4 +1,3 @@
-use crate::mcmc::*;
 use crate::{Categorical, CategoricalParams, DistributionError};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use opensrdk_linear_algebra::*;
@@ -27,7 +26,7 @@ pub enum ContinuousSamplesError {
 
 impl<T> ContinuousSamplesDistribution<T>
 where
-    T: RandomVariable + TransformVec,
+    T: RandomVariable,
 {
     pub fn new(samples: Vec<T>) -> Self {
         Self { samples }

@@ -3,7 +3,7 @@ use crate::{
     ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, EllipticalParams};
-use opensrdk_linear_algebra::{Matrix, Vector};
+use opensrdk_linear_algebra::Vector;
 use rand::prelude::*;
 use rand_distr::StandardNormal;
 use std::marker::PhantomData;
@@ -100,6 +100,7 @@ impl ValueDifferentiableDistribution for MultivariateNormal {
         Ok(f.vec())
     }
 }
+
 #[cfg(test)]
 mod tests {
     use crate::{

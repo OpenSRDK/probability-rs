@@ -109,6 +109,18 @@ impl ExactMultivariateStudentTParams {
     }
 }
 
+impl RandomVariable for ExactMultivariateStudentTParams {
+    type RestoreInfo = usize;
+
+    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
+        todo!()
+    }
+
+    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
+        todo!()
+    }
+}
+
 impl MultivariateStudentTParams<ExactEllipticalParams> for ExactMultivariateStudentTParams {
     fn nu(&self) -> f64 {
         self.nu

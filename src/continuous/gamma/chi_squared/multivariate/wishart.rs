@@ -1,5 +1,5 @@
-use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{DistributionError, WishartParams};
 use crate::{ExactMultivariateNormalParams, MultivariateNormal};
 use opensrdk_linear_algebra::{matrix::ge::sy_he::po::trf::POTRF, *};
 use rand::prelude::*;
@@ -58,38 +58,6 @@ impl Distribution for Wishart {
             )?;
 
         Ok(w)
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct WishartParams {
-    lv: Matrix,
-    n: f64,
-}
-
-impl WishartParams {
-    pub fn new(lv: Matrix, n: f64) -> Result<Self, DistributionError> {
-        let p = lv.rows();
-        if p != lv.cols() {
-            return Err(DistributionError::InvalidParameters(
-                WishartError::DimensionMismatch.into(),
-            ));
-        }
-        if n <= p as f64 - 1.0 as f64 {
-            return Err(DistributionError::InvalidParameters(
-                WishartError::NMustBeGTEDimension.into(),
-            ));
-        }
-
-        Ok(Self { lv, n })
-    }
-
-    pub fn lv(&self) -> &Matrix {
-        &self.lv
-    }
-
-    pub fn n(&self) -> f64 {
-        self.n
     }
 }
 

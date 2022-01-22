@@ -1,4 +1,3 @@
-use crate::TransformVec;
 use crate::{
     DependentJoint, Distribution, IndependentJoint, RandomVariable, ValueDifferentiableDistribution,
 };
@@ -99,14 +98,14 @@ impl Default for NormalParams {
     }
 }
 
-impl TransformVec for NormalParams {
-    type T = ();
+impl RandomVariable for NormalParams {
+    type RestoreInfo = ();
 
-    fn transform_vec(self) -> (Vec<f64>, Self::T) {
+    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
         (vec![self.mu, self.sigma], ())
     }
 
-    fn restore(v: Vec<f64>, _: Self::T) -> Self {
+    fn restore(v: Vec<f64>, _: Self::RestoreInfo) -> Self {
         Self::new(v[0], v[1]).unwrap()
     }
 }

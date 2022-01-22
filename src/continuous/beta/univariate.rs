@@ -75,6 +75,18 @@ impl BetaParams {
     }
 }
 
+impl RandomVariable for BetaParams {
+    type RestoreInfo = ();
+
+    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
+        todo!()
+    }
+
+    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
+        todo!()
+    }
+}
+
 impl<Rhs, TRhs> Mul<Rhs> for Beta
 where
     Rhs: Distribution<Value = TRhs, Condition = BetaParams>,

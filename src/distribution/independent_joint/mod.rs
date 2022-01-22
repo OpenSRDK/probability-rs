@@ -1,6 +1,7 @@
-use crate::DistributionError;
 use crate::{DependentJoint, Distribution, RandomVariable};
+use crate::{DistributionError, Event};
 use rand::prelude::*;
+use std::fmt::Debug;
 use std::{ops::BitAnd, ops::Mul};
 
 /// p(x, y) = p(x) p(y)
@@ -11,7 +12,7 @@ where
     R: Distribution<Value = TR, Condition = U>,
     TL: RandomVariable,
     TR: RandomVariable,
-    U: RandomVariable,
+    U: Event,
 {
     lhs: L,
     rhs: R,
@@ -23,7 +24,7 @@ where
     R: Distribution<Value = TR, Condition = U>,
     TL: RandomVariable,
     TR: RandomVariable,
-    U: RandomVariable,
+    U: Event,
 {
     pub fn new(lhs: L, rhs: R) -> Self {
         Self { lhs, rhs }
@@ -36,7 +37,7 @@ where
     R: Distribution<Value = TR, Condition = U>,
     TL: RandomVariable,
     TR: RandomVariable,
-    U: RandomVariable,
+    U: Event,
 {
     type Value = (TL, TR);
     type Condition = U;
@@ -56,7 +57,7 @@ where
     R: Distribution<Value = TR, Condition = U>,
     TL: RandomVariable,
     TR: RandomVariable,
-    U: RandomVariable,
+    U: Event,
     Rhs: Distribution<Value = TRhs, Condition = U>,
     TRhs: RandomVariable,
 {
@@ -73,7 +74,7 @@ where
     R: Distribution<Value = TR, Condition = U>,
     TL: RandomVariable,
     TR: RandomVariable,
-    U: RandomVariable,
+    U: Event,
     Rhs: Distribution<Value = U, Condition = URhs>,
     URhs: RandomVariable,
 {

@@ -1,6 +1,6 @@
 use crate::{
     DependentJoint, Distribution, ExactEllipticalParams, IndependentJoint, MultivariateStudentT,
-    MultivariateStudentTParams, RandomVariable,
+    MultivariateStudentTWrapper, RandomVariable,
 };
 use crate::{DistributionError, EllipticalParams};
 use rand::prelude::*;
@@ -53,38 +53,6 @@ where
         MultivariateStudentT::new().sample(&studentt_params, rng)
     }
 }
-
-#[derive(Clone, Debug, PartialEq)]
-struct MultivariateStudentTWrapper<'a, T>
-where
-    T: EllipticalParams,
-{
-    elliptical: &'a T,
-}
-
-impl<'a, T> MultivariateStudentTWrapper<'a, T>
-where
-    T: EllipticalParams,
-{
-    fn new(elliptical: &'a T) -> Self {
-        Self { elliptical }
-    }
-}
-
-impl<'a, T> MultivariateStudentTParams<T> for MultivariateStudentTWrapper<'a, T>
-where
-    T: EllipticalParams,
-{
-    fn nu(&self) -> f64 {
-        1.0
-    }
-
-    fn elliptical(&self) -> &T {
-        self.elliptical
-    }
-}
-
-pub type ExactMultivariateCauchyParams = ExactEllipticalParams;
 
 impl<T, Rhs, TRhs> Mul<Rhs> for MultivariateCauchy<T>
 where
