@@ -5,11 +5,11 @@ use crate::{
     nonparametric::{kernel_matrix, regressor::GaussianProcessRegressor},
     ExactEllipticalParams, RandomVariable,
 };
-use opensrdk_kernel_method::Kernel;
+use opensrdk_kernel_method::PositiveDefiniteKernel;
 
 impl<K, T> GaussianProcessRegressor<K, T> for SparseEllipticalProcessParams<K, T>
 where
-    K: Kernel<T>,
+    K: PositiveDefiniteKernel<T>,
     T: RandomVariable,
 {
     fn gp_predict_multivariate(

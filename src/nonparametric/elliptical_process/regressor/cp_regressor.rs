@@ -2,11 +2,11 @@ use super::utils::ref_to_slice;
 use crate::nonparametric::GaussianProcessRegressor;
 use crate::{DistributionError, ExactMultivariateStudentTParams, StudentTParams};
 use crate::{MultivariateStudentTParams, RandomVariable};
-use opensrdk_kernel_method::Kernel;
+use opensrdk_kernel_method::PositiveDefiniteKernel;
 
 pub trait CauchyProcessRegressor<K, T>: GaussianProcessRegressor<K, T>
 where
-    K: Kernel<T>,
+    K: PositiveDefiniteKernel<T>,
     T: RandomVariable,
 {
     fn cp_predict(&self, xs: &T) -> Result<StudentTParams, DistributionError> {
@@ -27,7 +27,7 @@ where
 
 impl<K, T, GPR> CauchyProcessRegressor<K, T> for GPR
 where
-    K: Kernel<T>,
+    K: PositiveDefiniteKernel<T>,
     T: RandomVariable,
     GPR: GaussianProcessRegressor<K, T>,
 {

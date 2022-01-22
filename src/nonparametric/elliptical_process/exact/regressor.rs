@@ -4,11 +4,11 @@ use crate::{
     ExactEllipticalParams, RandomVariable,
 };
 use crate::{DistributionError, EllipticalParams};
-use opensrdk_kernel_method::Kernel;
+use opensrdk_kernel_method::*;
 
 impl<K, T> GaussianProcessRegressor<K, T> for ExactEllipticalProcessParams<K, T>
 where
-    K: Kernel<T>,
+    K: PositiveDefiniteKernel<T>,
     T: RandomVariable,
 {
     fn gp_predict_multivariate(

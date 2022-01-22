@@ -20,7 +20,7 @@ const K: usize = 100;
 #[derive(Clone, Debug)]
 pub struct KissLoveEllipticalProcessParams<K, T>
 where
-    K: Kernel<Vec<f64>>,
+    K: PositiveDefiniteKernel<Vec<f64>>,
     T: RandomVariable + Convolutable,
 {
     base: BaseEllipticalProcessParams<Convolutional<K>, T>,
@@ -36,7 +36,7 @@ where
 
 impl<K, T> KissLoveEllipticalProcessParams<K, T>
 where
-    K: Kernel<Vec<f64>>,
+    K: PositiveDefiniteKernel<Vec<f64>>,
     T: RandomVariable + Convolutable,
 {
     fn new(
@@ -230,7 +230,7 @@ where
 
 impl<K, T> BaseEllipticalProcessParams<Convolutional<K>, T>
 where
-    K: Kernel<Vec<f64>>,
+    K: PositiveDefiniteKernel<Vec<f64>>,
     T: RandomVariable + Convolutable,
 {
     /// Lanczos Variance Estimate Kernel Interpolation for Scalable Structured Gaussian Process
@@ -249,7 +249,7 @@ where
 
 impl<K, T> EllipticalParams for KissLoveEllipticalProcessParams<K, T>
 where
-    K: Kernel<Vec<f64>>,
+    K: PositiveDefiniteKernel<Vec<f64>>,
     T: RandomVariable + Convolutable,
 {
     fn mu(&self) -> &Vec<f64> {
@@ -285,7 +285,7 @@ where
 
 impl<K, T> EllipticalProcessParams<Convolutional<K>, T> for KissLoveEllipticalProcessParams<K, T>
 where
-    K: Kernel<Vec<f64>>,
+    K: PositiveDefiniteKernel<Vec<f64>>,
     T: RandomVariable + Convolutable,
 {
     fn mahalanobis_squared(&self) -> f64 {

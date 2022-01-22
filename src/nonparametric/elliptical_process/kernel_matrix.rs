@@ -3,7 +3,7 @@ use opensrdk_kernel_method::*;
 use rayon::prelude::*;
 
 pub fn kernel_matrix<T>(
-    kernel: &impl Kernel<T>,
+    kernel: &impl PositiveDefiniteKernel<T>,
     params: &[f64],
     x: &[T],
     x_prime: &[T],
