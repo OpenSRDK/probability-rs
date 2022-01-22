@@ -1,83 +1,120 @@
+use opensrdk_linear_algebra::{pp::trf::PPTRF, Matrix, SymmetricPackedMatrix};
 use std::fmt::Debug;
 
-use opensrdk_linear_algebra::Matrix;
+use crate::DistributionError;
 
 pub trait RandomVariable: Clone + Debug + Send + Sync {
     type RestoreInfo: Eq;
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo);
-    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self;
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo);
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError>;
 }
 
 impl RandomVariable for () {
     type RestoreInfo = ();
 
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
         (vec![], ())
     }
 
-    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
-        ()
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+        if v.len() != 0 {
+            return Err(DistributionError::InvalidRestoreVector);
+        }
+        Ok(())
     }
 }
 
 impl RandomVariable for f64 {
     type RestoreInfo = ();
 
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
-        (vec![self], ())
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
+        (vec![*self], ())
     }
 
-    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
-        v[0]
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+        if v.len() != 1 {
+            return Err(DistributionError::InvalidRestoreVector);
+        }
+        Ok(v[0])
     }
 }
 
 impl RandomVariable for u64 {
-    type RestoreInfo = ();
+    type RestoreInfo = u64;
 
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
-        todo!()
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
+        (vec![], *self)
     }
 
-    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
-        todo!()
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+        if v.len() != 0 {
+            return Err(DistributionError::InvalidRestoreVector);
+        }
+        Ok(info)
     }
 }
 
 impl RandomVariable for usize {
-    type RestoreInfo = ();
+    type RestoreInfo = usize;
 
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
-        todo!()
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
+        (vec![], *self)
     }
 
-    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
-        todo!()
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+        if v.len() != 0 {
+            return Err(DistributionError::InvalidRestoreVector);
+        }
+        Ok(info)
     }
 }
 
 impl RandomVariable for bool {
-    type RestoreInfo = ();
+    type RestoreInfo = bool;
 
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
-        todo!()
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
+        (vec![], *self)
     }
 
-    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
-        todo!()
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+        if v.len() != 0 {
+            return Err(DistributionError::InvalidRestoreVector);
+        }
+        Ok(info)
     }
 }
 
 impl RandomVariable for Matrix {
     type RestoreInfo = usize;
 
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
         let rows = self.rows();
-        (self.vec(), rows)
+        (self.clone().vec(), rows)
     }
 
-    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
-        Matrix::from(info, v).unwrap()
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+        if v.len() != info * info {
+            return Err(DistributionError::InvalidRestoreVector);
+        }
+        Ok(Matrix::from(info, v.to_vec()).unwrap())
+    }
+}
+
+impl RandomVariable for PPTRF {
+    type RestoreInfo = usize;
+
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
+        let n = self.0.dim();
+        (self.0.elems().to_vec(), n)
+    }
+
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+        if v.len() != info + (info + 1) / 2 {
+            return Err(DistributionError::InvalidRestoreVector);
+        }
+        Ok(PPTRF(
+            SymmetricPackedMatrix::from(info, v.to_vec()).unwrap(),
+        ))
     }
 }
 
@@ -88,7 +125,7 @@ where
 {
     type RestoreInfo = (usize, T::RestoreInfo, U::RestoreInfo);
 
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
         let t = self.0.transform_vec();
         let u = self.1.transform_vec();
         let len = t.0.len();
@@ -96,12 +133,12 @@ where
         ([t.0, u.0].concat(), (len, t.1, u.1))
     }
 
-    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
         let (len, t_1, u_1) = info;
-        let t_0 = v[0..len].to_vec();
-        let u_0 = v[len..].to_vec();
+        let t_0 = &v[0..len];
+        let u_0 = &v[len..];
 
-        (T::restore(t_0, t_1), U::restore(u_0, u_1))
+        Ok((T::restore(t_0, t_1)?, U::restore(u_0, u_1)?))
     }
 }
 
@@ -111,11 +148,11 @@ where
 {
     type RestoreInfo = Vec<T::RestoreInfo>;
 
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
         todo!()
     }
 
-    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
         todo!()
     }
 }

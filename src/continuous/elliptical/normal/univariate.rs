@@ -1,5 +1,6 @@
 use crate::{
-    DependentJoint, Distribution, IndependentJoint, RandomVariable, ValueDifferentiableDistribution,
+    DependentJoint, Distribution, IndependentJoint, NormalParams, RandomVariable,
+    ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, NormalError};
 use rand::prelude::*;
@@ -42,32 +43,6 @@ impl Distribution for Normal {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct NormalParams {
-    mu: f64,
-    sigma: f64,
-}
-
-impl NormalParams {
-    pub fn new(mu: f64, sigma: f64) -> Result<Self, DistributionError> {
-        if sigma <= 0.0 {
-            return Err(DistributionError::InvalidParameters(
-                NormalError::SigmaMustBePositive.into(),
-            ));
-        }
-
-        Ok(Self { mu, sigma })
-    }
-
-    pub fn mu(&self) -> f64 {
-        self.mu
-    }
-
-    pub fn sigma(&self) -> f64 {
-        self.sigma
-    }
-}
-
 impl<Rhs, TRhs> Mul<Rhs> for Normal
 where
     Rhs: Distribution<Value = TRhs, Condition = NormalParams>,
@@ -89,24 +64,6 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
-    }
-}
-
-impl Default for NormalParams {
-    fn default() -> Self {
-        Self::new(0.0, 1.0).unwrap()
-    }
-}
-
-impl RandomVariable for NormalParams {
-    type RestoreInfo = ();
-
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
-        (vec![self.mu, self.sigma], ())
-    }
-
-    fn restore(v: Vec<f64>, _: Self::RestoreInfo) -> Self {
-        Self::new(v[0], v[1]).unwrap()
     }
 }
 

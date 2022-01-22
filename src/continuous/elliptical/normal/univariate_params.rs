@@ -1,17 +1,16 @@
-use crate::DistributionError;
-use crate::{CauchyError, RandomVariable};
+use crate::{DistributionError, NormalError, RandomVariable};
 
-#[derive(Clone, Debug)]
-pub struct CauchyParams {
+#[derive(Clone, Debug, PartialEq)]
+pub struct NormalParams {
     mu: f64,
     sigma: f64,
 }
 
-impl CauchyParams {
+impl NormalParams {
     pub fn new(mu: f64, sigma: f64) -> Result<Self, DistributionError> {
         if sigma <= 0.0 {
             return Err(DistributionError::InvalidParameters(
-                CauchyError::SigmaMustBePositive.into(),
+                NormalError::SigmaMustBePositive.into(),
             ));
         }
 
@@ -27,7 +26,13 @@ impl CauchyParams {
     }
 }
 
-impl RandomVariable for CauchyParams {
+impl Default for NormalParams {
+    fn default() -> Self {
+        Self::new(0.0, 1.0).unwrap()
+    }
+}
+
+impl RandomVariable for NormalParams {
     type RestoreInfo = ();
 
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {

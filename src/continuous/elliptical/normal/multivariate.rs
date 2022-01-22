@@ -61,8 +61,6 @@ where
     }
 }
 
-pub type ExactMultivariateNormalParams = ExactEllipticalParams;
-
 impl<T, Rhs, TRhs> Mul<Rhs> for MultivariateNormal<T>
 where
     T: EllipticalParams,
@@ -95,7 +93,8 @@ impl ValueDifferentiableDistribution for MultivariateNormal {
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, DistributionError> {
-        let sigma = theta.lsigma() * theta.lsigma().t();
+        let lsigma_mat = theta.lsigma().0.to_mat();
+        let sigma = &lsigma_mat * lsigma_mat.t();
         let f = -1.0 * x.clone().row_mat() * sigma;
         Ok(f.vec())
     }
@@ -107,7 +106,7 @@ mod tests {
         Distribution, ExactMultivariateNormalParams, MultivariateNormal,
         ValueDifferentiableDistribution,
     };
-    use opensrdk_linear_algebra::*;
+    use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
     use rand::prelude::*;
     #[test]
     fn it_works() {
@@ -115,19 +114,20 @@ mod tests {
         let mut rng = StdRng::from_seed([1; 32]);
 
         let mu = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
-        let lsigma = mat!(
+        let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
            1.0,  0.0,  0.0,  0.0,  0.0,  0.0;
            2.0,  3.0,  0.0,  0.0,  0.0,  0.0;
            4.0,  5.0,  6.0,  0.0,  0.0,  0.0;
            7.0,  8.0,  9.0, 10.0,  0.0,  0.0;
           11.0, 12.0, 13.0, 14.0, 15.0,  0.0;
           16.0, 17.0, 18.0, 19.0, 20.0, 21.0
-        );
+        ))
+        .unwrap();
         println!("{:#?}", lsigma);
 
         let x = normal
             .sample(
-                &ExactMultivariateNormalParams::new(mu, lsigma).unwrap(),
+                &ExactMultivariateNormalParams::new(mu, PPTRF(lsigma)).unwrap(),
                 &mut rng,
             )
             .unwrap();
@@ -141,14 +141,18 @@ mod tests {
         let mut rng = StdRng::from_seed([1; 32]);
 
         let mu = vec![0.0, 1.0];
-        let lsigma = mat!(
+        let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
            1.0,  0.0;
            2.0,  1.0
-        );
+        ))
+        .unwrap();
 
         let x = vec![0.0, 1.0];
 
-        let f = normal.ln_diff_value(&x, &ExactMultivariateNormalParams::new(mu, lsigma).unwrap());
+        let f = normal.ln_diff_value(
+            &x,
+            &ExactMultivariateNormalParams::new(mu, PPTRF(lsigma)).unwrap(),
+        );
         println!("{:#?}", f);
     }
 }

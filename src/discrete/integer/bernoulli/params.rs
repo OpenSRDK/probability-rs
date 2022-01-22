@@ -24,11 +24,14 @@ impl BernoulliParams {
 impl RandomVariable for BernoulliParams {
     type RestoreInfo = ();
 
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
-        todo!()
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
+        (vec![self.p], ())
     }
 
-    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
-        todo!()
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+        if v.len() != 1 {
+            return Err(DistributionError::InvalidRestoreVector);
+        }
+        BernoulliParams::new(v[0])
     }
 }

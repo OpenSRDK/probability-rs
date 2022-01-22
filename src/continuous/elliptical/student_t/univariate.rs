@@ -93,11 +93,14 @@ where
 impl RandomVariable for StudentTParams {
     type RestoreInfo = ();
 
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
         (vec![self.nu, self.mu, self.sigma], ())
     }
-    fn restore(v: Vec<f64>, _: Self::RestoreInfo) -> Self {
-        Self::new(v[0], v[1], v[2]).unwrap()
+    fn restore(v: &[f64], _: Self::RestoreInfo) -> Result<Self, DistributionError> {
+        if v.len() != 3 {
+            return Err(DistributionError::InvalidRestoreVector);
+        }
+        Self::new(v[0], v[1], v[2])
     }
 }
 

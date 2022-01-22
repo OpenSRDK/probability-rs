@@ -59,7 +59,7 @@ where
             sum = sum + v.col_mat();
         }
 
-        Ok(T::restore(sum.vec(), info))
+        T::restore(sum.elems(), info)
     }
 }
 

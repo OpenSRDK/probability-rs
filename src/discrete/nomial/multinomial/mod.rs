@@ -23,7 +23,7 @@ pub enum MultinominalError {
 
 impl Distribution for Multinominal {
     type Value = u64;
-    type Condition = MultinominalParams;
+    type Condition = MultinomialParams;
 
     fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let n = theta.n();
@@ -53,10 +53,10 @@ impl DiscreteDistribution for Multinominal {}
 
 impl<Rhs, TRhs> Mul<Rhs> for Multinominal
 where
-    Rhs: Distribution<Value = TRhs, Condition = MultinominalParams>,
+    Rhs: Distribution<Value = TRhs, Condition = MultinomialParams>,
     TRhs: RandomVariable,
 {
-    type Output = IndependentJoint<Self, Rhs, u64, TRhs, MultinominalParams>;
+    type Output = IndependentJoint<Self, Rhs, u64, TRhs, MultinomialParams>;
 
     fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
@@ -65,10 +65,10 @@ where
 
 impl<Rhs, URhs> BitAnd<Rhs> for Multinominal
 where
-    Rhs: Distribution<Value = MultinominalParams, Condition = URhs>,
+    Rhs: Distribution<Value = MultinomialParams, Condition = URhs>,
     URhs: RandomVariable,
 {
-    type Output = DependentJoint<Self, Rhs, u64, MultinominalParams, URhs>;
+    type Output = DependentJoint<Self, Rhs, u64, MultinomialParams, URhs>;
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)

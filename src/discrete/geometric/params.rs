@@ -1,4 +1,4 @@
-use crate::{GeometricError, RandomVariable};
+use crate::{DistributionError, GeometricError, RandomVariable};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct GeometricParams {
@@ -6,9 +6,11 @@ pub struct GeometricParams {
 }
 
 impl GeometricParams {
-    pub fn new(p: f64) -> Result<Self, GeometricError> {
+    pub fn new(p: f64) -> Result<Self, DistributionError> {
         if p < 0.0 || 1.0 < p {
-            return Err(GeometricError::PMustBeProbability.into());
+            return Err(DistributionError::InvalidParameters(
+                GeometricError::PMustBeProbability.into(),
+            ));
         }
 
         Ok(Self { p })
@@ -22,11 +24,14 @@ impl GeometricParams {
 impl RandomVariable for GeometricParams {
     type RestoreInfo = ();
 
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
-        todo!()
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
+        (vec![self.p], ())
     }
 
-    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
-        todo!()
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+        if v.len() != 1 {
+            return Err(DistributionError::InvalidRestoreVector);
+        }
+        GeometricParams::new(v[0])
     }
 }

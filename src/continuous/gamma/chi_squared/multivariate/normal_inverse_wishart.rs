@@ -3,6 +3,8 @@ use crate::{
     InverseWishartParams, MultivariateNormal, RandomVariable,
 };
 use crate::{DistributionError, NormalInverseWishartParams};
+use opensrdk_linear_algebra::pp::trf::PPTRF;
+use opensrdk_linear_algebra::{SymmetricPackedMatrix, Vector};
 use rand::prelude::*;
 use std::{ops::BitAnd, ops::Mul};
 
@@ -31,6 +33,7 @@ impl Distribution for NormalInverseWishart {
         let lambda = theta.lambda();
         let lpsi = theta.lpsi().clone();
         let nu = theta.nu();
+        let dim = mu0.len();
 
         let mu = x.mu();
         let lsigma = x.lsigma();
@@ -40,7 +43,16 @@ impl Distribution for NormalInverseWishart {
 
         Ok(n.fk(
             mu,
-            &ExactMultivariateNormalParams::new(mu0, (1.0 / lambda) * lsigma.clone())?,
+            &ExactMultivariateNormalParams::new(
+                mu0,
+                PPTRF(
+                    SymmetricPackedMatrix::from(
+                        dim,
+                        ((1.0 / lambda).sqrt() * lsigma.0.elems().to_vec().col_mat()).vec(),
+                    )
+                    .unwrap(),
+                ),
+            )?,
         )? * w_inv.fk(lsigma, &InverseWishartParams::new(lpsi, nu)?)?)
     }
 
@@ -53,13 +65,23 @@ impl Distribution for NormalInverseWishart {
         let lambda = theta.lambda();
         let lpsi = theta.lpsi().clone();
         let nu = theta.nu();
+        let dim = mu0.len();
 
-        let p = MultivariateNormal::new();
+        let n = MultivariateNormal::new();
         let winv = InverseWishart;
 
         let lsigma = winv.sample(&InverseWishartParams::new(lpsi, nu)?, rng)?;
-        let mu = p.sample(
-            &ExactMultivariateNormalParams::new(mu0, (1.0 / lambda).sqrt() * lsigma.clone())?,
+        let mu = n.sample(
+            &ExactMultivariateNormalParams::new(
+                mu0,
+                PPTRF(
+                    SymmetricPackedMatrix::from(
+                        dim,
+                        ((1.0 / lambda).sqrt() * lsigma.0.elems().to_vec().col_mat()).vec(),
+                    )
+                    .unwrap(),
+                ),
+            )?,
             rng,
         )?;
 

@@ -1,7 +1,3 @@
-pub mod params;
-
-pub use params::*;
-
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use crate::{DistributionError, Event};
 use rand::prelude::*;
@@ -10,6 +6,10 @@ use std::{
     fmt::Debug,
     ops::{BitAnd, Mul},
 };
+
+pub mod params;
+
+pub use params::*;
 
 #[derive(Clone, Debug)]
 pub struct SwitchedDistribution<'a, D, T, U>

@@ -27,13 +27,16 @@ impl BinomialParams {
 }
 
 impl RandomVariable for BinomialParams {
-    type RestoreInfo = ();
+    type RestoreInfo = u64;
 
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
-        todo!()
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
+        (vec![self.p], self.n)
     }
 
-    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
-        todo!()
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+        if v.len() != 1 {
+            return Err(DistributionError::InvalidRestoreVector);
+        }
+        BinomialParams::new(info, v[1])
     }
 }

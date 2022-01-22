@@ -1,7 +1,7 @@
 use super::wishart::Wishart;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable, WishartParams};
 use crate::{DistributionError, InverseWishartParams};
-use opensrdk_linear_algebra::{matrix::ge::sy_he::po::trf::POTRF, *};
+use opensrdk_linear_algebra::pp::trf::PPTRF;
 use rand::prelude::*;
 use std::{ops::BitAnd, ops::Mul};
 
@@ -20,18 +20,19 @@ pub enum InverseWishartError {
 }
 
 impl Distribution for InverseWishart {
-    type Value = Matrix;
+    type Value = PPTRF;
     type Condition = InverseWishartParams;
 
     /// x must be cholesky decomposed
     fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
-        let lpsi = theta.lpsi();
+        let lpsi = theta.lpsi().0.to_mat();
         let nu = theta.nu();
 
-        let p = x.rows() as f64;
+        let p = x.0.dim() as f64;
+        let lx = x.0.to_mat();
 
-        Ok(x.trdet().powf(-(nu + p + 1.0) / 2.0)
-            * (-0.5 * POTRF(x.clone()).potrs(lpsi * lpsi.t())?.tr()).exp())
+        Ok(lx.trdet().powf(-(nu + p + 1.0) / 2.0)
+            * (-0.5 * x.clone().pptrs(&lpsi * lpsi.t())?.tr()).exp())
     }
 
     /// output is cholesky decomposed
@@ -43,14 +44,14 @@ impl Distribution for InverseWishart {
         let lpsi = theta.lpsi();
         let nu = theta.nu();
 
-        let lpsi_inv = POTRF(lpsi.clone()).potri()?;
+        let lpsi_inv = lpsi.clone().pptri()?;
         let w = Wishart;
-        let w_params = WishartParams::new(lpsi_inv, nu)?;
+        let w_params = WishartParams::new(PPTRF(lpsi_inv), nu)?;
 
         let x = w.sample(&w_params, rng)?;
-        let x_inv = POTRF(x).potri()?;
+        let x_inv = x.pptri()?;
 
-        Ok(x_inv)
+        Ok(x_inv.pptrf().unwrap())
     }
 }
 
@@ -59,7 +60,7 @@ where
     Rhs: Distribution<Value = TRhs, Condition = InverseWishartParams>,
     TRhs: RandomVariable,
 {
-    type Output = IndependentJoint<Self, Rhs, Matrix, TRhs, InverseWishartParams>;
+    type Output = IndependentJoint<Self, Rhs, PPTRF, TRhs, InverseWishartParams>;
 
     fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
@@ -71,7 +72,7 @@ where
     Rhs: Distribution<Value = InverseWishartParams, Condition = URhs>,
     URhs: RandomVariable,
 {
-    type Output = DependentJoint<Self, Rhs, Matrix, InverseWishartParams, URhs>;
+    type Output = DependentJoint<Self, Rhs, PPTRF, InverseWishartParams, URhs>;
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)

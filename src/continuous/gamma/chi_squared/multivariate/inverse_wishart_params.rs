@@ -1,22 +1,18 @@
-use opensrdk_linear_algebra::Matrix;
+use opensrdk_linear_algebra::pp::trf::PPTRF;
 
 use crate::{DistributionError, InverseWishartError, RandomVariable};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct InverseWishartParams {
-    lpsi: Matrix,
+    lpsi: PPTRF,
     nu: f64,
 }
 
 impl InverseWishartParams {
-    pub fn new(lpsi: Matrix, nu: f64) -> Result<Self, DistributionError> {
-        let p = lpsi.rows();
-        if p != lpsi.cols() {
-            return Err(DistributionError::InvalidParameters(
-                InverseWishartError::DimensionMismatch.into(),
-            ));
-        }
-        if nu <= p as f64 - 1.0 as f64 {
+    pub fn new(lpsi: PPTRF, nu: f64) -> Result<Self, DistributionError> {
+        let p = lpsi.0.dim();
+
+        if nu <= p as f64 - 1.0 {
             return Err(DistributionError::InvalidParameters(
                 InverseWishartError::NuMustBeGTEDimension.into(),
             ));
@@ -25,7 +21,7 @@ impl InverseWishartParams {
         Ok(Self { lpsi, nu })
     }
 
-    pub fn lpsi(&self) -> &Matrix {
+    pub fn lpsi(&self) -> &PPTRF {
         &self.lpsi
     }
 
@@ -37,11 +33,11 @@ impl InverseWishartParams {
 impl RandomVariable for InverseWishartParams {
     type RestoreInfo = usize;
 
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
         todo!()
     }
 
-    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
         todo!()
     }
 }

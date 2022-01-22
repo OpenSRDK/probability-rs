@@ -83,7 +83,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::{Distribution, ExactMultivariateCauchyParams, MultivariateCauchy};
-    use opensrdk_linear_algebra::*;
+    use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
     use rand::prelude::*;
     #[test]
     fn it_works() {
@@ -91,19 +91,20 @@ mod tests {
         let mut rng = StdRng::from_seed([1; 32]);
 
         let mu = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
-        let lsigma = mat!(
+        let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
            1.0,  0.0,  0.0,  0.0,  0.0,  0.0;
            2.0,  3.0,  0.0,  0.0,  0.0,  0.0;
            4.0,  5.0,  6.0,  0.0,  0.0,  0.0;
            7.0,  8.0,  9.0, 10.0,  0.0,  0.0;
           11.0, 12.0, 13.0, 14.0, 15.0,  0.0;
           16.0, 17.0, 18.0, 19.0, 20.0, 21.0
-        );
+        ))
+        .unwrap();
         println!("{:#?}", lsigma);
 
         let x = cauchy
             .sample(
-                &ExactMultivariateCauchyParams::new(mu, lsigma).unwrap(),
+                &ExactMultivariateCauchyParams::new(mu, PPTRF(lsigma)).unwrap(),
                 &mut rng,
             )
             .unwrap();

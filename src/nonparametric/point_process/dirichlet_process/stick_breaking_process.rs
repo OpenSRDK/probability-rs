@@ -57,11 +57,11 @@ impl StickBreakingProcessParams {
 impl RandomVariable for StickBreakingProcessParams {
     type RestoreInfo = ();
 
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
         todo!()
     }
 
-    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
         todo!()
     }
 }

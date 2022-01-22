@@ -1,11 +1,11 @@
 use crate::{DistributionError, NormalInverseWishartError, RandomVariable};
-use opensrdk_linear_algebra::Matrix;
+use opensrdk_linear_algebra::pp::trf::PPTRF;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct NormalInverseWishartParams {
     mu0: Vec<f64>,
     lambda: f64,
-    lpsi: Matrix,
+    lpsi: PPTRF,
     nu: f64,
 }
 
@@ -13,11 +13,11 @@ impl NormalInverseWishartParams {
     pub fn new(
         mu0: Vec<f64>,
         lambda: f64,
-        lpsi: Matrix,
+        lpsi: PPTRF,
         nu: f64,
     ) -> Result<Self, DistributionError> {
         let n = mu0.len();
-        if n != lpsi.rows() || n != lpsi.cols() {
+        if n != lpsi.0.dim() {
             return Err(DistributionError::InvalidParameters(
                 NormalInverseWishartError::DimensionMismatch.into(),
             ));
@@ -49,7 +49,7 @@ impl NormalInverseWishartParams {
         self.lambda
     }
 
-    pub fn lpsi(&self) -> &Matrix {
+    pub fn lpsi(&self) -> &PPTRF {
         &self.lpsi
     }
 
@@ -61,11 +61,11 @@ impl NormalInverseWishartParams {
 impl RandomVariable for NormalInverseWishartParams {
     type RestoreInfo = usize;
 
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
         todo!()
     }
 
-    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
         todo!()
     }
 }

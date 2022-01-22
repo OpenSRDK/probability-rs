@@ -1,4 +1,4 @@
-use crate::{PoissonError, RandomVariable};
+use crate::{DistributionError, PoissonError, RandomVariable};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct PoissonParams {
@@ -6,9 +6,11 @@ pub struct PoissonParams {
 }
 
 impl PoissonParams {
-    pub fn new(lambda: f64) -> Result<Self, PoissonError> {
+    pub fn new(lambda: f64) -> Result<Self, DistributionError> {
         if lambda <= 0.0 {
-            return Err(PoissonError::LambdaMustBePositive.into());
+            return Err(DistributionError::InvalidParameters(
+                PoissonError::LambdaMustBePositive.into(),
+            ));
         }
 
         Ok(Self { lambda })
@@ -22,11 +24,14 @@ impl PoissonParams {
 impl RandomVariable for PoissonParams {
     type RestoreInfo = ();
 
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
-        todo!()
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
+        (vec![self.lambda], ())
     }
 
-    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
-        todo!()
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+        if v.len() != 1 {
+            return Err(DistributionError::InvalidRestoreVector);
+        }
+        PoissonParams::new(v[0])
     }
 }

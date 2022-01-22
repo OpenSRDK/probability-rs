@@ -1,7 +1,8 @@
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use crate::{DistributionError, WishartParams};
 use crate::{ExactMultivariateNormalParams, MultivariateNormal};
-use opensrdk_linear_algebra::{matrix::ge::sy_he::po::trf::POTRF, *};
+use opensrdk_linear_algebra::pp::trf::PPTRF;
+use opensrdk_linear_algebra::*;
 use rand::prelude::*;
 use std::{ops::BitAnd, ops::Mul};
 
@@ -18,7 +19,7 @@ pub enum WishartError {
 }
 
 impl Distribution for Wishart {
-    type Value = Matrix;
+    type Value = PPTRF;
     type Condition = WishartParams;
 
     /// x must be cholesky decomposed
@@ -26,10 +27,10 @@ impl Distribution for Wishart {
         let lv = theta.lv();
         let n = theta.n();
 
-        let p = x.rows() as f64;
+        let p = x.0.dim() as f64;
+        let lx = x.0.to_mat();
 
-        Ok(x.trdet().powf((n + p + 1.0) / 2.0)
-            * (-0.5 * POTRF(lv.clone()).potrs(x * x.t())?.tr()).exp())
+        Ok(lx.trdet().powf(n + p + 1.0) * (-0.5 * lv.clone().pptrs(&lx * lx.t())?.tr()).exp())
     }
 
     /// output is cholesky decomposed
@@ -41,7 +42,7 @@ impl Distribution for Wishart {
         let lv = theta.lv();
         let n = theta.n() as usize;
 
-        let p = lv.rows();
+        let p = lv.0.dim();
 
         let normal = MultivariateNormal::new();
         let normal_params = ExactMultivariateNormalParams::new(vec![0.0; p], lv.clone())?;
@@ -57,7 +58,10 @@ impl Distribution for Wishart {
                 },
             )?;
 
-        Ok(w)
+        Ok(SymmetricPackedMatrix::from_mat(&w)
+            .unwrap()
+            .pptrf()
+            .unwrap())
     }
 }
 
@@ -66,7 +70,7 @@ where
     Rhs: Distribution<Value = TRhs, Condition = WishartParams>,
     TRhs: RandomVariable,
 {
-    type Output = IndependentJoint<Self, Rhs, Matrix, TRhs, WishartParams>;
+    type Output = IndependentJoint<Self, Rhs, PPTRF, TRhs, WishartParams>;
 
     fn mul(self, rhs: Rhs) -> Self::Output {
         IndependentJoint::new(self, rhs)
@@ -78,7 +82,7 @@ where
     Rhs: Distribution<Value = WishartParams, Condition = URhs>,
     URhs: RandomVariable,
 {
-    type Output = DependentJoint<Self, Rhs, Matrix, WishartParams, URhs>;
+    type Output = DependentJoint<Self, Rhs, PPTRF, WishartParams, URhs>;
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)

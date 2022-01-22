@@ -3,6 +3,8 @@ use crate::nonparametric::GaussianProcessRegressor;
 use crate::{DistributionError, ExactMultivariateStudentTParams, StudentTParams};
 use crate::{MultivariateStudentTParams, RandomVariable};
 use opensrdk_kernel_method::PositiveDefiniteKernel;
+use opensrdk_linear_algebra::pp::trf::PPTRF;
+use opensrdk_linear_algebra::{SymmetricPackedMatrix, Vector};
 
 pub trait CauchyProcessRegressor<K, T>: GaussianProcessRegressor<K, T>
 where
@@ -15,7 +17,7 @@ where
         Ok(StudentTParams::new(
             fs.nu(),
             fs.mu()[0],
-            fs.lsigma()[(0, 0)],
+            fs.lsigma().0.elems()[0],
         )?)
     }
 
@@ -40,10 +42,12 @@ where
 
         let (mu, lsigma) = self.gp_predict_multivariate(xs)?.eject();
 
-        ExactMultivariateStudentTParams::new(
-            (1 + n) as f64,
-            mu,
-            ((1.0 + mahalanobis_squared) / (1 + n) as f64).sqrt() * lsigma,
-        )
+        let coefficient = ((1.0 + mahalanobis_squared) / (1 + n) as f64).sqrt();
+        let new_lsigma = PPTRF(
+            SymmetricPackedMatrix::from(n, (coefficient * lsigma.0.eject().col_mat()).vec())
+                .unwrap(),
+        );
+
+        ExactMultivariateStudentTParams::new((1 + n) as f64, mu, new_lsigma)
     }
 }

@@ -43,6 +43,8 @@ pub enum DistributionError {
     MatrixError(MatrixError),
     #[error("Kernel error")]
     KernelError(KernelError),
+    #[error("Invalid restore vector")]
+    InvalidRestoreVector,
     #[error("Others")]
     Others(Box<dyn Error + Send + Sync>),
 }

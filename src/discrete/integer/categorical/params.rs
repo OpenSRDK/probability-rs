@@ -16,13 +16,16 @@ impl CategoricalParams {
 }
 
 impl RandomVariable for CategoricalParams {
-    type RestoreInfo = ();
+    type RestoreInfo = usize;
 
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
-        todo!()
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
+        (self.p.clone(), self.p.len())
     }
 
-    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
-        todo!()
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+        if v.len() != info {
+            return Err(DistributionError::InvalidRestoreVector);
+        }
+        CategoricalParams::new(v.to_vec())
     }
 }

@@ -1,21 +1,16 @@
 use crate::{DistributionError, RandomVariable, WishartError};
-use opensrdk_linear_algebra::Matrix;
+use opensrdk_linear_algebra::pp::trf::PPTRF;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct WishartParams {
-    lv: Matrix,
+    lv: PPTRF,
     n: f64,
 }
 
 impl WishartParams {
-    pub fn new(lv: Matrix, n: f64) -> Result<Self, DistributionError> {
-        let p = lv.rows();
-        if p != lv.cols() {
-            return Err(DistributionError::InvalidParameters(
-                WishartError::DimensionMismatch.into(),
-            ));
-        }
-        if n <= p as f64 - 1.0 as f64 {
+    pub fn new(lv: PPTRF, n: f64) -> Result<Self, DistributionError> {
+        let p = lv.0.dim();
+        if n <= p as f64 - 1.0 {
             return Err(DistributionError::InvalidParameters(
                 WishartError::NMustBeGTEDimension.into(),
             ));
@@ -24,7 +19,7 @@ impl WishartParams {
         Ok(Self { lv, n })
     }
 
-    pub fn lv(&self) -> &Matrix {
+    pub fn lv(&self) -> &PPTRF {
         &self.lv
     }
 
@@ -36,11 +31,11 @@ impl WishartParams {
 impl RandomVariable for WishartParams {
     type RestoreInfo = ();
 
-    fn transform_vec(self) -> (Vec<f64>, Self::RestoreInfo) {
+    fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
         todo!()
     }
 
-    fn restore(v: Vec<f64>, info: Self::RestoreInfo) -> Self {
+    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
         todo!()
     }
 }
