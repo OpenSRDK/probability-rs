@@ -55,14 +55,14 @@ where
         let phi = (0..n)
             .into_par_iter()
             .map(|j| &self.samples.samples()[j])
-            .map(|xj| {
+            .map(|theta_j| {
                 let kernel = self
                     .kernel
-                    .value(self.kernel_params, &theta_vec, &xj)
+                    .value(self.kernel_params, &theta_vec, &theta_j)
                     .unwrap();
                 let kernel_diff = self
                     .kernel
-                    .ln_diff_value(self.kernel_params, &theta_vec, &xj)
+                    .ln_diff_value(self.kernel_params, &theta_vec, &theta_j)
                     .unwrap()
                     .0
                     .col_mat();
@@ -74,7 +74,10 @@ where
                     + self.prior.ln_diff_value(&theta, &()).unwrap().col_mat();
                 kernel * p_diff + kernel_diff
             })
-            .reduce(|| mat!(0.0), |sum, x| sum + x);
+            .reduce(
+                || vec![0.0; theta_vec.len()].col_mat(),
+                |sum, theta| sum + theta,
+            );
 
         Ok(phi.vec())
     }
