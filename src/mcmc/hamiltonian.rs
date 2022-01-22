@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, ContinuousUniform, Distribution, DistributionError,
-    RandomVariable, TransformVec, ValueDifferentiableDistribution,
+    RandomVariable, ValueDifferentiableDistribution,
 };
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
@@ -30,7 +30,7 @@ impl<'a, L, P, A, B> HamiltonianSampler<'a, L, P, A, B>
 where
     L: Distribution<Value = A, Condition = B> + ConditionDifferentiableDistribution,
     P: Distribution<Value = B, Condition = ()> + ValueDifferentiableDistribution,
-    A: RandomVariable + TransformVec,
+    A: RandomVariable,
     B: RandomVariable,
 {
     pub fn new(value: &'a A, likelihood: &'a L, prior: &'a P) -> Self {
