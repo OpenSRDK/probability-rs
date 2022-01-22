@@ -13,7 +13,7 @@ where
     P: Distribution<Value = B, Condition = ()> + ValueDifferentiableDistribution,
     A: RandomVariable,
     B: RandomVariable,
-    K: PositiveDefiniteKernel<Vec<f64>> + ValueDifferentiable<Vec<f64>>,
+    K: PositiveDefiniteKernel<Vec<f64>> + ValueDifferentiableKernel<Vec<f64>>,
 {
     value: &'a A,
     likelihood: &'a L,
@@ -29,7 +29,7 @@ where
     P: Distribution<Value = B, Condition = ()> + ValueDifferentiableDistribution,
     A: RandomVariable,
     B: RandomVariable,
-    K: PositiveDefiniteKernel<Vec<f64>> + ValueDifferentiable<Vec<f64>>,
+    K: PositiveDefiniteKernel<Vec<f64>> + ValueDifferentiableKernel<Vec<f64>>,
 {
     pub fn new(
         value: &'a A,
@@ -64,7 +64,6 @@ where
                     .kernel
                     .ln_diff_value(self.kernel_params, &theta_vec, &theta_j)
                     .unwrap()
-                    .0
                     .col_mat();
                 let p_diff = self
                     .likelihood

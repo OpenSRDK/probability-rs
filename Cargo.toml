@@ -18,7 +18,7 @@ thiserror = "1.0.28"
 rayon = "1.5.1"
 num-integer = "0.1"
 opensrdk-linear-algebra = "0.8.4"
-opensrdk-kernel-method = "0.1.7"
+opensrdk-kernel-method = "0.1.8"
 
 [dev-dependencies]
 blas-src = { version = "0.8", features = ["intel-mkl"] } 
