@@ -32,7 +32,7 @@ impl RandomVariable for WishartParams {
     type RestoreInfo = ();
 
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
-        todo!()
+        (vec![self.lv, self.n], ())
     }
 
     fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {

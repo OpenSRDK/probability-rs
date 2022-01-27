@@ -35,10 +35,10 @@ impl RandomVariable for FisherFParams {
     type RestoreInfo = ();
 
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
-        todo!()
+        (vec![self.m, self.n], ())
     }
 
     fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
-        todo!()
+        Self::new(v[0], v[1])
     }
 }

@@ -25,10 +25,10 @@ impl RandomVariable for ChiSquaredParams {
     type RestoreInfo = ();
 
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
-        todo!()
+        (vec![self.k], ())
     }
 
     fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
-        todo!()
+        Self::new(v[0])
     }
 }

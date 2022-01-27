@@ -35,10 +35,10 @@ impl RandomVariable for GammaParams {
     type RestoreInfo = ();
 
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
-        todo!()
+        (vec![self.shape, self.scale], ())
     }
 
     fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
-        todo!()
+        Self::new(v[0], v[1])
     }
 }

@@ -79,11 +79,11 @@ impl RandomVariable for BetaParams {
     type RestoreInfo = ();
 
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
-        todo!()
+        (vec![self.alpha, self.beta], ())
     }
 
     fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
-        todo!()
+        Self::new(v[0], v[1])
     }
 }
 
