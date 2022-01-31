@@ -1,5 +1,5 @@
 use crate::{DistributionError, RandomVariable, WishartError};
-use opensrdk_linear_algebra::pp::trf::PPTRF;
+use opensrdk_linear_algebra::{pp::trf::PPTRF, SymmetricPackedMatrix};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct WishartParams {
@@ -29,13 +29,20 @@ impl WishartParams {
 }
 
 impl RandomVariable for WishartParams {
-    type RestoreInfo = ();
+    type RestoreInfo = usize;
 
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
-        (vec![self.lv, self.n], ())
+        let p = self.lv.0.dim();
+        ([self.lv.0.elems(), &[self.n]].concat(), p)
     }
 
     fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
-        todo!()
+        if v.len() != info + 1 {
+            return Err(DistributionError::InvalidRestoreVector);
+        }
+        let p = info;
+        let n = v[v.len() - 1];
+        let lv = PPTRF(SymmetricPackedMatrix::from(p, v[0..p].to_vec()).unwrap());
+        Self::new(lv, n)
     }
 }

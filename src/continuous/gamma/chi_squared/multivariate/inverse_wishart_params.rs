@@ -43,7 +43,7 @@ impl RandomVariable for InverseWishartParams {
             return Err(DistributionError::InvalidRestoreVector);
         }
         let p = info;
-        let nu = v[info + 1];
+        let nu = v[v.len() - 1];
         let lpsi = PPTRF(SymmetricPackedMatrix::from(p, v[0..p].to_vec()).unwrap());
         Self::new(lpsi, nu)
     }
