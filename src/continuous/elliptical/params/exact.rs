@@ -49,8 +49,7 @@ impl RandomVariable for ExactEllipticalParams {
         }
         let n = info;
         let mu = v[0..n].to_vec();
-        let lsigma =
-            PPTRF(SymmetricPackedMatrix::from(n, v[n..n + n * (n + 1) / 2].to_vec()).unwrap());
+        let lsigma = PPTRF(SymmetricPackedMatrix::from(n, v[n..v.len()].to_vec()).unwrap());
         Self::new(mu, lsigma)
     }
 }
