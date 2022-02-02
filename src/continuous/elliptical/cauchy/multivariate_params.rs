@@ -25,11 +25,17 @@ where
     type RestoreInfo = usize;
 
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
-        todo!()
+        let mut mu = self.elliptical().mu().to_vec();
+        mu.push(self.nu());
+        let n = mu.clone().len();
+        (mu, n)
     }
 
     fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
-        todo!()
+        let n = info;
+        let mu = v[0..n].to_vec();
+        let nu = v[n];
+        Self::new(elliptical)
     }
 }
 
