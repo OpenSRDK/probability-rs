@@ -97,7 +97,7 @@ impl RandomVariable for DirichletParams {
         if n < 2 {
             return Err(DistributionError::InvalidRestoreVector);
         }
-        let alpha = v[0..n].to_vec();
+        let alpha = v.to_vec();
         Self::new(alpha)
     }
 }
