@@ -1,5 +1,5 @@
 use crate::{DistributionError, NormalInverseWishartError, RandomVariable};
-use opensrdk_linear_algebra::pp::trf::PPTRF;
+use opensrdk_linear_algebra::{pp::trf::PPTRF, SymmetricPackedMatrix};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct NormalInverseWishartParams {
@@ -62,10 +62,25 @@ impl RandomVariable for NormalInverseWishartParams {
     type RestoreInfo = usize;
 
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
-        todo!()
+        let n = self.mu0().len();
+        (
+            [
+                self.mu0(),
+                self.lpsi().0.elems(),
+                &[self.lambda],
+                &[self.nu],
+            ]
+            .concat(),
+            n,
+        )
     }
 
     fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
-        todo!()
+        let n = info;
+        let mu0 = v[0..n].to_vec();
+        let lpsi = PPTRF(SymmetricPackedMatrix::from(n, v[n..v.len() - 2].to_vec()).unwrap());
+        let lambda = v[v.len() - 2];
+        let nu = v[v.len() - 1];
+        Self::new(mu0, lambda, lpsi, nu)
     }
 }
