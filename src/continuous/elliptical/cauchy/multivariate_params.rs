@@ -22,20 +22,15 @@ impl<'a, T> RandomVariable for MultivariateStudentTWrapper<'a, T>
 where
     T: EllipticalParams,
 {
-    type RestoreInfo = usize;
+    type RestoreInfo = T::RestoreInfo;
 
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
-        let mut mu = self.elliptical().mu().to_vec();
-        mu.push(self.nu());
-        let n = mu.clone().len();
-        (mu, n)
+        let t = self.transform_vec();
+        (t.0, t.1)
     }
 
     fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
-        let n = info;
-        let mu = v[0..n].to_vec();
-        let nu = v[n];
-        Self::new(elliptical)
+        Ok(MultivariateStudentTWrapper::restore(v, info)?)
     }
 }
 
