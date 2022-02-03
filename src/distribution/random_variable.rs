@@ -149,10 +149,17 @@ where
     type RestoreInfo = Vec<T::RestoreInfo>;
 
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
-        todo!()
+        let t = self.transform_vec();
+        (t.0, t.1)
     }
 
     fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
-        todo!()
+        if v.len() != 0 {
+            return Err(DistributionError::InvalidRestoreVector);
+        }
+        let t_0 = v.to_vec();
+        let t_1 = info;
+        // t_1の1要素を2乗してt_0を分解
+        let t = T::restore(&t_0[0..t_1[0]], t_1[0])?;
     }
 }
