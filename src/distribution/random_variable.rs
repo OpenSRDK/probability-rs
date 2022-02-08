@@ -146,20 +146,27 @@ impl<T> RandomVariable for Vec<T>
 where
     T: RandomVariable,
 {
-    type RestoreInfo = Vec<T::RestoreInfo>;
+    type RestoreInfo = (Vec<usize>, Vec<T::RestoreInfo>);
 
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
-        let t = self.transform_vec();
-        (t.0, t.1)
+        let len = self.len();
+        let mut t_0_vec = vec![];
+        let mut len_vec = vec![];
+        let mut t_1_vec = vec![];
+        for i in 0..len {
+            t_0_vec = [t_0_vec, self[i].transform_vec().0].concat();
+            len_vec.push(self[i].transform_vec().0.len());
+            t_1_vec.push(self[i].transform_vec().1);
+        }
+        (t_0_vec, (len_vec, t_1_vec))
     }
 
     fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
         if v.len() != 0 {
             return Err(DistributionError::InvalidRestoreVector);
         }
-        let t_0 = v.to_vec();
-        let t_1 = info;
         // t_1の1要素を2乗してt_0を分解
-        let t = T::restore(&t_0[0..t_1[0]], t_1[0])?;
+        let n = info.len();
+        let t = T::restore(v, info[0]);
     }
 }
