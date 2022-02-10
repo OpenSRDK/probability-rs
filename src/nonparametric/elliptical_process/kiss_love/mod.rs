@@ -258,7 +258,7 @@ where
         todo!()
     }
 
-    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+    fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         todo!()
     }
 }

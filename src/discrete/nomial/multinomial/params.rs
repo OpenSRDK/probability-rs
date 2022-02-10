@@ -33,10 +33,10 @@ impl RandomVariable for MultinomialParams {
         (vec![self.p], self.n)
     }
 
-    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+    fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         if v.len() != 1 {
             return Err(DistributionError::InvalidRestoreVector);
         }
-        MultinomialParams::new(info, v[1])
+        MultinomialParams::new(*info, v[1])
     }
 }

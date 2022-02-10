@@ -36,11 +36,11 @@ impl RandomVariable for WishartParams {
         ([self.lv.0.elems(), &[self.n]].concat(), p)
     }
 
-    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+    fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         if v.len() != info + 1 {
             return Err(DistributionError::InvalidRestoreVector);
         }
-        let p = info;
+        let p = *info;
         let n = v[v.len() - 1];
         let lv = PPTRF(SymmetricPackedMatrix::from(p, v[0..p].to_vec()).unwrap());
         Self::new(lv, n)

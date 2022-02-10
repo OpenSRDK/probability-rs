@@ -75,8 +75,8 @@ impl RandomVariable for NormalInverseWishartParams {
         )
     }
 
-    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
-        let n = info;
+    fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
+        let n = *info;
         let mu0 = v[0..n].to_vec();
         let lpsi = PPTRF(SymmetricPackedMatrix::from(n, v[n..v.len() - 2].to_vec()).unwrap());
         let lambda = v[v.len() - 2];

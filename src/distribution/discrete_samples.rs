@@ -91,7 +91,7 @@ where
             sum = sum + (*vec[i].1 as f64) * v.col_mat();
         }
 
-        T::restore(sum.elems(), info)
+        T::restore(sum.elems(), &info)
     }
 }
 

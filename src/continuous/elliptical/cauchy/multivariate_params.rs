@@ -1,4 +1,4 @@
-use crate::{DistributionError, EllipticalParams};
+use crate::{elliptical, DistributionError, EllipticalParams};
 use crate::{ExactEllipticalParams, MultivariateStudentTParams, RandomVariable};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -25,12 +25,11 @@ where
     type RestoreInfo = T::RestoreInfo;
 
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
-        let t = self.transform_vec();
-        (t.0, t.1)
+        todo!()
     }
 
-    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
-        Ok(MultivariateStudentTWrapper::restore(v, info)?)
+    fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
+        todo!()
     }
 }
 

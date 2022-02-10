@@ -22,8 +22,8 @@ impl RandomVariable for CategoricalParams {
         (self.p.clone(), self.p.len())
     }
 
-    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
-        if v.len() != info {
+    fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
+        if v.len() != *info {
             return Err(DistributionError::InvalidRestoreVector);
         }
         CategoricalParams::new(v.to_vec())

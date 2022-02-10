@@ -119,8 +119,8 @@ impl RandomVariable for ExactMultivariateStudentTParams {
         ([self.mu(), self.lsigma().0.elems(), &[self.nu]].concat(), p)
     }
 
-    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
-        let p = info;
+    fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
+        let p = *info;
         let mu = v[0..p].to_vec();
         let lsigma = PPTRF(SymmetricPackedMatrix::from(p, v[p..v.len() - 1].to_vec()).unwrap());
         let nu = v[v.len() - 1];

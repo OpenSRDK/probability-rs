@@ -28,7 +28,7 @@ impl RandomVariable for ExpParams {
         (vec![self.lambda], ())
     }
 
-    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
+    fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         Self::new(v[0])
     }
 }
