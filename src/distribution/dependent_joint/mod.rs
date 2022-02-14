@@ -13,8 +13,8 @@ where
     UL: Event,
     UR: Event,
 {
-    lhs: L,
-    rhs: R,
+    pub lhs: L,
+    pub rhs: R,
 }
 
 impl<L, R, T, UL, UR> DependentJoint<L, R, T, UL, UR>
