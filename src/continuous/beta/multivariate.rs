@@ -88,11 +88,17 @@ impl RandomVariable for DirichletParams {
     type RestoreInfo = usize;
 
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
-        todo!()
+        let n = self.alpha.len();
+        (self.clone().alpha, n)
     }
 
-    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
-        todo!()
+    fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
+        let n = *info;
+        if n < 2 {
+            return Err(DistributionError::InvalidRestoreVector);
+        }
+        let alpha = v.to_vec();
+        Self::new(alpha)
     }
 }
 

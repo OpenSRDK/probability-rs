@@ -1,4 +1,4 @@
-use opensrdk_linear_algebra::pp::trf::PPTRF;
+use opensrdk_linear_algebra::{pp::trf::PPTRF, SymmetricPackedMatrix};
 
 use crate::{DistributionError, InverseWishartError, RandomVariable};
 
@@ -34,10 +34,17 @@ impl RandomVariable for InverseWishartParams {
     type RestoreInfo = usize;
 
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
-        todo!()
+        let p = self.lpsi.0.dim();
+        ([self.lpsi.0.elems(), &[self.nu]].concat(), p)
     }
 
-    fn restore(v: &[f64], info: Self::RestoreInfo) -> Result<Self, DistributionError> {
-        todo!()
+    fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
+        if v.len() != info + 1 {
+            return Err(DistributionError::InvalidRestoreVector);
+        }
+        let p = *info;
+        let nu = v[v.len() - 1];
+        let lpsi = PPTRF(SymmetricPackedMatrix::from(p, v[0..p].to_vec()).unwrap());
+        Self::new(lpsi, nu)
     }
 }

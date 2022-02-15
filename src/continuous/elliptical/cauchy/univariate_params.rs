@@ -34,7 +34,7 @@ impl RandomVariable for CauchyParams {
         (vec![self.mu, self.sigma], ())
     }
 
-    fn restore(v: &[f64], _: Self::RestoreInfo) -> Result<Self, DistributionError> {
+    fn restore(v: &[f64], _: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         Self::new(v[0], v[1])
     }
 }

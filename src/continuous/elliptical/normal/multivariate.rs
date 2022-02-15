@@ -138,7 +138,7 @@ mod tests {
     #[test]
     fn it_works2() {
         let normal = MultivariateNormal::new();
-        let mut rng = StdRng::from_seed([1; 32]);
+        let mut _rng = StdRng::from_seed([1; 32]);
 
         let mu = vec![0.0, 1.0];
         let lsigma = SymmetricPackedMatrix::from_mat(&mat!(

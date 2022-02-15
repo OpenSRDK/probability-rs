@@ -59,7 +59,7 @@ where
             let mut buf = b.transform_vec();
             buf.0 = Self::step(buf.0, theta, &nu.0);
 
-            b = B::restore(&buf.0, buf.1)?;
+            b = B::restore(&buf.0, &buf.1)?;
             if rho < self.likelihood.fk(self.value, &b)? {
                 break;
             }
