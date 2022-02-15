@@ -1,5 +1,7 @@
+use opensrdk_linear_algebra::Vector;
+
 use crate::{
-    ConditionDifferentiableDistribution, DependentJoint, Distribution, RandomVariable,
+    value, ConditionDifferentiableDistribution, DependentJoint, Distribution, RandomVariable,
     ValueDifferentiableDistribution,
 };
 
@@ -18,13 +20,15 @@ where
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, crate::DistributionError> {
-        todo!()
+        let diff_l = &self.lhs.ln_diff_value(&x.0, &x.1)?;
+        let diff = (diff_l.clone().col_mat() * &self.rhs.fk(&x.1, theta)?).vec();
+        Ok(diff)
     }
 }
 
 impl<L, R, T, UL, UR> ConditionDifferentiableDistribution for DependentJoint<L, R, T, UL, UR>
 where
-    L: Distribution<Value = T, Condition = UL>,
+    L: Distribution<Value = T, Condition = UL> + ConditionDifferentiableDistribution,
     R: Distribution<Value = UL, Condition = UR> + ConditionDifferentiableDistribution,
     T: RandomVariable,
     UL: RandomVariable,
@@ -35,6 +39,8 @@ where
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, crate::DistributionError> {
-        todo!()
+        let diff_r = &self.rhs.ln_diff_condition(&x.1, &theta)?;
+        let diff = (&self.lhs.fk(&x.0, &x.1)? * diff_r.clone().col_mat()).vec();
+        Ok(diff)
     }
 }
