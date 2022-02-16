@@ -1,6 +1,6 @@
 use crate::{
-    DependentJoint, Distribution, IndependentJoint, NormalParams, RandomVariable,
-    ValueDifferentiableDistribution,
+    ConditionDifferentiableDistribution, DependentJoint, Distribution, IndependentJoint,
+    NormalParams, RandomVariable, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, NormalError};
 use rand::prelude::*;
@@ -75,6 +75,16 @@ impl ValueDifferentiableDistribution for Normal {
     ) -> Result<Vec<f64>, DistributionError> {
         let f = (theta.mu() - x) / theta.sigma().powi(2);
         Ok(vec![f; 1])
+    }
+}
+
+impl ConditionDifferentiableDistribution for Normal {
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        todo!()
     }
 }
 

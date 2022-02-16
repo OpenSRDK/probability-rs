@@ -1,6 +1,6 @@
 use crate::{
-    DependentJoint, Distribution, ExactEllipticalParams, IndependentJoint, RandomVariable,
-    ValueDifferentiableDistribution,
+    ConditionDifferentiableDistribution, DependentJoint, Distribution, ExactEllipticalParams,
+    IndependentJoint, RandomVariable, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, EllipticalParams};
 use opensrdk_linear_algebra::Vector;
@@ -97,6 +97,16 @@ impl ValueDifferentiableDistribution for MultivariateNormal {
         let sigma = &lsigma_mat * lsigma_mat.t();
         let f = -1.0 * x.clone().row_mat() * sigma;
         Ok(f.vec())
+    }
+}
+
+impl ConditionDifferentiableDistribution for MultivariateNormal {
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        todo!()
     }
 }
 
