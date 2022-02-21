@@ -1,9 +1,9 @@
 use crate::{
-    DependentJoint, Distribution, ExactEllipticalParams, IndependentJoint, RandomVariable,
-    ValueDifferentiableDistribution,
+    ConditionDifferentiableDistribution, DependentJoint, Distribution, ExactEllipticalParams,
+    IndependentJoint, RandomVariable, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, EllipticalParams};
-use opensrdk_linear_algebra::Vector;
+use opensrdk_linear_algebra::{DiagonalMatrix, Vector};
 use rand::prelude::*;
 use rand_distr::StandardNormal;
 use std::marker::PhantomData;
@@ -96,6 +96,24 @@ impl ValueDifferentiableDistribution for MultivariateNormal {
         let lsigma_mat = theta.lsigma().0.to_mat();
         let sigma = &lsigma_mat * lsigma_mat.t();
         let f = -1.0 * x.clone().row_mat() * sigma;
+        Ok(f.vec())
+    }
+}
+
+impl ConditionDifferentiableDistribution for MultivariateNormal {
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let lsigma_mat = theta.lsigma().0.to_mat();
+        let sigma_inv = DiagonalMatrix::new((&lsigma_mat * lsigma_mat.t()).vec())
+            .powf(-1.0)
+            .mat();
+        let mu_mat = theta.x_mu(x)?.col_mat();
+        let x_mat = x.clone().col_mat();
+        let fk = self.fk(x, theta).unwrap();
+        let f = (x_mat - mu_mat) * sigma_inv * fk;
         Ok(f.vec())
     }
 }
