@@ -84,7 +84,12 @@ impl ConditionDifferentiableDistribution for Normal {
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, DistributionError> {
-        todo!()
+        let sigma = theta.sigma();
+        let mu = theta.mu();
+        let fk = self.fk(x, theta).unwrap();
+        let f_mu = (x - mu) / sigma.powi(2) * fk;
+        let f_sigma = -(x - mu).powi(2) / sigma.powi(4) * fk;
+        Ok(vec![f_mu, f_sigma])
     }
 }
 
