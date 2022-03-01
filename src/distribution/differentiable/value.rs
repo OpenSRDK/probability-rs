@@ -1,4 +1,4 @@
-use crate::{Distribution, DistributionError};
+use crate::{Distribution, DistributionError, RandomVariable};
 
 pub trait ValueDifferentiableDistribution: Distribution {
     fn ln_diff_value(
