@@ -129,7 +129,7 @@ impl<D, T, U> ConditionDifferentiableDistribution for IndependentValueArrayJoint
 where
     D: Distribution<Value = T, Condition = U> + ConditionDifferentiableDistribution,
     T: RandomVariable,
-    U: RandomVariable,
+    U: RandomVariable + ExactSizeIterator,
 {
     fn ln_diff_condition(
         &self,
@@ -145,7 +145,7 @@ where
                     .unwrap()
                     .col_mat()
             })
-            .fold(mat!(0.0, 0.0, 0.0), |a, b| a + b)
+            .fold(vec![0.0; theta.len()].col_mat(), |a, b| a + b)
             .vec();
         Ok(f)
     }
