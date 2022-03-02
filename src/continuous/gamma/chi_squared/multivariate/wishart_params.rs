@@ -36,6 +36,10 @@ impl RandomVariable for WishartParams {
         ([self.lv.0.elems(), &[self.n]].concat(), p)
     }
 
+    fn len(&self) -> usize {
+        todo!()
+    }
+
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         if v.len() != info + 1 {
             return Err(DistributionError::InvalidRestoreVector);

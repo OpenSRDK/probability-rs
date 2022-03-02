@@ -75,6 +75,10 @@ impl RandomVariable for NormalInverseWishartParams {
         )
     }
 
+    fn len(&self) -> usize {
+        todo!()
+    }
+
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         let n = *info;
         let mu0 = v[0..n].to_vec();

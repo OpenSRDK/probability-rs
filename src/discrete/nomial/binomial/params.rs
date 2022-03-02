@@ -33,6 +33,10 @@ impl RandomVariable for BinomialParams {
         (vec![self.p], self.n)
     }
 
+    fn len(&self) -> usize {
+        todo!()
+    }
+
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         if v.len() != 1 {
             return Err(DistributionError::InvalidRestoreVector);

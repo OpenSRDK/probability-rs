@@ -43,6 +43,10 @@ impl RandomVariable for ExactEllipticalParams {
         ([self.mu(), self.lsigma.0.elems()].concat(), n)
     }
 
+    fn len(&self) -> usize {
+        todo!()
+    }
+
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         if v.len() != info + info * (info + 1) / 2 {
             return Err(DistributionError::InvalidRestoreVector);

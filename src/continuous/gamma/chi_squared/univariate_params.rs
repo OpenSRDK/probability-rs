@@ -28,6 +28,10 @@ impl RandomVariable for ChiSquaredParams {
         (vec![self.k], ())
     }
 
+    fn len(&self) -> usize {
+        todo!()
+    }
+
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         Self::new(v[0])
     }

@@ -119,6 +119,10 @@ impl RandomVariable for ExactMultivariateStudentTParams {
         ([self.mu(), self.lsigma().0.elems(), &[self.nu]].concat(), p)
     }
 
+    fn len(&self) -> usize {
+        todo!()
+    }
+
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         let p = *info;
         let mu = v[0..p].to_vec();

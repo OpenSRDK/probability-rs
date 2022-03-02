@@ -96,6 +96,11 @@ impl RandomVariable for StudentTParams {
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
         (vec![self.nu, self.mu, self.sigma], ())
     }
+
+    fn len(&self) -> usize {
+        todo!()
+    }
+
     fn restore(v: &[f64], _: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         if v.len() != 3 {
             return Err(DistributionError::InvalidRestoreVector);

@@ -38,6 +38,10 @@ impl RandomVariable for InverseWishartParams {
         ([self.lpsi.0.elems(), &[self.nu]].concat(), p)
     }
 
+    fn len(&self) -> usize {
+        todo!()
+    }
+
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         if v.len() != info + 1 {
             return Err(DistributionError::InvalidRestoreVector);
