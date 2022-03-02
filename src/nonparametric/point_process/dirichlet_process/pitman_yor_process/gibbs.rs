@@ -79,6 +79,10 @@ impl RandomVariable for PitmanYorGibbsSample {
         todo!()
     }
 
+    fn len(&self) -> usize {
+        todo!()
+    }
+
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         todo!()
     }
@@ -118,6 +122,10 @@ where
     type RestoreInfo = ();
 
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
+        todo!()
+    }
+
+    fn len(&self) -> usize {
         todo!()
     }
 

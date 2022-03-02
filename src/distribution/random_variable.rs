@@ -6,6 +6,7 @@ use crate::DistributionError;
 pub trait RandomVariable: Clone + Debug + Send + Sync {
     type RestoreInfo: Eq;
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo);
+    fn len(&self) -> usize;
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError>;
 }
 
@@ -14,6 +15,10 @@ impl RandomVariable for () {
 
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
         (vec![], ())
+    }
+
+    fn len(&self) -> usize {
+        0
     }
 
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
@@ -31,6 +36,10 @@ impl RandomVariable for f64 {
         (vec![*self], ())
     }
 
+    fn len(&self) -> usize {
+        1
+    }
+
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         if v.len() != 1 {
             return Err(DistributionError::InvalidRestoreVector);
@@ -44,6 +53,10 @@ impl RandomVariable for u64 {
 
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
         (vec![], *self)
+    }
+
+    fn len(&self) -> usize {
+        1
     }
 
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
@@ -61,6 +74,10 @@ impl RandomVariable for usize {
         (vec![], *self)
     }
 
+    fn len(&self) -> usize {
+        1
+    }
+
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         if v.len() != 0 {
             return Err(DistributionError::InvalidRestoreVector);
@@ -74,6 +91,10 @@ impl RandomVariable for bool {
 
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
         (vec![], *self)
+    }
+
+    fn len(&self) -> usize {
+        1
     }
 
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
@@ -92,6 +113,10 @@ impl RandomVariable for Matrix {
         (self.clone().vec(), rows)
     }
 
+    fn len(&self) -> usize {
+        self.cols() * self.rows()
+    }
+
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         if v.len() != info * info {
             return Err(DistributionError::InvalidRestoreVector);
@@ -106,6 +131,10 @@ impl RandomVariable for PPTRF {
     fn transform_vec(&self) -> (Vec<f64>, Self::RestoreInfo) {
         let n = self.0.dim();
         (self.0.elems().to_vec(), n)
+    }
+
+    fn len(&self) -> usize {
+        self.0.elems().len()
     }
 
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
@@ -131,6 +160,10 @@ where
         let len = t.0.len();
 
         ([t.0, u.0].concat(), (len, t.1, u.1))
+    }
+
+    fn len(&self) -> usize {
+        self.len()
     }
 
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
@@ -159,6 +192,10 @@ where
             t_1_vec.push(self[i].transform_vec().1);
         }
         (t_0_vec, (len_vec, t_1_vec))
+    }
+
+    fn len(&self) -> usize {
+        self.len()
     }
 
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {

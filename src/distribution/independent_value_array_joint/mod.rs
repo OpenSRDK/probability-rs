@@ -3,7 +3,7 @@ use crate::{
     RandomVariable,
 };
 use crate::{DistributionError, ValueDifferentiableDistribution};
-use opensrdk_linear_algebra::{mat, Vector};
+use opensrdk_linear_algebra::Vector;
 use rand::prelude::*;
 use std::iter::Iterator;
 use std::{ops::BitAnd, ops::Mul};
@@ -129,7 +129,7 @@ impl<D, T, U> ConditionDifferentiableDistribution for IndependentValueArrayJoint
 where
     D: Distribution<Value = T, Condition = U> + ConditionDifferentiableDistribution,
     T: RandomVariable,
-    U: RandomVariable + ExactSizeIterator,
+    U: RandomVariable,
 {
     fn ln_diff_condition(
         &self,
