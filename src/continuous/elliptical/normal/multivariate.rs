@@ -93,10 +93,12 @@ impl ValueDifferentiableDistribution for MultivariateNormal {
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, DistributionError> {
-        let lsigma_mat = theta.lsigma().0.to_mat();
-        let sigma = &lsigma_mat * lsigma_mat.t();
-        let f = -1.0 * x.clone().row_mat() * sigma;
-        Ok(f.vec())
+        let sigma_inv = theta.lsigma().clone().pptri()?.to_mat();
+        let mu_mat = theta.x_mu(x)?.col_mat();
+        let x_mat = x.clone().col_mat();
+        let mu_x_mat = mu_mat - x_mat;
+        let f_x = &mu_x_mat * &sigma_inv;
+        Ok(f_x.vec())
     }
 }
 
@@ -115,8 +117,7 @@ impl ConditionDifferentiableDistribution for MultivariateNormal {
         let mu_mat = theta.x_mu(x)?.col_mat();
         let x_mat = x.clone().col_mat();
         let x_mu_mat = x_mat - mu_mat;
-        let mu_x_mat = -x_mu_mat.clone();
-        let f_mu = &mu_x_mat * &sigma_inv;
+        let f_mu = &x_mu_mat * &sigma_inv;
 
         let lsigma_t_inv = theta.lsigma().clone().pptri()?.to_mat().t();
         let x_mu_t = x_mu_mat.t();
