@@ -1,6 +1,6 @@
 use crate::{
-    ConditionDifferentiableDistribution, DependentJoint, Distribution, DistributionError, Event,
-    IndependentJoint, RandomVariable, ValueDifferentiableDistribution,
+    ConditionDifferentiableDistribution, ConditionedDistribution, DependentJoint, Distribution,
+    DistributionError, Event, IndependentJoint, RandomVariable, ValueDifferentiableDistribution,
 };
 use rand::prelude::*;
 use std::{
@@ -13,7 +13,7 @@ use std::{
 
 pub struct ConditionDifferentiableConditionedDistribution<C, D, T, U1, U2, F, G>
 where
-    C: ConditionedDistribution<D, T, U1, U2, F>,
+    C: ConditionedDistribution<Distribution = D, Condition = F>,
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: Event,
@@ -26,13 +26,15 @@ where
     phantom: PhantomData<U2>,
 }
 
-impl<D, T, U1, U2, F> ConditionedDistribution<D, T, U1, U2, F>
+impl<C, D, T, U1, U2, F, G> ConditionDifferentiableConditionedDistribution<C, D, T, U1, U2, F, G>
 where
+    C: ConditionedDistribution<Distribution = D, Condition = F>,
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: Event,
     U2: Event,
     F: Fn(&U2) -> Result<U1, DistributionError> + Clone + Send + Sync,
+    G: Fn(&U2) -> Result<U1, DistributionError>,
 {
     pub fn new(conditioned_distribution: C, condition_diff: G) -> Self {
         Self {

@@ -1,3 +1,7 @@
+pub mod condition_differentiable;
+
+pub use condition_differentiable::*;
+
 use crate::{
     DependentJoint, Distribution, DistributionError, Event, IndependentJoint, RandomVariable,
     ValueDifferentiableDistribution,
