@@ -1,5 +1,6 @@
 use crate::{
     DependentJoint, Distribution, DistributionError, Event, IndependentJoint, RandomVariable,
+    ValueDifferentiableDistribution,
 };
 use rand::prelude::*;
 use std::{
@@ -150,5 +151,26 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl<D, T, U1, U2, F> ValueDifferentiableDistribution for ConditionedDistribution<D, T, U1, U2, F>
+where
+    D: Distribution<Value = T, Condition = U1> + ValueDifferentiableDistribution,
+    T: RandomVariable,
+    U1: Event,
+    U2: Event,
+    F: Fn(&U2) -> Result<U1, DistributionError> + Clone + Send + Sync,
+{
+    fn ln_diff_value(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let f = self
+            .distribution
+            .ln_diff_value(x, &(self.condition)(theta)?)
+            .unwrap();
+        Ok(f)
     }
 }
