@@ -93,7 +93,7 @@ impl RandomVariable for DirichletParams {
     }
 
     fn len(&self) -> usize {
-        todo!()
+        self.alpha.len()
     }
 
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {

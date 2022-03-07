@@ -44,7 +44,7 @@ impl RandomVariable for ExactEllipticalParams {
     }
 
     fn len(&self) -> usize {
-        todo!()
+        1 + self.lsigma.0.elems()
     }
 
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {

@@ -13,7 +13,7 @@ use std::{
 
 pub struct ConditionDifferentiableConditionedDistribution<C, D, T, U1, U2, F, G>
 where
-    C: ConditionedDistribution<Distribution = D, Condition = F>,
+    C: ConditionedDistribution<D, T, U1, U2, F>,
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: Event,
@@ -28,7 +28,7 @@ where
 
 impl<C, D, T, U1, U2, F, G> ConditionDifferentiableConditionedDistribution<C, D, T, U1, U2, F, G>
 where
-    C: ConditionedDistribution<Distribution = D, Condition = F>,
+    C: ConditionedDistribution<D, T, U1, U2, F>,
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: Event,

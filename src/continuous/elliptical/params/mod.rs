@@ -32,4 +32,5 @@ pub trait EllipticalParams: RandomVariable {
 
     fn lsigma_cols(&self) -> usize;
     fn sample(&self, z: Vec<f64>) -> Result<Vec<f64>, DistributionError>;
+    fn len(&self) -> usize;
 }

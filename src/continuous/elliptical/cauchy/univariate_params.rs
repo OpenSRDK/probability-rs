@@ -35,7 +35,7 @@ impl RandomVariable for CauchyParams {
     }
 
     fn len(&self) -> usize {
-        todo!()
+        2usize
     }
 
     fn restore(v: &[f64], _: &Self::RestoreInfo) -> Result<Self, DistributionError> {

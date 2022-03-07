@@ -98,7 +98,7 @@ impl RandomVariable for StudentTParams {
     }
 
     fn len(&self) -> usize {
-        todo!()
+        3usize
     }
 
     fn restore(v: &[f64], _: &Self::RestoreInfo) -> Result<Self, DistributionError> {

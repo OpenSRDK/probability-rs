@@ -83,7 +83,7 @@ impl RandomVariable for BetaParams {
     }
 
     fn len(&self) -> usize {
-        todo!()
+        2usize
     }
 
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
