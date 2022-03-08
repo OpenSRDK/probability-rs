@@ -32,4 +32,4 @@ Conditioned Distribution : $ p(\mathbf{a} \mid f(c)$ ,
 
 and 
 
-Condition Difference ( not $log$ ) : $d\, f(c) / d\, c$
+Differentiated Condition ( not $log$ ) : $d\, f(c) / d\, c$
