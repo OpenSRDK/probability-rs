@@ -28,7 +28,7 @@ $$
 
 `ConditionDifferentiableConditionedDistribution` has 
 
-Conditioned Distribution : $ p(\mathbf{a} \mid f(c)$ ,
+Conditioned Distribution : $ p(\mathbf{a} \mid f(c))$ ,
 
 and 
 
