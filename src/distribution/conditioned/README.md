@@ -26,3 +26,10 @@ $$
   d\, log ( p(\mathbf{a} \mid f(c))/d\, c =  d\, log ( p(\mathbf{a} \mid f(c))/d\, f(c) \, * \, d\, f(c) / d\, c
 $$
 
+`ConditionDifferentiableConditionedDistribution` has 
+
+Conditioned Distribution : $ p(\mathbf{a} \mid f(c)$ ,
+
+and 
+
+Condition Difference ( not $log$ ) : $d\, f(c) / d\, c$
