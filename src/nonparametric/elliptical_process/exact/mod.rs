@@ -117,6 +117,9 @@ where
     fn sample(&self, z: Vec<f64>) -> Result<Vec<f64>, DistributionError> {
         Ok((self.mu[0] + &self.lsigma.0 * z.col_mat()).vec())
     }
+    fn len(&self) -> usize {
+        todo!()
+    }
 }
 
 impl<K, T> EllipticalProcessParams<K, T> for ExactEllipticalProcessParams<K, T>

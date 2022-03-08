@@ -120,7 +120,7 @@ impl RandomVariable for ExactMultivariateStudentTParams {
     }
 
     fn len(&self) -> usize {
-        1 + self.elliptical.len()
+        todo!()
     }
 
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {

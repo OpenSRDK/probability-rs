@@ -301,6 +301,9 @@ where
 
         Ok((self.mu[0] + wxt_lkuu_z).vec())
     }
+    fn len(&self) -> usize {
+        todo!()
+    }
 }
 
 impl<K, T> EllipticalProcessParams<Convolutional<K>, T> for KissLoveEllipticalProcessParams<K, T>
