@@ -1,4 +1,7 @@
-use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{
+    ConditionDifferentiableDistribution, DependentJoint, Distribution, IndependentJoint,
+    RandomVariable, ValueDifferentiableDistribution,
+};
 use crate::{DistributionError, StudentTError};
 use rand::prelude::*;
 use rand_distr::StudentT as RandStudentT;
@@ -87,6 +90,34 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl ValueDifferentiableDistribution for StudentT {
+    fn ln_diff_value(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let nu = theta.nu();
+        let mu = theta.mu();
+        let f_x = -(nu + 1.0) / (x - mu);
+        Ok(vec![f_x])
+    }
+}
+
+impl ConditionDifferentiableDistribution for StudentT {
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let nu = theta.nu();
+        let mu = theta.mu();
+        let sigma = theta.sigma();
+        let f_mu = (nu + 1.0) / (x - mu);
+        let f_sigma = (nu + 1.0) / sigma;
+        Ok(vec![f_mu, f_sigma])
     }
 }
 
