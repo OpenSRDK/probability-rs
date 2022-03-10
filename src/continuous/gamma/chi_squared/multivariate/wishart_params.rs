@@ -37,7 +37,8 @@ impl RandomVariable for WishartParams {
     }
 
     fn len(&self) -> usize {
-        todo!()
+        let t = self.lv.0.elems().len();
+        t + 1usize
     }
 
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {

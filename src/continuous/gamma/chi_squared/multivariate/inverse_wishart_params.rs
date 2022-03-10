@@ -39,7 +39,8 @@ impl RandomVariable for InverseWishartParams {
     }
 
     fn len(&self) -> usize {
-        todo!()
+        let t = self.lpsi.0.elems().len();
+        t + 1usize
     }
 
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {

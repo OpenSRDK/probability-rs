@@ -23,7 +23,7 @@ impl RandomVariable for CategoricalParams {
     }
 
     fn len(&self) -> usize {
-        todo!()
+        self.p.len()
     }
 
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {

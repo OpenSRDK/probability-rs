@@ -29,7 +29,7 @@ impl RandomVariable for PoissonParams {
     }
 
     fn len(&self) -> usize {
-        todo!()
+        1usize
     }
 
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {

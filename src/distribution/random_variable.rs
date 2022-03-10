@@ -163,7 +163,7 @@ where
     }
 
     fn len(&self) -> usize {
-        self.len()
+        self.0.len() + self.1.len()
     }
 
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
@@ -195,7 +195,7 @@ where
     }
 
     fn len(&self) -> usize {
-        self.len()
+        self.iter().map(|self_i| self_i.len()).sum::<usize>()
     }
 
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
