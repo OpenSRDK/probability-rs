@@ -15,7 +15,7 @@ $$
 Log Value Difference
 
 $$
-  d\, log ( p(\mathbf{a} \mid f(c))/da
+  \frac{\partial log ( p(\mathbf{a} \mid f(c))}{\partial a}
 $$
 
 Log Condition Difference
@@ -23,7 +23,7 @@ Log Condition Difference
 （ use `ConditionDifferentiableConditionedDistribution` ）
 
 $$
-  d\, log ( p(\mathbf{a} \mid f(c))/d\, c =  d\, log ( p(\mathbf{a} \mid f(c))/d\, f(c) \, * \, d\, f(c) / d\, c
+ \frac{\partial log ( p(\mathbf{a} \mid f(c))}{\partial c} =  \frac{\partial log ( p(\mathbf{a} \mid f(c))}{\partial f(c)} \times \frac{\partial f(c)}{\partial c}
 $$
 
 `ConditionDifferentiableConditionedDistribution` has 
@@ -32,4 +32,4 @@ Conditioned Distribution : $ p(\mathbf{a} \mid f(c))$ ,
 
 and 
 
-Differentiated Condition ( not $log$ ) : $d\, f(c) / d\, c$
+Differentiated Condition ( not $log$ ) : $\frac{\partial f(c)}{\partial c}$
