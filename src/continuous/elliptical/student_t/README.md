@@ -16,7 +16,7 @@ $$
 
 $$
   \begin{aligned}
-    \log{p(x \mid \nu, \mu, \sigma)} =& \log{\Gamma\left(\frac{\nu+1}{2}\right)} \\
+    \log{p(x \mid \mu, \sigma, \nu)} =& \log{\Gamma\left(\frac{\nu+1}{2}\right)} \\
     &- \log{\Gamma \left(\frac{\nu}{2} \right)} - \frac{1}{2} \log{\nu} - \frac{1}{2} \log{\pi} - \log{\sigma} \\
     & - \frac{\nu + 1}{2}  \log{\left(1 + \frac{(x - \mu)^2} {\nu \sigma^2}\right)}
   \end{aligned}
@@ -26,7 +26,7 @@ $$
 
 $$
   \begin{aligned}
-    \frac{\partial \log{p(x \mid \nu, \mu, \sigma)}}{\partial x}
+    \frac{\partial \log{p(x \mid \mu, \sigma, \nu)}}{\partial x}
     &= - \frac{\nu + 1}{2} \left(1 + \frac{(x - \mu)^2}{\nu \sigma^2}\right)^{-1} \frac{2x - 2\mu}{\nu \sigma^2} \\
     &= -(\nu + 1) \left(\frac{\nu \sigma^2 + (x - \mu)^2}{\nu \sigma^2}\right)^{-1} \frac{x - \mu}{\nu \sigma^2} \\
     &= -\frac{(\nu + 1)(x - \mu)}{\nu \sigma^2 +(x - \mu)^2}
@@ -37,7 +37,7 @@ $$
 
 $$
   \begin{aligned}
-    \frac{\partial \log{p(x \mid \nu, \mu, \sigma)}}{\partial \mu}
+    \frac{\partial \log{p(x \mid \mu, \sigma, \nu)}}{\partial \mu}
     &= - \frac{\nu + 1}{2} \left(1 + \frac{(x - \mu)^2}{\nu \sigma^2}\right)^{-1} \left( -\frac{2x - 2\mu}{\nu \sigma^2} \right) \\
     &= (\nu + 1) \left(\frac{\nu \sigma^2 + (x - \mu)^2}{\nu \sigma^2}\right)^{-1} \frac{x - \mu}{\nu \sigma^2} \\
     &= \frac{(\nu + 1)(x - \mu)}{\nu \sigma^2 +(x - \mu)^2}
@@ -48,7 +48,7 @@ $$
 
 $$
   \begin{aligned}
-    \frac{\partial \log{p(x \mid \nu, \mu, \sigma)}}{\partial \mu}
+    \frac{\partial \log{p(x \mid \mu, \sigma, \nu)}}{\partial \sigma}
     &= -\frac{1}{\sigma} - \frac{\nu + 1}{2} \left(1 + \frac{(x - \mu)^2}{\nu \sigma^2}\right)^{-1} \left( -\frac{2 (x - \mu)^2}{\nu \sigma^3} \right) \\
     &= (\nu + 1) \left(\frac{\nu \sigma^2 + (x - \mu)^2}{\nu \sigma^2}\right)^{-1} \frac{(x - \mu)^2}{\nu \sigma^3} -\frac{1}{\sigma} \\
     &= \frac{(\nu + 1)(x - \mu)^2 \sigma}{\nu \sigma^2 +(x - \mu)^2} -\frac{1}{\sigma}
@@ -59,7 +59,7 @@ $$
 
 $$
   \begin{aligned}
-    \frac{\partial \log{p(x \mid \nu, \mu, \sigma)}}{\partial \nu}
+    \frac{\partial \log{p(x \mid \mu, \sigma, \nu)}}{\partial \nu}
     =& \frac{1}{2} \psi \left(\frac{\nu + 1}{2} \right) - \frac{1}{2} \psi \left(\frac{\nu}{2}\right) - \frac{1}{2 \nu} \\
     &+ \frac{\nu + 1}{2} \left(1 + \frac{(x - \mu)^2}{\nu \sigma^2}\right)^{-1} \frac{(x - \mu)^2}{\nu^2 \sigma^2} \\
     &- \frac{1}{2} \log \left(1 + \frac{(x - \mu)^2}{\nu \sigma^2} \right)
@@ -83,8 +83,8 @@ $$
 
 $$
   \begin{aligned}
-    \frac{\partial \log{p(x \mid \nu, \mu, \sigma)}}{\partial x}
-    &= - \frac{\nu + n}{2} \left(1 + \frac{1}{\nu}(x - \mu)^\top \Sigma^{-1} (x - \mu)\right)^{-1} \frac{2}{\nu}(x - \mu)^\top \Sigma^{-1}
+    \frac{\partial \log{p(\mathbf{x} \mid \bm{\mu}, \mathbf{L}, \bm{\nu})}}{\partial \mathbf{x}}
+    &= - \frac{\bm{\nu} + n}{2} \left(1 + \frac{1}{\bm{\nu}}(\mathbf{x} - \bm{\mu})^\top \bm{\Sigma}^{-1} (\mathbf{x} - \bm{\mu})\right)^{-1} \frac{2}{\bm{\nu}}(\mathbf{x} - \bm{\mu})^\top \bm{\Sigma}^{-1}
   \end{aligned}
 $$
 
@@ -92,8 +92,8 @@ $$
 
 $$
   \begin{aligned}
-    \frac{\partial \log{p(x \mid \nu, \mu, \sigma)}}{\partial \mu}
-    &= - \frac{\nu + p}{2} \left(1 + \frac{1}{\nu}(x - \mu)^\top \Sigma^{-1} (x - \mu)\right)^{-1} \left(-\frac{2}{\nu}(x - \mu)^\top \Sigma^{-1} \right)
+    \frac{\partial \log{p(\mathbf{x} \mid \bm{\mu}, \mathbf{L}, \bm{\nu})}}{\partial \bm{\mu}}
+    &= - \frac{\bm{\nu} + n}{2} \left(1 + \frac{1}{\bm{\nu}}(\mathbf{x} - \bm{\mu})^\top \bm{\Sigma}^{-1} (\mathbf{x} - \bm{\mu})\right)^{-1} \left(-\frac{2}{\bm{\nu}}(\mathbf{x} - \bm{\mu})^\top \bm{\Sigma}^{-1} \right)
   \end{aligned}
 $$
 
@@ -101,8 +101,8 @@ $$
 
 $$
   \begin{aligned}
-    \frac{\partial \log{p(x \mid \nu, \mu, \sigma)}}{\partial \mathbf{L}}
-    &= - \frac{\nu + p}{2} \left(1 + \frac{1}{\nu}(x - \mu)^\top \Sigma^{-1} (x - \mu)\right)^{-1} \left(-\frac{2}{\nu} (x - \mu) M (x - \mu)^\top \right)
+    \frac{\partial \log{p(\mathbf{x} \mid \bm{\mu}, \mathbf{L}, \bm{\nu})}}{\partial \mathbf{L}}
+    &= - \frac{\bm{\nu} + n}{2} \left(1 + \frac{1}{\bm{\nu}}(\mathbf{x} - \bm{\mu})^\top \bm{\Sigma}^{-1} (\mathbf{x} - \bm{\mu})\right)^{-1} \left(-\frac{2}{\bm{\nu}} (\mathbf{x} - \bm{\mu}) M (\mathbf{x} - \bm{\mu})^\top \right)
   \end{aligned}
 $$
 
@@ -122,9 +122,9 @@ $$
 
 $$
   \begin{aligned}
-    \frac{\partial \log{p(x \mid \nu, \mu, \sigma)}}{\partial \nu}
-    =& \frac{1}{2} \psi \left(\frac{\nu + p}{2} \right) - \frac{p}{2 \nu} - \frac{1}{2} \psi \left(\frac{\nu}{2}\right) \\
-    &+ \frac{\nu + p}{2} \left(1 + \frac{1}{\nu} d \right)^{-1} \left(-\frac{1}{\nu^2}d \right) \\
-    &- \frac{1}{2} \log \left(1 + \frac{1}{\nu} d \right)
+    \frac{\partial \log{p(\mathbf{x} \mid \bm{\mu}, \mathbf{L}, \bm{\nu})}}{\partial \bm{\nu}}
+    =& \frac{1}{2} \psi \left(\frac{\bm{\nu} + n}{2} \right) - \frac{n}{2 \bm{\nu}} - \frac{1}{2} \psi \left(\frac{\bm{\nu}}{2}\right) \\
+    &+ \frac{\bm{\nu} + n}{2} \left(1 + \frac{1}{\bm{\nu}} d \right)^{-1} \left(-\frac{1}{\bm{\nu}^2}d \right) \\
+    &- \frac{1}{2} \log \left(1 + \frac{1}{\bm{\nu}} d \right)
   \end{aligned}
 $$
