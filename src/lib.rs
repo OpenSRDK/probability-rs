@@ -8,6 +8,7 @@ pub extern crate opensrdk_linear_algebra;
 pub extern crate rand;
 extern crate rand_distr;
 extern crate rayon;
+extern crate special;
 extern crate thiserror;
 
 pub mod continuous;

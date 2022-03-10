@@ -1,7 +1,11 @@
-use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{
+    ConditionDifferentiableDistribution, DependentJoint, Distribution, IndependentJoint,
+    RandomVariable, ValueDifferentiableDistribution,
+};
 use crate::{DistributionError, StudentTError};
 use rand::prelude::*;
 use rand_distr::StudentT as RandStudentT;
+use special::Gamma;
 use std::{ops::BitAnd, ops::Mul};
 
 /// Student-t distribution
@@ -87,6 +91,45 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl ValueDifferentiableDistribution for StudentT {
+    fn ln_diff_value(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let mu = theta.mu();
+        let x_mu = x - mu;
+        let nu = theta.nu();
+        let sigma = theta.sigma();
+        let f_x = -(nu + 1.0) * x_mu / (nu * sigma.powi(2) + x_mu.powi(2));
+        Ok(vec![f_x])
+    }
+}
+
+impl ConditionDifferentiableDistribution for StudentT {
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let mu = theta.mu();
+        let x_mu = x - mu;
+        let sigma = theta.sigma();
+        let nu = theta.nu();
+        let f_mu = (nu + 1.0) * x_mu / (nu * sigma.powi(2) + x_mu.powi(2));
+        let f_sigma =
+            (nu + 1.0) * x_mu.powi(2) * sigma / (nu * sigma.powi(2) + x_mu.powi(2)) - (1.0 / sigma);
+        let f_nu =
+            0.5 * ((nu + 1.0) / 2.0).digamma() - 0.5 * (nu / 2.0) - 1.0 / (2.0 + nu).digamma()
+                + (nu + 1.0) / 2.0
+                    * (1.0 + x_mu.powi(2) / (nu * sigma.powi(2))).powi(-1)
+                    * x_mu.powi(2)
+                    / (nu.powi(2) * sigma.powi(2))
+                - 0.5 * (1.0 + x_mu / (nu * sigma.powi(2))).ln();
+        Ok(vec![f_mu, f_sigma, f_nu])
     }
 }
 
