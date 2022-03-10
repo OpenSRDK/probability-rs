@@ -1,11 +1,13 @@
 use crate::{
-    DependentJoint, Distribution, ExactEllipticalParams, IndependentJoint, RandomVariable,
+    ConditionDifferentiableDistribution, DependentJoint, Distribution, ExactEllipticalParams,
+    IndependentJoint, RandomVariable, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, EllipticalParams};
 use opensrdk_linear_algebra::pp::trf::PPTRF;
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
 use rand_distr::StudentT as RandStudentT;
+use special::digamma;
 use std::marker::PhantomData;
 use std::{ops::BitAnd, ops::Mul};
 
@@ -74,6 +76,56 @@ where
             .collect::<Vec<_>>();
 
         Ok(elliptical.sample(z)?)
+    }
+}
+
+impl ValueDifferentiableDistribution for MultivariateStudentT {
+    fn ln_diff_value(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let x_mat = x.clone().row_mat();
+        let mu_mat = theta.mu().clone().row_mat();
+        let x_mu = x_mat - mu_mat;
+        let x_mu_t = x_mu.t();
+        let sigma_inv = theta.lsigma().clone().pptri()?.to_mat();
+        let nu = theta.nu();
+        let n = x.len() as f64;
+        let d = (&x_mu_t * &sigma_inv * &x_mu)[(0, 0)];
+        let f_x = -(&nu + &n) / &nu * (1.0 + &d).powi(-1) * (x_mu_t * sigma_inv);
+        Ok(f_x.vec())
+    }
+}
+
+impl ConditionDifferentiableDistribution for MultivariateStudentT {
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let x_mat = x.clone().row_mat();
+        let mu_mat = theta.mu().clone().row_mat();
+        let x_mu = x_mat - mu_mat;
+        let x_mu_t = x_mu.t();
+        let sigma_inv = theta.lsigma().clone().pptri()?.to_mat();
+        let nu = theta.nu();
+        let n = x.len() as f64;
+        let d = (&x_mu_t * &sigma_inv * &x_mu)[(0, 0)];
+        // Hadamard product (L*L*L)
+        let m = sigma_inv
+            .clone()
+            .hadamard_prod(&sigma_inv)
+            .hadamard_prod(&sigma_inv);
+        let f_mu = (&nu + &n) / &nu * (1.0 + &d).powi(-1) * (&x_mu_t * &sigma_inv);
+        let f_lsigma = (&nu + &n) / &nu * (1.0 + &d / &nu).powi(-1) * (&x_mu_t * &m * &x_mu);
+        let f_nu = 0.5
+            * (digamma(0.5 * (nu + n))
+                - (n / nu)
+                - digamma(0.5 * nu)
+                - (nu + n) * d / nu.powi(2) * (1.0 + d / nu).powi(-1)
+                - (1.0 + d / nu).ln());
+        Ok([f_mu.vec(), f_lsigma.vec(), vec![f_nu]].concat())
     }
 }
 
