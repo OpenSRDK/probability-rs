@@ -1,4 +1,7 @@
-use crate::{CauchyParams, DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{
+    CauchyParams, ConditionDifferentiableDistribution, DependentJoint, Distribution,
+    IndependentJoint, RandomVariable, ValueDifferentiableDistribution,
+};
 use crate::{DistributionError, StudentT, StudentTParams};
 use rand::prelude::*;
 use std::{ops::BitAnd, ops::Mul};
@@ -49,6 +52,26 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl ValueDifferentiableDistribution for Cauchy {
+    fn ln_diff_value(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        todo!()
+    }
+}
+
+impl ConditionDifferentiableDistribution for Cauchy {
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        todo!()
     }
 }
 

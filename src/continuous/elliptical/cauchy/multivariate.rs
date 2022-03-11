@@ -1,6 +1,7 @@
 use crate::{
-    DependentJoint, Distribution, ExactEllipticalParams, IndependentJoint, MultivariateStudentT,
-    MultivariateStudentTWrapper, RandomVariable,
+    ConditionDifferentiableDistribution, DependentJoint, Distribution, ExactEllipticalParams,
+    IndependentJoint, MultivariateStudentT, MultivariateStudentTWrapper, RandomVariable,
+    ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, EllipticalParams};
 use rand::prelude::*;
@@ -77,6 +78,26 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl ValueDifferentiableDistribution for MultivariateCauchy {
+    fn ln_diff_value(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        todo!()
+    }
+}
+
+impl ConditionDifferentiableDistribution for MultivariateCauchy {
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        todo!()
     }
 }
 
