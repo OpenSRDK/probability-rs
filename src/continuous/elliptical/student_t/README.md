@@ -51,7 +51,7 @@ $$
     \frac{\partial \log{p(x \mid \mu, \sigma, \nu)}}{\partial \sigma}
     &= -\frac{1}{\sigma} - \frac{\nu + 1}{2} \left(1 + \frac{(x - \mu)^2}{\nu \sigma^2}\right)^{-1} \left( -\frac{2 (x - \mu)^2}{\nu \sigma^3} \right) \\
     &= (\nu + 1) \left(\frac{\nu \sigma^2 + (x - \mu)^2}{\nu \sigma^2}\right)^{-1} \frac{(x - \mu)^2}{\nu \sigma^3} -\frac{1}{\sigma} \\
-    &= \frac{(\nu + 1)(x - \mu)^2 \sigma}{\nu \sigma^2 +(x - \mu)^2} -\frac{1}{\sigma}
+    &= \frac{\nu + 1}{\sigma} \frac{(x - \mu)^2}{\nu \sigma^2 +(x - \mu)^2} -\frac{1}{\sigma}
   \end{aligned}
 $$
 
@@ -104,7 +104,7 @@ $$
 $$
   \begin{aligned}
     \frac{\partial \log{p(\mathbf{x} \mid \bm{\mu}, \mathbf{L}, \nu)}}{\partial \mathbf{L}}
-    &= - \frac{\nu + n}{2} \left(1 + \frac{1}{\nu} d\right)^{-1} \left(-\frac{2}{\nu} (\mathbf{x} - \bm{\mu}) M (\mathbf{x} - \bm{\mu})^\top \right) \\
+    &= - \frac{\nu + n}{2} \left(1 + \frac{1}{\nu} d\right)^{-1} \left(-\frac{2}{\nu} (\mathbf{x} - \bm{\mu})^\top M (\mathbf{x} - \bm{\mu}) \right) \\
     &= \frac{\nu + n}{\nu} (1 + \frac{1}{\nu} d)^{-1} (\mathbf{x} - \bm{\mu})^\top M (\mathbf{x} - \bm{\mu})
   \end{aligned}
 $$

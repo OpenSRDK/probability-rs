@@ -120,8 +120,8 @@ impl ConditionDifferentiableDistribution for StudentT {
         let sigma = theta.sigma();
         let nu = theta.nu();
         let f_mu = (nu + 1.0) * x_mu / (nu * sigma.powi(2) + x_mu.powi(2));
-        let f_sigma =
-            (nu + 1.0) * x_mu.powi(2) * sigma / (nu * sigma.powi(2) + x_mu.powi(2)) - (1.0 / sigma);
+        let f_sigma = (nu + 1.0) * x_mu.powi(2) / (sigma * (nu * sigma.powi(2) + x_mu.powi(2)))
+            - (1.0 / sigma);
         let f_nu =
             0.5 * ((nu + 1.0) / 2.0).digamma() - 0.5 * (nu / 2.0) - 1.0 / (2.0 + nu).digamma()
                 + (nu + 1.0) / 2.0
