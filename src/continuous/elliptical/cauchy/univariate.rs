@@ -61,7 +61,11 @@ impl ValueDifferentiableDistribution for Cauchy {
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, DistributionError> {
-        todo!()
+        let mu = theta.mu();
+        let x_mu = x - mu;
+        let sigma = theta.sigma();
+        let f_x = -2.0 * x_mu / (sigma.powi(2) + x_mu.powi(2));
+        Ok(vec![f_x])
     }
 }
 
@@ -71,7 +75,12 @@ impl ConditionDifferentiableDistribution for Cauchy {
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, DistributionError> {
-        todo!()
+        let mu = theta.mu();
+        let x_mu = x - mu;
+        let sigma = theta.sigma();
+        let f_mu = 2.0 * x_mu / (sigma.powi(2) + x_mu.powi(2));
+        let f_sigma = 2.0 * x_mu.powi(2) / (sigma * (sigma.powi(2) + x_mu.powi(2))) - (1.0 / sigma);
+        Ok(vec![f_mu, f_sigma])
     }
 }
 
