@@ -1,4 +1,6 @@
-use crate::DistributionError;
+use crate::{
+    ConditionDifferentiableDistribution, DistributionError, ValueDifferentiableDistribution,
+};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::Beta as RandBeta;
@@ -41,6 +43,26 @@ impl Distribution for Beta {
         }?;
 
         Ok(rng.sample(beta))
+    }
+}
+
+impl ValueDifferentiableDistribution for Beta {
+    fn ln_diff_value(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        todo!()
+    }
+}
+
+impl ConditionDifferentiableDistribution for Beta {
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        todo!()
     }
 }
 
