@@ -28,6 +28,10 @@ impl RandomVariable for PoissonParams {
         (vec![self.lambda], ())
     }
 
+    fn len(&self) -> usize {
+        1usize
+    }
+
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         if v.len() != 1 {
             return Err(DistributionError::InvalidRestoreVector);

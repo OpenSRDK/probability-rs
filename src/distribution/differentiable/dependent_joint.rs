@@ -1,7 +1,7 @@
 use opensrdk_linear_algebra::Vector;
 
 use crate::{
-    value, ConditionDifferentiableDistribution, DependentJoint, Distribution, RandomVariable,
+    ConditionDifferentiableDistribution, DependentJoint, Distribution, RandomVariable,
     ValueDifferentiableDistribution,
 };
 

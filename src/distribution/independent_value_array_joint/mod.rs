@@ -1,5 +1,9 @@
-use crate::DistributionError;
-use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{
+    ConditionDifferentiableDistribution, DependentJoint, Distribution, IndependentJoint,
+    RandomVariable,
+};
+use crate::{DistributionError, ValueDifferentiableDistribution};
+use opensrdk_linear_algebra::Vector;
 use rand::prelude::*;
 use std::iter::Iterator;
 use std::{ops::BitAnd, ops::Mul};
@@ -93,6 +97,57 @@ where
         let distributions = self.collect::<Vec<_>>();
 
         IndependentValueArrayJoint::<D, T, U> { distributions }
+    }
+}
+
+impl<D, T, U> ValueDifferentiableDistribution for IndependentValueArrayJoint<D, T, U>
+where
+    D: Distribution<Value = T, Condition = U> + ValueDifferentiableDistribution,
+    T: RandomVariable,
+    U: RandomVariable,
+{
+    fn ln_diff_value(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let f = x
+            .iter()
+            .enumerate()
+            .flat_map(|(i, xi)| {
+                self.distributions[i]
+                    .ln_diff_value(xi, theta)
+                    .unwrap()
+                    .into_iter()
+            })
+            .collect::<Vec<f64>>();
+        Ok(f)
+    }
+}
+
+impl<D, T, U> ConditionDifferentiableDistribution for IndependentValueArrayJoint<D, T, U>
+where
+    D: Distribution<Value = T, Condition = U> + ConditionDifferentiableDistribution,
+    T: RandomVariable,
+    U: RandomVariable,
+{
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let f = x
+            .iter()
+            .enumerate()
+            .map(|(i, xi)| {
+                self.distributions[i]
+                    .ln_diff_condition(xi, theta)
+                    .unwrap()
+                    .col_mat()
+            })
+            .fold(vec![0.0; theta.len()].col_mat(), |a, b| a + b)
+            .vec();
+        Ok(f)
     }
 }
 

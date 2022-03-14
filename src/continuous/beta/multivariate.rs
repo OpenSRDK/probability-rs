@@ -92,6 +92,10 @@ impl RandomVariable for DirichletParams {
         (self.clone().alpha, n)
     }
 
+    fn len(&self) -> usize {
+        self.alpha.len()
+    }
+
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         let n = *info;
         if n < 2 {

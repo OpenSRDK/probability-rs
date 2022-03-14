@@ -61,6 +61,10 @@ impl RandomVariable for StickBreakingProcessParams {
         todo!()
     }
 
+    fn len(&self) -> usize {
+        todo!()
+    }
+
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         todo!()
     }

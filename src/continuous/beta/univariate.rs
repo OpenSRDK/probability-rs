@@ -112,6 +112,10 @@ impl RandomVariable for BetaParams {
         (vec![self.alpha, self.beta], ())
     }
 
+    fn len(&self) -> usize {
+        2usize
+    }
+
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         Self::new(v[0], v[1])
     }

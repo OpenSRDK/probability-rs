@@ -28,6 +28,10 @@ where
         todo!()
     }
 
+    fn len(&self) -> usize {
+        self.elliptical.len()
+    }
+
     fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         todo!()
     }
