@@ -1,8 +1,10 @@
 use crate::{
-    DependentJoint, Distribution, ExactEllipticalParams, IndependentJoint, MultivariateStudentT,
-    MultivariateStudentTWrapper, RandomVariable,
+    ConditionDifferentiableDistribution, DependentJoint, Distribution, ExactEllipticalParams,
+    IndependentJoint, MultivariateStudentT, MultivariateStudentTWrapper, RandomVariable,
+    ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, EllipticalParams};
+use opensrdk_linear_algebra::Vector;
 use rand::prelude::*;
 use std::marker::PhantomData;
 use std::{ops::BitAnd, ops::Mul};
@@ -77,6 +79,47 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl ValueDifferentiableDistribution for MultivariateCauchy {
+    fn ln_diff_value(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let x_mat = x.clone().row_mat();
+        let mu_mat = theta.mu().clone().row_mat();
+        let x_mu = x_mat - mu_mat;
+        let x_mu_t = x_mu.t();
+        let sigma_inv = theta.lsigma().clone().pptri()?.to_mat();
+        let n = x.len() as f64;
+        let d = (&x_mu_t * &sigma_inv * &x_mu)[(0, 0)];
+        let f_x = -(1.0 + n) / (1.0 + &d) * x_mu_t * sigma_inv;
+        Ok(f_x.vec())
+    }
+}
+
+impl ConditionDifferentiableDistribution for MultivariateCauchy {
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let x_mat = x.clone().row_mat();
+        let mu_mat = theta.mu().clone().row_mat();
+        let x_mu = x_mat - mu_mat;
+        let x_mu_t = x_mu.t();
+        let sigma_inv = theta.lsigma().clone().pptri()?.to_mat();
+        let n = x.len() as f64;
+        let d = (&x_mu_t * &sigma_inv * &x_mu)[(0, 0)];
+        let m = sigma_inv
+            .clone()
+            .hadamard_prod(&sigma_inv)
+            .hadamard_prod(&sigma_inv);
+        let f_mu = (1.0 + n) / (1.0 + &d) * (&x_mu_t * &sigma_inv);
+        let f_lsigma = (1.0 + n) / (1.0 + &d) * (&x_mu_t * &m * &x_mu);
+        Ok([f_mu.vec(), f_lsigma.vec()].concat())
     }
 }
 

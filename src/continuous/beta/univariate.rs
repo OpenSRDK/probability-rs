@@ -1,7 +1,10 @@
-use crate::DistributionError;
+use crate::{
+    ConditionDifferentiableDistribution, DistributionError, ValueDifferentiableDistribution,
+};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::Beta as RandBeta;
+use special::Gamma;
 use std::{ops::BitAnd, ops::Mul};
 
 /// Beta distribution
@@ -41,6 +44,33 @@ impl Distribution for Beta {
         }?;
 
         Ok(rng.sample(beta))
+    }
+}
+
+impl ValueDifferentiableDistribution for Beta {
+    fn ln_diff_value(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let alpha = theta.alpha();
+        let beta = theta.beta();
+        let f_x = (alpha - 1.0) / x - (beta - 1.0) / (1.0 - x);
+        Ok(vec![f_x])
+    }
+}
+
+impl ConditionDifferentiableDistribution for Beta {
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let alpha = theta.alpha();
+        let beta = theta.beta();
+        let f_alpha = x.ln() - alpha.digamma() + (alpha + beta).digamma();
+        let f_beta = (1.0 - x).ln() - beta.digamma() + (alpha + beta).digamma();
+        Ok(vec![f_alpha, f_beta])
     }
 }
 
