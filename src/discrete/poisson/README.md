@@ -1,25 +1,21 @@
 # Poisson
 
-## Probability density function
+## Probability mass function
 
 $$
-  p(x|\lambda) = \frac{\lambda^x}{x!}\exp(-\lambda)
+  p^{m(x \mid \lambda)} = P(X = x \mid \lambda) = \frac{\lambda^x}{x!}\exp(-\lambda)
 $$
 
 $$
-  \log{p(x|\lambda)} = x \log{\lambda} - \log{x!} - \lambda
+  \log{P(X = x \mid \lambda)} = x \log{\lambda} - \log{x!} - \lambda
 $$
 
 ## Diff x
 
-$$
-  \frac{\partial \log{p(x|\lambda)}}{\partial x} = \log{\lambda} -\frac{\partial \log{x!}}{\partial x}
-$$
-
-x の階乗は連続関数ではないため、微分不可
+離散確率分布は value による微分不可
 
 ## Diff lambda
 
 $$
-  \frac{\partial \log{p(x|\lambda)}}{\partial \lambda} = \frac{x}{\lambda} - 1
+  \frac{\partial \log{P(X = x \mid \lambda)}}{\partial \lambda} = \frac{x}{\lambda} - 1
 $$
