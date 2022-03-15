@@ -3,11 +3,11 @@
 ## Probability mass function
 
 $$
-  p^{m(x \mid \lambda)} = P(X = x \mid \lambda) = \frac{\lambda^x}{x!}\exp(-\lambda)
+  p^m(x \mid \lambda) = \frac{\lambda^x}{x!}\exp(-\lambda)
 $$
 
 $$
-  \log{P(X = x \mid \lambda)} = x \log{\lambda} - \log{x!} - \lambda
+  \log{p^m(x \mid \lambda)} = x \log{\lambda} - \log{x!} - \lambda
 $$
 
 ## Diff x
@@ -17,5 +17,5 @@ $$
 ## Diff lambda
 
 $$
-  \frac{\partial \log{P(X = x \mid \lambda)}}{\partial \lambda} = \frac{x}{\lambda} - 1
+  \frac{\partial \log{p^m(x \mid \lambda)}}{\partial \lambda} = \frac{x}{\lambda} - 1
 $$
