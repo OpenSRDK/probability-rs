@@ -2,7 +2,10 @@ pub mod params;
 
 pub use params::*;
 
-use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{
+    ConditionDifferentiableDistribution, DependentJoint, Distribution, IndependentJoint,
+    RandomVariable, ValueDifferentiableDistribution,
+};
 use crate::{DiscreteDistribution, DistributionError};
 use rand::prelude::*;
 use rand_distr::Poisson as RandPoisson;
@@ -74,6 +77,27 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl ValueDifferentiableDistribution for Poisson {
+    fn ln_diff_value(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        // x階乗が微分不可のため、未実装
+        todo!()
+    }
+}
+
+impl ConditionDifferentiableDistribution for Poisson {
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        todo!()
     }
 }
 
