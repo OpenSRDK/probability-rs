@@ -97,7 +97,9 @@ impl ConditionDifferentiableDistribution for Poisson {
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, DistributionError> {
-        todo!()
+        let labmda = theta.lambda();
+        let f_lambda = *x as f64 / labmda - 1.0;
+        Ok(vec![f_lambda])
     }
 }
 
