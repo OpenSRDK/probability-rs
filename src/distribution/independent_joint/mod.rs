@@ -1,4 +1,7 @@
-use crate::{DependentJoint, Distribution, RandomVariable};
+use crate::{
+    ConditionDifferentiableDistribution, DependentJoint, Distribution, RandomVariable,
+    ValueDifferentiableDistribution,
+};
 use crate::{DistributionError, Event};
 use rand::prelude::*;
 use std::fmt::Debug;
@@ -85,6 +88,48 @@ where
     }
 }
 
+impl<L, R, TL, TR, U> ValueDifferentiableDistribution for IndependentJoint<L, R, TL, TR, U>
+where
+    L: Distribution<Value = TL, Condition = U> + ValueDifferentiableDistribution,
+    R: Distribution<Value = TR, Condition = U> + ValueDifferentiableDistribution,
+    TL: RandomVariable,
+    TR: RandomVariable,
+    U: Event,
+{
+    fn ln_diff_value(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let f_lhs = self.lhs.ln_diff_value(&x.0, theta)?;
+        let f_rhs = self.rhs.ln_diff_value(&x.1, theta)?;
+        Ok([f_lhs, f_rhs].concat())
+    }
+}
+
+impl<L, R, TL, TR, U> ConditionDifferentiableDistribution for IndependentJoint<L, R, TL, TR, U>
+where
+    L: Distribution<Value = TL, Condition = U> + ConditionDifferentiableDistribution,
+    R: Distribution<Value = TR, Condition = U> + ConditionDifferentiableDistribution,
+    TL: RandomVariable,
+    TR: RandomVariable,
+    U: Event,
+{
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let f_lhs = self.lhs.ln_diff_condition(&x.0, theta)?;
+        let f_rhs = self.rhs.ln_diff_condition(&x.1, theta)?;
+        let f = f_lhs
+            .iter()
+            .enumerate()
+            .map(|(i, f_lhsi)| f_lhsi + f_rhs[i])
+            .collect::<Vec<f64>>();
+        Ok(f)
+    }
+}
 #[cfg(test)]
 mod tests {
     use crate::distribution::Distribution;

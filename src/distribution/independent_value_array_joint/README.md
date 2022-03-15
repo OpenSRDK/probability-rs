@@ -8,11 +8,11 @@ $$
 Log Value Difference
 
 $$
-  \left( \frac{\partial \log {p(\mathbf{y}_1 \mid x_1)}}{\partial x_1} ,\cdots , \frac{\partial \log {p(\mathbf{y}_i \mid x_i)}}{\partial x_i} ,\cdots ,\frac{\partial \log {p(\mathbf{y}_n \mid x_n)}}{\partial x_n} \right)
+  \left( \frac{\partial \log {p(y_1 \mid x)}}{\partial y_1} ,\cdots , \frac{\partial \log {p(y_i \mid x)}}{\partial y_i} ,\cdots ,\frac{\partial \log {p(y_n \mid x)}}{\partial y_n} \right)
 $$
 
 Log Condition Difference
 
 $$
- \frac{\partial \log {p(\mathbf{y}_1 \mid x_1)}}{\partial \theta}  + \cdots + \frac{\partial \log{p(\mathbf{y}_i \mid x_i)}}{\partial \theta}+ \cdots + \frac{\partial \log {p(\mathbf{y}_n \mid x_n)}}{\partial \theta}
+ \frac{\partial \log {p(y_1 \mid x)}}{\partial x}  + \cdots + \frac{\partial \log{p(y_i \mid x)}}{\partial x}+ \cdots + \frac{\partial \log {p(y_n \mid x)}}{\partial x}
 $$
