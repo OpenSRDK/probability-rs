@@ -2,7 +2,10 @@ pub mod params;
 
 pub use params::*;
 
-use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{
+    ConditionDifferentiableDistribution, DependentJoint, Distribution, IndependentJoint,
+    RandomVariable,
+};
 use crate::{DiscreteDistribution, DistributionError};
 use rand::prelude::*;
 use rand_distr::Poisson as RandPoisson;
@@ -74,6 +77,18 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl ConditionDifferentiableDistribution for Poisson {
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let labmda = theta.lambda();
+        let f_lambda = *x as f64 / labmda - 1.0;
+        Ok(vec![f_lambda])
     }
 }
 
