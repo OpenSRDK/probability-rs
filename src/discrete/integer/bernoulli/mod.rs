@@ -58,3 +58,16 @@ where
         DependentJoint::new(self, rhs)
     }
 }
+
+impl ConditionDifferentiableDistribution for Bernoulli {
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let p = theta.p();
+        let x_f64 = if *x { 1.0 } else { 0.0 };
+        let f_p = x_f64 / p - (1.0 - x_f64) / (1.0 - p);
+        Ok(vec![f_p])
+    }
+}
