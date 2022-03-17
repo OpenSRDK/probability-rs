@@ -1,4 +1,6 @@
-use crate::DistributionError;
+use crate::{
+    ConditionDifferentiableDistribution, DistributionError, ValueDifferentiableDistribution,
+};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use std::iter::Iterator;
@@ -96,6 +98,36 @@ where
         let distributions = self.collect::<Vec<_>>();
 
         IndependentArrayJoint::<D, T, U> { distributions }
+    }
+}
+
+impl<D, T, U> ValueDifferentiableDistribution for IndependentArrayJoint<D, T, U>
+where
+    D: Distribution<Value = T, Condition = U> + ValueDifferentiableDistribution,
+    T: RandomVariable,
+    U: RandomVariable,
+{
+    fn ln_diff_value(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        todo!()
+    }
+}
+
+impl<D, T, U> ConditionDifferentiableDistribution for IndependentArrayJoint<D, T, U>
+where
+    D: Distribution<Value = T, Condition = U> + ConditionDifferentiableDistribution,
+    T: RandomVariable,
+    U: RandomVariable,
+{
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        todo!()
     }
 }
 
