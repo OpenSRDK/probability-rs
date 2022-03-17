@@ -16,15 +16,15 @@ Log Value Difference
 
 $$
   \frac{\partial \log{p(\mathbf{y} \mid x)}}{\partial \mathbf{y}}
-  = \left( \frac{\partial \log {p(y_1 \mid x)}}{\partial y_1} + \cdots + \frac{\partial \log {p(y_n \mid x)}}{\partial y_1},\cdots , \frac{\partial \log {p(y_1 \mid x)}}{\partial y_i} + \cdots + \frac{\partial \log {p(y_n \mid x)}}{\partial y_i},\cdots ,\frac{\partial \log {p(y_1 \mid x)}}{\partial y_n} + \cdots + \frac{\partial \log {p(y_n \mid x)}}{\partial y_n}, \right) 
+  = \begin{bmatrix} \frac{\partial \log {p(y_1 \mid x)}}{\partial y_1} + \cdots + \frac{\partial \log {p(y_n \mid x)}}{\partial y_1} \\ \vdots  \\ \frac{\partial \log {p(y_1 \mid x)}}{\partial y_i} + \cdots + \frac{\partial \log {p(y_n \mid x)}}{\partial y_i} \\ \vdots  \\ \frac{\partial \log {p(y_1 \mid x)}}{\partial y_n} + \cdots + \frac{\partial \log {p(y_n \mid x)}}{\partial y_n} \end{bmatrix}
 
   \\
 
-  = \left( \frac{\partial \log {p(y_1 \mid x)}}{\partial y_1} + 0 + \cdots,\cdots , \cdots + 0 + \frac{\partial \log {p(y_i \mid x)}}{\partial y_i} + 0 + \cdots ,\cdots ,0 + \cdots + \frac{\partial \log {p(y_n \mid x)}}{\partial y_n} \right) 
+  = \begin{bmatrix} \frac{\partial \log {p(y_1 \mid x)}}{\partial y_1} + 0 + \cdots \\ \vdots  \\ \cdots + 0 + \frac{\partial \log {p(y_i \mid x)}}{\partial y_i} + 0 + \cdots \\ \vdots  \\ 0 + \cdots + \frac{\partial \log {p(y_n \mid x)}}{\partial y_n} \end{bmatrix}
 
   \\
 
-  =\left( \frac{\partial \log {p(y_1 \mid x)}}{\partial y_1} ,\cdots , \frac{\partial \log {p(y_i \mid x)}}{\partial y_i} ,\cdots ,\frac{\partial \log {p(y_n \mid x)}}{\partial y_n} \right)
+  =\begin{bmatrix} \frac{\partial \log {p(y_1 \mid x)}}{\partial y_1} \\ \vdots  \\ \frac{\partial \log {p(y_i \mid x)}}{\partial y_i} \\ \vdots  \\ \frac{\partial \log {p(y_n \mid x)}}{\partial y_n} \end{bmatrix}
 $$
 
 Log Condition Difference
