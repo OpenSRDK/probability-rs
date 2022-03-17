@@ -2,6 +2,7 @@ use crate::{
     ConditionDifferentiableDistribution, DistributionError, ValueDifferentiableDistribution,
 };
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use opensrdk_linear_algebra::Vector;
 use rand::prelude::*;
 use std::iter::Iterator;
 use std::{ops::BitAnd, ops::Mul};
@@ -112,7 +113,18 @@ where
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, DistributionError> {
-        todo!()
+        let f = x
+            .iter()
+            .zip(theta.iter())
+            .enumerate()
+            .flat_map(|(i, (xi, thetai))| {
+                self.distributions[i]
+                    .ln_diff_value(xi, thetai)
+                    .unwrap()
+                    .into_iter()
+            })
+            .collect::<Vec<f64>>();
+        Ok(f)
     }
 }
 
@@ -127,7 +139,19 @@ where
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, DistributionError> {
-        todo!()
+        let f = x
+            .iter()
+            .zip(theta.iter())
+            .enumerate()
+            .map(|(i, (xi, thetai))| {
+                self.distributions[i]
+                    .ln_diff_condition(xi, thetai)
+                    .unwrap()
+                    .col_mat()
+            })
+            .fold(vec![0.0; theta.len()].col_mat(), |a, b| a + b)
+            .vec();
+        Ok(f)
     }
 }
 
