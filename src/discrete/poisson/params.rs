@@ -32,7 +32,7 @@ impl RandomVariable for PoissonParams {
         1usize
     }
 
-    fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
+    fn restore(v: &[f64], _: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         if v.len() != 1 {
             return Err(DistributionError::InvalidRestoreVector);
         }
