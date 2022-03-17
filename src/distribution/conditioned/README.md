@@ -12,10 +12,16 @@ $$
   f: C \mapsto B
 $$
 
+Log
+
+$$
+ \log{p(\mathbf{a} \mid f(c))}
+$$
+
 Log Value Difference
 
 $$
-  \frac{\partial \log{p(\mathbf{a} \mid f(c))}}{\partial a}
+  \frac{\partial \log{p(\mathbf{a} \mid f(c))}}{\partial \mathbf{a}}
 $$
 
 Log Condition Difference

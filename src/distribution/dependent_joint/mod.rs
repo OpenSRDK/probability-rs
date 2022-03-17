@@ -1,5 +1,9 @@
-use crate::{Distribution, IndependentJoint, RandomVariable};
+use crate::{
+    ConditionDifferentiableDistribution, Distribution, IndependentJoint, RandomVariable,
+    ValueDifferentiableDistribution,
+};
 use crate::{DistributionError, Event};
+use opensrdk_linear_algebra::Vector;
 use rand::prelude::*;
 use std::{ops::BitAnd, ops::Mul};
 
@@ -13,8 +17,8 @@ where
     UL: Event,
     UR: Event,
 {
-    pub (crate) lhs: L,
-    pub (crate) rhs: R,
+    pub(crate) lhs: L,
+    pub(crate) rhs: R,
 }
 
 impl<L, R, T, UL, UR> DependentJoint<L, R, T, UL, UR>
@@ -82,6 +86,46 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl<L, R, T, UL, UR> ValueDifferentiableDistribution for DependentJoint<L, R, T, UL, UR>
+where
+    L: Distribution<Value = T, Condition = UL>
+        + ValueDifferentiableDistribution
+        + ConditionDifferentiableDistribution,
+    R: Distribution<Value = UL, Condition = UR> + ValueDifferentiableDistribution,
+    T: RandomVariable,
+    UL: RandomVariable,
+    UR: RandomVariable,
+{
+    fn ln_diff_value(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, crate::DistributionError> {
+        let diff_l = &self.lhs.ln_diff_value(&x.0, &x.1)?;
+        let diff = (diff_l.clone().col_mat() * &self.rhs.fk(&x.1, theta)?).vec();
+        Ok(diff)
+    }
+}
+
+impl<L, R, T, UL, UR> ConditionDifferentiableDistribution for DependentJoint<L, R, T, UL, UR>
+where
+    L: Distribution<Value = T, Condition = UL> + ConditionDifferentiableDistribution,
+    R: Distribution<Value = UL, Condition = UR> + ConditionDifferentiableDistribution,
+    T: RandomVariable,
+    UL: RandomVariable,
+    UR: RandomVariable,
+{
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, crate::DistributionError> {
+        let diff_r = &self.rhs.ln_diff_condition(&x.1, &theta)?;
+        let diff = (&self.lhs.fk(&x.0, &x.1)? * diff_r.clone().col_mat()).vec();
+        Ok(diff)
     }
 }
 
