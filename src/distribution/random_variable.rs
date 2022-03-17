@@ -21,7 +21,7 @@ impl RandomVariable for () {
         0
     }
 
-    fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
+    fn restore(v: &[f64], _info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         if v.len() != 0 {
             return Err(DistributionError::InvalidRestoreVector);
         }
@@ -40,7 +40,7 @@ impl RandomVariable for f64 {
         1
     }
 
-    fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
+    fn restore(v: &[f64], _info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         if v.len() != 1 {
             return Err(DistributionError::InvalidRestoreVector);
         }

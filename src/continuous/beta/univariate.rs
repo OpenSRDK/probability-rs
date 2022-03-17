@@ -116,7 +116,7 @@ impl RandomVariable for BetaParams {
         2usize
     }
 
-    fn restore(v: &[f64], info: &Self::RestoreInfo) -> Result<Self, DistributionError> {
+    fn restore(v: &[f64], _: &Self::RestoreInfo) -> Result<Self, DistributionError> {
         Self::new(v[0], v[1])
     }
 }

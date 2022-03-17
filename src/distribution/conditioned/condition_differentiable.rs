@@ -10,7 +10,6 @@ use std::{
 };
 
 #[derive(Clone)]
-
 pub struct ConditionDifferentiableConditionedDistribution<D, T, U1, U2, F, G>
 where
     D: Distribution<Value = T, Condition = U1>,

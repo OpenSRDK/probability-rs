@@ -12,6 +12,7 @@ use std::{
     marker::PhantomData,
     ops::{BitAnd, Mul},
 };
+
 #[derive(Clone)]
 pub struct ConditionedDistribution<D, T, U1, U2, F>
 where

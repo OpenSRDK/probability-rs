@@ -1,4 +1,4 @@
-use crate::{elliptical, DistributionError, EllipticalParams};
+use crate::{DistributionError, EllipticalParams};
 use crate::{ExactEllipticalParams, MultivariateStudentTParams, RandomVariable};
 
 #[derive(Clone, Debug, PartialEq)]
