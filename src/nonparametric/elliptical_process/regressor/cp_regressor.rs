@@ -44,7 +44,7 @@ where
 
         let coefficient = ((1.0 + mahalanobis_squared) / (1 + n) as f64).sqrt();
         let new_lsigma = PPTRF(
-            SymmetricPackedMatrix::from(n, (coefficient * lsigma.0.eject().col_mat()).vec())
+            SymmetricPackedMatrix::from(mu.len(), (coefficient * lsigma.0.eject().col_mat()).vec())
                 .unwrap(),
         );
 
