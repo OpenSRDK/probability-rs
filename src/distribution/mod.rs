@@ -10,6 +10,7 @@ pub mod independent_array_joint;
 pub mod independent_joint;
 pub mod independent_value_array_joint;
 pub mod instant;
+pub mod instant_condition_differentiable;
 pub mod random_variable;
 pub mod switched;
 pub mod transformed;
