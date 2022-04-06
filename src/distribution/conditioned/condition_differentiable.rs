@@ -175,6 +175,7 @@ where
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, DistributionError> {
+        println!("Condition");
         let f = self
             .conditioned_distribution
             .distribution

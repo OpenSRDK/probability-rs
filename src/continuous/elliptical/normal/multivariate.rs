@@ -108,6 +108,7 @@ impl ConditionDifferentiableDistribution for MultivariateNormal {
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, DistributionError> {
+        println!("Normal");
         let lsigma = theta.lsigma().0.to_mat();
         let _sigma = &lsigma * &lsigma.t();
         let sigma_inv = theta.lsigma().clone().pptri()?.to_mat();

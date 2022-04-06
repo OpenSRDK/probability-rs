@@ -136,6 +136,7 @@ where
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, DistributionError> {
+        println!("OnlyValueArrayJoint");
         let f = x
             .iter()
             .enumerate()
