@@ -35,7 +35,7 @@ where
 
 #[derive(thiserror::Error, Debug)]
 pub enum MultivariateStudentTError {
-    #[error("dimension mismatch")]
+    #[error("dimension mismatch (StudentT Multivariate)")]
     DimensionMismatch,
 }
 
