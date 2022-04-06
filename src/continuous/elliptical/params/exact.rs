@@ -12,6 +12,7 @@ impl ExactEllipticalParams {
     /// `L` is needed as second argument under decomposition `Sigma = L * L^T`
     /// l_sigma = sigma.pptrf()?;
     pub fn new(mu: Vec<f64>, lsigma: PPTRF) -> Result<Self, DistributionError> {
+        println!("Params");
         let p = mu.len();
         if p != lsigma.0.dim() {
             return Err(DistributionError::InvalidParameters(
