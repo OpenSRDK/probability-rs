@@ -182,7 +182,7 @@ mod tests {
     }
 
     #[test]
-    fn it_works_diff() {
+    fn it_works_3() {
         let normal = MultivariateNormal::new();
         let mut _rng = StdRng::from_seed([1; 32]);
 
