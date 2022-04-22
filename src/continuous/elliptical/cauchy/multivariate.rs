@@ -93,9 +93,10 @@ impl ValueDifferentiableDistribution for MultivariateCauchy {
         let x_mu = x_mat - mu_mat;
         let x_mu_t = x_mu.t();
         let sigma_inv = theta.lsigma().clone().pptri()?.to_mat();
+
         let n = x.len() as f64;
-        let d = (&x_mu_t * &sigma_inv * &x_mu)[(0, 0)];
-        let f_x = -(1.0 + n) / (1.0 + &d) * x_mu_t * sigma_inv;
+        let d = (&x_mu * &sigma_inv * &x_mu_t)[(0, 0)];
+        let f_x = -(1.0 + n) / (1.0 + &d) * x_mu * sigma_inv;
         Ok(f_x.vec())
     }
 }
@@ -112,20 +113,23 @@ impl ConditionDifferentiableDistribution for MultivariateCauchy {
         let x_mu_t = x_mu.t();
         let sigma_inv = theta.lsigma().clone().pptri()?.to_mat();
         let n = x.len() as f64;
-        let d = (&x_mu_t * &sigma_inv * &x_mu)[(0, 0)];
+        let d = (&x_mu * &sigma_inv * &x_mu_t)[(0, 0)];
         let m = sigma_inv
             .clone()
             .hadamard_prod(&sigma_inv)
             .hadamard_prod(&sigma_inv);
-        let f_mu = (1.0 + n) / (1.0 + &d) * (&x_mu_t * &sigma_inv);
-        let f_lsigma = (1.0 + n) / (1.0 + &d) * (&x_mu_t * &m * &x_mu);
+        let f_mu = (1.0 + n) / (1.0 + &d) * (&x_mu * &sigma_inv);
+        let f_lsigma = (1.0 + n) / (1.0 + &d) * (&x_mu * &m * &x_mu_t);
         Ok([f_mu.vec(), f_lsigma.vec()].concat())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{Distribution, ExactMultivariateCauchyParams, MultivariateCauchy};
+    use crate::{
+        ConditionDifferentiableDistribution, Distribution, ExactMultivariateCauchyParams,
+        MultivariateCauchy, ValueDifferentiableDistribution,
+    };
     use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
     use rand::prelude::*;
     #[test]
@@ -153,5 +157,51 @@ mod tests {
             .unwrap();
 
         println!("{:#?}", x);
+    }
+
+    #[test]
+    fn it_works2() {
+        let cauchy = MultivariateCauchy::new();
+
+        let mu = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
+        let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
+           1.0,  0.0,  0.0,  0.0,  0.0,  0.0;
+           2.0,  3.0,  0.0,  0.0,  0.0,  0.0;
+           4.0,  5.0,  6.0,  0.0,  0.0,  0.0;
+           7.0,  8.0,  9.0, 10.0,  0.0,  0.0;
+          11.0, 12.0, 13.0, 14.0, 15.0,  0.0;
+          16.0, 17.0, 18.0, 19.0, 20.0, 21.0
+        ))
+        .unwrap();
+        let x = vec![0.0, 1.0, 2.0, 2.0, 2.0, 4.0];
+
+        let f = cauchy.ln_diff_value(
+            &x,
+            &ExactMultivariateCauchyParams::new(mu, PPTRF(lsigma)).unwrap(),
+        );
+        println!("{:#?}", f);
+    }
+
+    #[test]
+    fn it_works_3() {
+        let cauchy = MultivariateCauchy::new();
+
+        let mu = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
+        let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
+           1.0,  0.0,  0.0,  0.0,  0.0,  0.0;
+           2.0,  3.0,  0.0,  0.0,  0.0,  0.0;
+           4.0,  5.0,  6.0,  0.0,  0.0,  0.0;
+           7.0,  8.0,  9.0, 10.0,  0.0,  0.0;
+          11.0, 12.0, 13.0, 14.0, 15.0,  0.0;
+          16.0, 17.0, 18.0, 19.0, 20.0, 21.0
+        ))
+        .unwrap();
+        let x = vec![0.0, 1.0, 2.0, 2.0, 2.0, 4.0];
+
+        let f = cauchy.ln_diff_condition(
+            &x,
+            &ExactMultivariateCauchyParams::new(mu, PPTRF(lsigma)).unwrap(),
+        );
+        println!("{:#?}", f);
     }
 }

@@ -104,4 +104,30 @@ mod tests {
 
         println!("{}", x);
     }
+
+    #[test]
+    fn it_works2() {
+        let n = Cauchy;
+
+        let mu = 2.0;
+        let sigma = 3.0;
+
+        let x = 0.5;
+
+        let f = n.ln_diff_value(&x, &CauchyParams::new(mu, sigma).unwrap());
+        println!("{:#?}", f);
+    }
+
+    #[test]
+    fn it_works_3() {
+        let n = Cauchy;
+
+        let mu = 2.0;
+        let sigma = 3.0;
+
+        let x = 0.5;
+
+        let f = n.ln_diff_condition(&x, &CauchyParams::new(mu, sigma).unwrap());
+        println!("{:#?}", f);
+    }
 }

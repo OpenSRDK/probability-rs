@@ -96,7 +96,10 @@ impl ConditionDifferentiableDistribution for Normal {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Distribution, Normal, NormalParams};
+    use crate::{
+        ConditionDifferentiableDistribution, Distribution, Normal, NormalParams,
+        ValueDifferentiableDistribution,
+    };
     use rand::prelude::*;
 
     #[test]
@@ -112,5 +115,31 @@ mod tests {
             .unwrap();
 
         println!("{}", x);
+    }
+
+    #[test]
+    fn it_works2() {
+        let n = Normal;
+
+        let mu = 2.0;
+        let sigma = 3.0;
+
+        let x = 0.5;
+
+        let f = n.ln_diff_value(&x, &NormalParams::new(mu, sigma).unwrap());
+        println!("{:#?}", f);
+    }
+
+    #[test]
+    fn it_works_3() {
+        let n = Normal;
+
+        let mu = 2.0;
+        let sigma = 3.0;
+
+        let x = 0.5;
+
+        let f = n.ln_diff_condition(&x, &NormalParams::new(mu, sigma).unwrap());
+        println!("{:#?}", f);
     }
 }

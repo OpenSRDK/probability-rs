@@ -147,7 +147,10 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{Beta, BetaParams, Distribution};
+    use crate::{
+        Beta, BetaParams, ConditionDifferentiableDistribution, Distribution,
+        ValueDifferentiableDistribution,
+    };
     use rand::prelude::*;
 
     #[test]
@@ -163,5 +166,30 @@ mod tests {
             .unwrap();
 
         println!("{}", x);
+    }
+    #[test]
+    fn it_works2() {
+        let n = Beta;
+
+        let alpha = 2.0;
+        let beta = 3.0;
+
+        let x = 0.5;
+
+        let f = n.ln_diff_value(&x, &BetaParams::new(alpha, beta).unwrap());
+        println!("{:#?}", f);
+    }
+
+    #[test]
+    fn it_works_3() {
+        let n = Beta;
+
+        let alpha = 2.0;
+        let beta = 3.0;
+
+        let x = 0.5;
+
+        let f = n.ln_diff_condition(&x, &BetaParams::new(alpha, beta).unwrap());
+        println!("{:#?}", f);
     }
 }
