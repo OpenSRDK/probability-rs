@@ -146,7 +146,18 @@ where
                     .unwrap()
                     .col_mat()
             })
-            .fold(vec![0.0; theta.len()].col_mat(), |a, b| a + b)
+            .fold(
+                vec![
+                    0.0;
+                    self.distributions[0]
+                        .ln_diff_condition(&x[0], theta)
+                        .unwrap()
+                        .col_mat()
+                        .len()
+                ]
+                .col_mat(),
+                |a, b| a + b,
+            )
             .vec();
         Ok(f)
     }
@@ -156,6 +167,7 @@ where
 mod tests {
     use crate::distribution::Distribution;
     use crate::*;
+    use opensrdk_linear_algebra::{mat, pp::trf::PPTRF, SymmetricPackedMatrix};
     use rand::prelude::*;
     #[test]
     fn it_works() {
@@ -183,12 +195,35 @@ mod tests {
 
     #[test]
     fn it_works3() {
-      let model = vec![Normal; 3].into_iter().only_value_joint();
+        let model = vec![Normal; 3].into_iter().only_value_joint();
 
-      let f = model
-          .ln_diff_condition(&vec![1.0, 2.0, 3.0], &NormalParams::new(0.0, 1.0).unwrap())
-          .unwrap();
+        let f = model
+            .ln_diff_condition(&vec![1.0, 2.0, 3.0], &NormalParams::new(0.0, 1.0).unwrap())
+            .unwrap();
 
-      println!("{:#?}", f);
+        println!("{:#?}", f);
+    }
+
+    #[test]
+    fn it_works4() {
+        let mu = vec![0.0, 1.0];
+        let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
+           1.0,  0.0;
+           2.0,  3.0
+        ))
+        .unwrap();
+
+        let model = vec![MultivariateNormal::new(); 3]
+            .into_iter()
+            .only_value_joint();
+
+        let f = model
+            .ln_diff_condition(
+                &vec![vec![2.0, 1.0], vec![0.0, 1.0], vec![2.0, 0.0]],
+                &ExactMultivariateNormalParams::new(mu, PPTRF(lsigma)).unwrap(),
+            )
+            .unwrap();
+
+        println!("{:#?}", f);
     }
 }
