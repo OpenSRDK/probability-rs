@@ -23,7 +23,7 @@ pub enum Type {
 
 #[test]
 fn test_main() {
-    let is_not_ci = false;
+    let is_not_ci = true;
     let is_gif = false;
     let tp = Type::Sparse;
 
@@ -158,18 +158,22 @@ fn draw(
     //     0.0,
     //     &BLUE.mix(0.5),
     // ))?;
+    println!("{:?}", result);
     chart.draw_series(LineSeries::new(
         result.iter().map(|&(xs, mu, sigma)| (xs, mu + 3.0 * sigma)),
         &RED.mix(0.5),
     ))?;
+    println!("{:?}", 1.0);
     chart.draw_series(LineSeries::new(
         result.iter().map(|&(xs, mu, _)| (xs, mu)),
         &RGBColor(255, 0, 255).mix(0.5),
     ))?;
+    println!("{:?}", 2.0);
     chart.draw_series(LineSeries::new(
         result.iter().map(|&(xs, mu, sigma)| (xs, mu - 3.0 * sigma)),
         &BLUE.mix(0.5),
     ))?;
+    println!("{:?}", 3.0);
 
     root.present()?;
 

@@ -75,7 +75,7 @@ where
             })
             .reduce(
                 || vec![0.0; theta_vec.len()].col_mat(),
-                |sum, theta| sum + theta,
+                |sum, theta| sum + theta / n as f64,
             );
 
         Ok(phi.vec())
