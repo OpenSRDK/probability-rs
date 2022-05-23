@@ -62,7 +62,7 @@ where
                     .unwrap();
                 let kernel_diff = self
                     .kernel
-                    .ln_diff_value(self.kernel_params, &theta_vec, &theta_j)
+                    .diff_value(self.kernel_params, &theta_vec, &theta_j)
                     .unwrap()
                     .col_mat();
                 let p_diff = self
