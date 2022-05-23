@@ -29,7 +29,9 @@ where
     P: Distribution<Value = B, Condition = ()> + ValueDifferentiableDistribution,
     A: RandomVariable,
     B: RandomVariable,
-    K: PositiveDefiniteKernel<Vec<f64>> + ValueDifferentiableKernel<Vec<f64>>,
+    K: PositiveDefiniteKernel<Vec<f64>>
+        + ValueDifferentiableKernel<Vec<f64>>
+        + ValueDiffKernel<Vec<f64>>,
 {
     pub fn new(
         value: &'a A,
