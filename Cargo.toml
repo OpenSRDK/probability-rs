@@ -1,6 +1,6 @@
 [package]
 name = "opensrdk-probability"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["Kimura Yu <33382781+KimuraYu45z@users.noreply.github.com>"]
 edition = "2018"
 description = "Standard probability library for OpenSRDK toolchain."
