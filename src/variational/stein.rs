@@ -20,7 +20,7 @@ where
     prior: &'a P,
     kernel: &'a K,
     kernel_params: &'a [f64],
-    samples: &'a mut ContinuousSamplesDistribution<Vec<f64>>,
+    samples: &'a ContinuousSamplesDistribution<Vec<f64>>,
 }
 
 impl<'a, L, P, A, B, K> SteinVariational<'a, L, P, A, B, K>
@@ -39,7 +39,7 @@ where
         prior: &'a P,
         kernel: &'a K,
         kernel_params: &'a [f64],
-        samples: &'a mut ContinuousSamplesDistribution<Vec<f64>>,
+        samples: &'a ContinuousSamplesDistribution<Vec<f64>>,
     ) -> Self {
         Self {
             value,
