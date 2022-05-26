@@ -51,8 +51,8 @@ where
         }
     }
 
-    pub fn samples(self) -> &'a mut ContinuousSamplesDistribution<Vec<f64>> {
-        self.samples
+    pub fn samples(&mut self) -> &mut ContinuousSamplesDistribution<Vec<f64>> {
+        &mut self.samples
     }
 
     pub fn direction(&self, theta: &B) -> Result<Vec<f64>, DistributionError> {
