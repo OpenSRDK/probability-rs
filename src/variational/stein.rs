@@ -164,7 +164,17 @@ mod tests {
 
         let kernel = RBF;
         let kernel_params = [0.5, 0.5];
-        let samples = &mut ContinuousSamplesDistribution::new(vec![vec![0.1; x[0].len()]; 10]);
+        let samples_orig = (0..10)
+            .into_iter()
+            .map(|v| {
+                let mut rng3 = StdRng::from_seed([v; 32]);
+                let theta_0 = rng3.gen_range(-5.0..=5.0);
+                let mut rng4 = StdRng::from_seed([v * 2; 32]);
+                let theta_1 = rng4.gen_range(-5.0..=5.0);
+                vec![theta_0, theta_1]
+            })
+            .collect::<Vec<Vec<f64>>>();
+        let samples = &mut ContinuousSamplesDistribution::new(samples_orig);
 
         let theta = vec![0.1, 0.1];
 
