@@ -68,20 +68,17 @@ where
                     .kernel
                     .value(self.kernel_params, &theta_vec, &theta_j)
                     .unwrap();
-                println!("{:?}", kernel);
                 let kernel_diff = self
                     .kernel
                     .diff_value(self.kernel_params, &theta_vec, &theta_j)
                     .unwrap()
                     .col_mat();
-                println!("{:?}", kernel_diff);
                 let p_diff = self
                     .likelihood
                     .ln_diff_condition(self.value, &theta)
                     .unwrap()
                     .col_mat();
                 // + self.prior.ln_diff_value(&theta, &()).unwrap().col_mat();
-                println!("{:?}", p_diff);
                 kernel * p_diff + kernel_diff
             })
             .fold(vec![0.0; m].col_mat(), |sum, x| sum + x);
