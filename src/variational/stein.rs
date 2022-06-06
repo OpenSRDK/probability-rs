@@ -77,8 +77,8 @@ where
                     .likelihood
                     .ln_diff_condition(self.value, &theta)
                     .unwrap()
-                    .col_mat();
-                // + self.prior.ln_diff_value(&theta, &()).unwrap().col_mat();
+                    .col_mat()
+                    + self.prior.ln_diff_value(&theta, &()).unwrap().col_mat();
                 kernel * p_diff + kernel_diff
             })
             .fold(vec![0.0; m].col_mat(), |sum, x| sum + x);
@@ -87,7 +87,6 @@ where
             .iter()
             .map(|i| i / n as f64)
             .collect::<Vec<f64>>();
-
         Ok(phi)
     }
 }
