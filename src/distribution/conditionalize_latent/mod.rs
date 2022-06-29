@@ -1,4 +1,11 @@
-use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+pub mod conditionalize_latent;
+
+pub use conditionalize_latent::*;
+
+use crate::{
+    DependentJoint, Distribution, DistributionError, Event, IndependentJoint, RandomVariable,
+    ValueDifferentiableDistribution,
+};
 use rand::prelude::*;
 use std::{
     fmt::Debug,
@@ -104,5 +111,67 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl<D, F, T, U, V, W> ValueDifferentiableDistribution
+    for ConditionalizeLatentVariableDistribution<D, F, T, U, V, W>
+where
+    D: Distribution<Value = T, Condition = U>,
+    F: Fn((V, W)) -> (T, U),
+    T: RandomVariable,
+    U: RandomVariable,
+    V: RandomVariable,
+    W: RandomVariable,
+{
+    fn ln_diff_value(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let converted = (x, theta).converter()?;
+        let v_len = x.len();
+        let t_len = converted.0.len();
+        let diff = t_len - v_len;
+        if 0 < diff {
+            let value_orig = self.distribution.ln_diff_value(converted)?;
+            let condition_orig = self.distribution.ln_diff_condition(converted)?;
+            let result_value = concat![value_orig, condition_orig[..diff]];
+            Ok(result_value)
+        } else {
+            let value_orig = self.distribution.ln_diff_value(converted)?;
+            Ok(result_value[..t_len])
+        }
+    }
+}
+
+impl<D, F, T, U, V, W> ConditionDifferentiableDistribution
+    for ConditionalizeLatentVariableDistribution<D, F, T, U, V, W>
+where
+    D: Distribution<Value = T, Condition = U>,
+    F: Fn((V, W)) -> (T, U),
+    T: RandomVariable,
+    U: RandomVariable,
+    V: RandomVariable,
+    W: RandomVariable,
+{
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let converted = (x, theta).converter()?;
+        let w_len = x.len();
+        let u_len = converted.1.len();
+        let diff = u_len - w_len;
+        if 0 < diff {
+            let value_orig = self.distribution.ln_diff_value(converted)?;
+            let condition_orig = self.distribution.ln_diff_condition(converted)?;
+            let result_condition = concat![value_orig[w_len..], condition_orig];
+            Ok(result_condition)
+        } else {
+            let value_orig = self.distribution.ln_diff_condition(converted)?;
+            Ok(result_condition[..w_len])
+        }
     }
 }
