@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, IndependentJoint,
-    NormalParams, RandomVariable, ValueDifferentiableDistribution,
+    NormalParams, RandomVariable, SampleableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, NormalError};
 use rand::prelude::*;
@@ -64,6 +64,28 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl SampleableDistribution for Normal {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let mu = theta.mu();
+        let sigma = theta.sigma();
+
+        let normal = match RandNormal::new(mu, sigma) {
+            Ok(n) => n,
+            Err(_) => {
+                return Err(DistributionError::InvalidParameters(
+                    NormalError::SigmaMustBePositive.into(),
+                ))
+            }
+        };
+
+        Ok(rng.sample(normal))
     }
 }
 

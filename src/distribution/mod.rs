@@ -1,3 +1,4 @@
+pub mod conditionalize_latent;
 pub mod conditioned;
 pub mod continuous_samples;
 pub mod degenerate;
@@ -12,9 +13,11 @@ pub mod independent_value_array_joint;
 pub mod instant;
 pub mod instant_condition_differentiable;
 pub mod random_variable;
+pub mod sampleable;
 pub mod switched;
 pub mod transformed;
 
+pub use conditionalize_latent::*;
 pub use conditioned::*;
 pub use continuous_samples::*;
 pub use degenerate::*;
@@ -28,6 +31,7 @@ pub use independent_joint::*;
 pub use independent_value_array_joint::*;
 pub use instant::*;
 pub use random_variable::*;
+pub use sampleable::*;
 pub use switched::*;
 pub use transformed::*;
 

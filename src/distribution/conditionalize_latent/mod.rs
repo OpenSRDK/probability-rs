@@ -1,10 +1,6 @@
-pub mod conditionalize_latent;
-
-pub use conditionalize_latent::*;
-
 use crate::{
-    DependentJoint, Distribution, DistributionError, Event, IndependentJoint, RandomVariable,
-    ValueDifferentiableDistribution,
+    ConditionDifferentiableDistribution, DependentJoint, Distribution, DistributionError, Event,
+    IndependentJoint, RandomVariable, ValueDifferentiableDistribution,
 };
 use rand::prelude::*;
 use std::{
@@ -17,7 +13,7 @@ use std::{
 pub struct ConditionalizeLatentVariableDistribution<D, F, T, U, V, W>
 where
     D: Distribution<Value = T, Condition = U>,
-    F: Fn((V, W)) -> (T, U),
+    F: Fn((V, W)) -> (T, U) + Clone + Debug + Send + Sync,
     T: RandomVariable,
     U: RandomVariable,
     V: RandomVariable,
@@ -31,7 +27,7 @@ where
 impl<D, F, T, U, V, W> ConditionalizeLatentVariableDistribution<D, F, T, U, V, W>
 where
     D: Distribution<Value = T, Condition = U>,
-    F: Fn((V, W)) -> (T, U),
+    F: Fn((V, W)) -> (T, U) + Clone + Debug + Send + Sync,
     T: RandomVariable,
     U: RandomVariable,
     V: RandomVariable,
@@ -49,7 +45,7 @@ where
 impl<D, F, T, U, V, W> Distribution for ConditionalizeLatentVariableDistribution<D, F, T, U, V, W>
 where
     D: Distribution<Value = T, Condition = U>,
-    F: Fn((V, W)) -> (T, U),
+    F: Fn((V, W)) -> (T, U) + Clone + Debug + Send + Sync,
     T: RandomVariable,
     U: RandomVariable,
     V: RandomVariable,
@@ -63,7 +59,8 @@ where
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<f64, crate::DistributionError> {
-        self.distribution.fk((x, theta).converter())
+        let converted = (x, theta).converter();
+        self.distribution.fk(converted.0, converted.1)
     }
 
     fn sample(
@@ -80,7 +77,7 @@ impl<D, F, T, U, V, W, Rhs, TRhs> Mul<Rhs>
     for ConditionalizeLatentVariableDistribution<D, F, T, U, V, W>
 where
     D: Distribution<Value = T, Condition = U>,
-    F: Fn((V, W)) -> (T, U),
+    F: Fn((V, W)) -> (T, U) + Clone + Debug + Send + Sync,
     T: RandomVariable,
     U: RandomVariable,
     V: RandomVariable,
@@ -88,18 +85,28 @@ where
     Rhs: Distribution<Value = TRhs, Condition = U>,
     TRhs: RandomVariable,
 {
-    type Output = IndependentJoint<Self, Rhs, T, TRhs, U>;
+    type Output = ConditionalizeLatentVariableDistribution<
+        IndependentJoint<D, Rhs, T, TRhs, U>,
+        F,
+        T,
+        U,
+        V,
+        W,
+    >;
 
     fn mul(self, rhs: Rhs) -> Self::Output {
-        IndependentJoint::new(self, rhs)
+        ConditionalizeLatentVariableDistribution::new(
+            IndependentJoint::new(self.distribution, rhs),
+            self.converter,
+        )
     }
 }
 
-impl<D, F, T, U, V, W, Rhs, TRhs> Mul<Rhs>
+impl<D, F, T, U, V, W, Rhs, URhs> BitAnd<Rhs>
     for ConditionalizeLatentVariableDistribution<D, F, T, U, V, W>
 where
     D: Distribution<Value = T, Condition = U>,
-    F: Fn((V, W)) -> (T, U),
+    F: Fn((V, W)) -> (T, U) + Clone + Debug + Send + Sync,
     T: RandomVariable,
     U: RandomVariable,
     V: RandomVariable,
@@ -107,10 +114,14 @@ where
     Rhs: Distribution<Value = T, Condition = URhs>,
     URhs: RandomVariable,
 {
-    type Output = DependentJoint<Self, Rhs, T, U, URhs>;
+    type Output =
+        ConditionalizeLatentVariableDistribution<DependentJoint<D, Rhs, T, U, URhs>, F, T, U, V, W>;
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
-        DependentJoint::new(self, rhs)
+        ConditionalizeLatentVariableDistribution::new(
+            DependentJoint::new(self.distribution, rhs),
+            self.converter,
+        )
     }
 }
 
@@ -118,7 +129,7 @@ impl<D, F, T, U, V, W> ValueDifferentiableDistribution
     for ConditionalizeLatentVariableDistribution<D, F, T, U, V, W>
 where
     D: Distribution<Value = T, Condition = U>,
-    F: Fn((V, W)) -> (T, U),
+    F: Fn((V, W)) -> (T, U) + Clone + Debug + Send + Sync,
     T: RandomVariable,
     U: RandomVariable,
     V: RandomVariable,
@@ -136,11 +147,11 @@ where
         if 0 < diff {
             let value_orig = self.distribution.ln_diff_value(converted)?;
             let condition_orig = self.distribution.ln_diff_condition(converted)?;
-            let result_value = concat![value_orig, condition_orig[..diff]];
+            let result_value = [value_orig, condition_orig[..diff]].concat();
             Ok(result_value)
         } else {
             let value_orig = self.distribution.ln_diff_value(converted)?;
-            Ok(result_value[..t_len])
+            Ok(value_orig[..t_len])
         }
     }
 }
@@ -149,7 +160,7 @@ impl<D, F, T, U, V, W> ConditionDifferentiableDistribution
     for ConditionalizeLatentVariableDistribution<D, F, T, U, V, W>
 where
     D: Distribution<Value = T, Condition = U>,
-    F: Fn((V, W)) -> (T, U),
+    F: Fn((V, W)) -> (T, U) + Clone + Debug + Send + Sync,
     T: RandomVariable,
     U: RandomVariable,
     V: RandomVariable,
@@ -167,11 +178,11 @@ where
         if 0 < diff {
             let value_orig = self.distribution.ln_diff_value(converted)?;
             let condition_orig = self.distribution.ln_diff_condition(converted)?;
-            let result_condition = concat![value_orig[w_len..], condition_orig];
+            let result_condition = [value_orig[w_len..], condition_orig].concat();
             Ok(result_condition)
         } else {
             let value_orig = self.distribution.ln_diff_condition(converted)?;
-            Ok(result_condition[..w_len])
+            Ok(value_orig[..w_len])
         }
     }
 }

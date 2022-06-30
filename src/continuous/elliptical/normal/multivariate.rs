@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, ExactEllipticalParams,
-    IndependentJoint, RandomVariable, ValueDifferentiableDistribution,
+    IndependentJoint, RandomVariable, SampleableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, EllipticalParams};
 use opensrdk_linear_algebra::Vector;
@@ -84,6 +84,21 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl SampleableDistribution for MultivariateNormal {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let z = (0..theta.lsigma_cols())
+            .into_iter()
+            .map(|_| rng.sample(StandardNormal))
+            .collect::<Vec<f64>>();
+
+        Ok(theta.sample(z)?)
     }
 }
 
