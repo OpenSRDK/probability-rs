@@ -40,7 +40,7 @@ where
     }
 }
 
-impl<T, U, FF, FS, G> Debug for H<T, U, FF, FS, G>
+impl<T, U, FF, FS, G> Debug for ValueDifferentiableInstantDistribution<T, U, FF, FS, G>
 where
     T: RandomVariable,
     U: RandomVariable,

@@ -87,20 +87,20 @@ where
     }
 }
 
-impl SampleableDistribution for MultivariateNormal {
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let z = (0..theta.lsigma_cols())
-            .into_iter()
-            .map(|_| rng.sample(StandardNormal))
-            .collect::<Vec<f64>>();
+// impl SampleableDistribution for MultivariateNormal {
+//     fn sample(
+//         &self,
+//         theta: &Self::Condition,
+//         rng: &mut dyn RngCore,
+//     ) -> Result<Self::Value, DistributionError> {
+//         let z = (0..theta.lsigma_cols())
+//             .into_iter()
+//             .map(|_| rng.sample(StandardNormal))
+//             .collect::<Vec<f64>>();
 
-        Ok(theta.sample(z)?)
-    }
-}
+//         Ok(theta.sample(z)?)
+//     }
+// }
 
 impl ValueDifferentiableDistribution for MultivariateNormal {
     fn ln_diff_value(

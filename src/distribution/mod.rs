@@ -12,6 +12,7 @@ pub mod independent_joint;
 pub mod independent_value_array_joint;
 pub mod instant;
 pub mod instant_condition_differentiable;
+pub mod instant_value_differentiable;
 pub mod random_variable;
 pub mod sampleable;
 pub mod switched;
