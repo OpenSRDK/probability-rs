@@ -67,27 +67,27 @@ where
     }
 }
 
-impl SampleableDistribution for Normal {
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let mu = theta.mu();
-        let sigma = theta.sigma();
+// impl SampleableDistribution for Normal {
+//     fn sample(
+//         &self,
+//         theta: &Self::Condition,
+//         rng: &mut dyn RngCore,
+//     ) -> Result<Self::Value, DistributionError> {
+//         let mu = theta.mu();
+//         let sigma = theta.sigma();
 
-        let normal = match RandNormal::new(mu, sigma) {
-            Ok(n) => n,
-            Err(_) => {
-                return Err(DistributionError::InvalidParameters(
-                    NormalError::SigmaMustBePositive.into(),
-                ))
-            }
-        };
+//         let normal = match RandNormal::new(mu, sigma) {
+//             Ok(n) => n,
+//             Err(_) => {
+//                 return Err(DistributionError::InvalidParameters(
+//                     NormalError::SigmaMustBePositive.into(),
+//                 ))
+//             }
+//         };
 
-        Ok(rng.sample(normal))
-    }
-}
+//         Ok(rng.sample(normal))
+//     }
+// }
 
 impl ValueDifferentiableDistribution for Normal {
     fn ln_diff_value(
