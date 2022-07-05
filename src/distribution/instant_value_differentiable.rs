@@ -16,7 +16,7 @@ where
     U: RandomVariable,
     FF: Fn(&T, &U) -> Result<f64, DistributionError> + Clone + Send + Sync,
     FS: Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Clone + Send + Sync,
-    G: Fn(&T, &U) -> Result<Vec<f64>, DistributionError> + Clone + Send + Sync,
+    G: Fn(&T, &U) -> Vec<f64> + Clone + Send + Sync,
 {
     instant_distribution: InstantDistribution<T, U, FF, FS>,
     value_diff: G,
@@ -29,7 +29,7 @@ where
     U: RandomVariable,
     FF: Fn(&T, &U) -> Result<f64, DistributionError> + Clone + Send + Sync,
     FS: Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Clone + Send + Sync,
-    G: Fn(&T, &U) -> Result<Vec<f64>, DistributionError> + Clone + Send + Sync,
+    G: Fn(&T, &U) -> Vec<f64> + Clone + Send + Sync,
 {
     pub fn new(instant_distribution: InstantDistribution<T, U, FF, FS>, value_diff: G) -> Self {
         Self {
@@ -46,7 +46,7 @@ where
     U: RandomVariable,
     FF: Fn(&T, &U) -> Result<f64, DistributionError> + Clone + Send + Sync,
     FS: Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Clone + Send + Sync,
-    G: Fn(&T, &U) -> Result<Vec<f64>, DistributionError> + Clone + Send + Sync,
+    G: Fn(&T, &U) -> Vec<f64> + Clone + Send + Sync,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "InstantDistribution")
@@ -59,7 +59,7 @@ where
     U: RandomVariable,
     FF: Fn(&T, &U) -> Result<f64, DistributionError> + Clone + Send + Sync,
     FS: Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Clone + Send + Sync,
-    G: Fn(&T, &U) -> Result<Vec<f64>, DistributionError> + Clone + Send + Sync,
+    G: Fn(&T, &U) -> Vec<f64> + Clone + Send + Sync,
 {
     type Value = T;
     type Condition = U;
@@ -90,7 +90,7 @@ where
     TRhs: RandomVariable,
     FF: Fn(&T, &U) -> Result<f64, DistributionError> + Clone + Send + Sync,
     FS: Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Clone + Send + Sync,
-    G: Fn(&T, &U) -> Result<Vec<f64>, DistributionError> + Clone + Send + Sync,
+    G: Fn(&T, &U) -> Vec<f64> + Clone + Send + Sync,
 {
     type Output = IndependentJoint<Self, Rhs, T, TRhs, U>;
 
@@ -108,7 +108,7 @@ where
     URhs: RandomVariable,
     FF: Fn(&T, &U) -> Result<f64, DistributionError> + Clone + Send + Sync,
     FS: Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Clone + Send + Sync,
-    G: Fn(&T, &U) -> Result<Vec<f64>, DistributionError> + Clone + Send + Sync,
+    G: Fn(&T, &U) -> Vec<f64> + Clone + Send + Sync,
 {
     type Output = DependentJoint<Self, Rhs, T, U, URhs>;
 
@@ -124,14 +124,14 @@ where
     U: RandomVariable,
     FF: Fn(&T, &U) -> Result<f64, DistributionError> + Clone + Send + Sync,
     FS: Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Clone + Send + Sync,
-    G: Fn(&T, &U) -> Result<Vec<f64>, DistributionError> + Clone + Send + Sync,
+    G: Fn(&T, &U) -> Vec<f64> + Clone + Send + Sync,
 {
     fn ln_diff_value(
         &self,
         x: &Self::Value,
         _theta: &Self::Condition,
     ) -> Result<Vec<f64>, DistributionError> {
-        let g = (self.value_diff)(x, _theta)?;
+        let g = (self.value_diff)(x, _theta);
         Ok(g)
     }
 }
