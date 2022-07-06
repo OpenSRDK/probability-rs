@@ -91,8 +91,12 @@ where
 
 impl<L, R, T, UL, UR> ValueDifferentiableDistribution for DependentJoint<L, R, T, UL, UR>
 where
-    L: Distribution<Value = T, Condition = UL> + ValueDifferentiableDistribution,
-    R: Distribution<Value = UL, Condition = UR> + ValueDifferentiableDistribution,
+    L: Distribution<Value = T, Condition = UL>
+        + ValueDifferentiableDistribution
+        + ConditionDifferentiableDistribution,
+    R: Distribution<Value = UL, Condition = UR>
+        + ValueDifferentiableDistribution
+        + ConditionDifferentiableDistribution,
     T: RandomVariable,
     UL: RandomVariable,
     UR: RandomVariable,
@@ -102,15 +106,20 @@ where
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, crate::DistributionError> {
-        let diff_l = &self.lhs.ln_diff_value(&x.0, &x.1)?;
-        let diff = (diff_l.clone().col_mat() * &self.rhs.fk(&x.1, theta)?).vec();
+        // let diff_l = &self.lhs.ln_diff_value(&x.0, &x.1)?;
+        // let diff = (diff_l.clone().col_mat() * &self.rhs.fk(&x.1, theta)?).vec();
+        let diff_a = self.lhs.ln_diff_value(&x.0, &x.1)?.col_mat() * self.rhs.fk(&x.1, &theta)?;
+        let diff_b = self.lhs.ln_diff_condition(&x.0, &x.1)?.col_mat()
+            * self.rhs.fk(&x.1, &theta)?
+            + self.rhs.ln_diff_value(&x.1, &theta)?.col_mat() * self.lhs.fk(&x.0, &x.1)?;
+        let diff = [diff_a.vec(), diff_b.vec()].concat();
         Ok(diff)
     }
 }
 
 impl<L, R, T, UL, UR> ConditionDifferentiableDistribution for DependentJoint<L, R, T, UL, UR>
 where
-    L: Distribution<Value = T, Condition = UL> + ConditionDifferentiableDistribution,
+    L: Distribution<Value = T, Condition = UL>,
     R: Distribution<Value = UL, Condition = UR> + ConditionDifferentiableDistribution,
     T: RandomVariable,
     UL: RandomVariable,
@@ -149,16 +158,16 @@ mod tests {
         println!("{:#?}", x);
     }
 
-    #[test]
-    fn it_works2() {
-        let model = Normal.condition(|x: &f64| NormalParams::new(1.0, x.powi(2) + 1.0)) & Normal;
+    // #[test]
+    // fn it_works2() {
+    //     let model = Normal.condition(|x: &f64| NormalParams::new(1.0, x.powi(2) + 1.0)) & Normal;
 
-        let f = model
-            .ln_diff_value(&(1.0, 2.0), &NormalParams::new(0.0, 1.0).unwrap())
-            .unwrap();
+    //     let f = model
+    //         .ln_diff_value(&(1.0, 2.0), &NormalParams::new(0.0, 1.0).unwrap())
+    //         .unwrap();
 
-        println!("{:#?}", f);
-    }
+    //     println!("{:#?}", f);
+    // }
 
     #[test]
     fn it_works3() {
