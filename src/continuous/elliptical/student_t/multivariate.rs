@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, ExactEllipticalParams,
-    IndependentJoint, RandomVariable, ValueDifferentiableDistribution,
+    IndependentJoint, RandomVariable, SampleableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, EllipticalParams};
 use opensrdk_linear_algebra::pp::trf::PPTRF;
@@ -222,6 +222,29 @@ where
         DependentJoint::new(self, rhs)
     }
 }
+
+// impl SampleableDistribution for MultivariateStudentT {
+//     fn sample(
+//         &self,
+//         theta: &Self::Condition,
+//         rng: &mut dyn RngCore,
+//     ) -> Result<Self::Value, DistributionError> {
+//         let nu = theta.nu();
+//         let elliptical = theta.elliptical();
+
+//         let student_t = match RandStudentT::new(nu) {
+//             Ok(v) => Ok(v),
+//             Err(e) => Err(DistributionError::Others(e.into())),
+//         }?;
+
+//         let z = (0..elliptical.lsigma_cols())
+//             .into_iter()
+//             .map(|_| rng.sample(student_t))
+//             .collect::<Vec<_>>();
+
+//         Ok(elliptical.sample(z)?)
+//     }
+// }
 
 #[cfg(test)]
 mod tests {

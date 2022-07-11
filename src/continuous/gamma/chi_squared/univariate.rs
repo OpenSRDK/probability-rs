@@ -1,4 +1,4 @@
-use crate::{ChiSquaredParams, DistributionError};
+use crate::{ChiSquaredParams, DistributionError, SampleableDistribution};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::ChiSquared as RandChiSquared;
@@ -63,6 +63,23 @@ where
         DependentJoint::new(self, rhs)
     }
 }
+
+// impl SampleableDistribution for ChiSquared {
+//     fn sample(
+//         &self,
+//         theta: &Self::Condition,
+//         rng: &mut dyn RngCore,
+//     ) -> Result<Self::Value, DistributionError> {
+//         let k = theta.k();
+
+//         let chi_squared = match RandChiSquared::new(k) {
+//             Ok(v) => Ok(v),
+//             Err(e) => Err(DistributionError::Others(e.into())),
+//         }?;
+
+//         Ok(rng.sample(chi_squared))
+//     }
+// }
 
 #[cfg(test)]
 mod tests {

@@ -1,5 +1,8 @@
 use super::wishart::Wishart;
-use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable, WishartParams};
+use crate::{
+    DependentJoint, Distribution, IndependentJoint, RandomVariable, SampleableDistribution,
+    WishartParams,
+};
 use crate::{DistributionError, InverseWishartParams};
 use opensrdk_linear_algebra::pp::trf::PPTRF;
 use rand::prelude::*;
@@ -78,6 +81,26 @@ where
         DependentJoint::new(self, rhs)
     }
 }
+
+// impl SampleableDistribution for InverseWishart {
+//     fn sample(
+//         &self,
+//         theta: &Self::Condition,
+//         rng: &mut dyn RngCore,
+//     ) -> Result<Self::Value, DistributionError> {
+//         let lpsi = theta.lpsi();
+//         let nu = theta.nu();
+
+//         let lpsi_inv = lpsi.clone().pptri()?;
+//         let w = Wishart;
+//         let w_params = WishartParams::new(PPTRF(lpsi_inv), nu)?;
+
+//         let x = w.sample(&w_params, rng)?;
+//         let x_inv = x.pptri()?;
+
+//         Ok(x_inv.pptrf().unwrap())
+//     }
+// }
 
 #[cfg(test)]
 mod tests {

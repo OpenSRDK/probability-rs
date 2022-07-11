@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, IndependentJoint,
-    RandomVariable, ValueDifferentiableDistribution,
+    RandomVariable, SampleableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, StudentTError};
 use rand::prelude::*;
@@ -93,6 +93,22 @@ where
         DependentJoint::new(self, rhs)
     }
 }
+
+// impl SampleableDistribution for StudentT {
+//     fn sample(
+//         &self,
+//         theta: &Self::Condition,
+//         rng: &mut dyn RngCore,
+//     ) -> Result<Self::Value, DistributionError> {
+//         let nu = theta.nu();
+
+//         let student_t = match RandStudentT::new(nu) {
+//             Ok(v) => Ok(v),
+//             Err(e) => Err(DistributionError::Others(e.into())),
+//         }?;
+//         Ok(rng.sample(student_t))
+//     }
+// }
 
 impl ValueDifferentiableDistribution for StudentT {
     fn ln_diff_value(
