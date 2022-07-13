@@ -130,8 +130,8 @@ where
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, crate::DistributionError> {
-        let diff_r = &self.rhs.ln_diff_condition(&x.1, &theta)?;
-        let diff = (&self.lhs.fk(&x.0, &x.1)? * diff_r.clone().col_mat()).vec();
+        let diff_r = &self.rhs.ln_diff_condition(&x.1, &theta).unwrap();
+        let diff = (&self.lhs.fk(&x.0, &x.1).unwrap() * diff_r.clone().col_mat()).vec();
         Ok(diff)
     }
 }
