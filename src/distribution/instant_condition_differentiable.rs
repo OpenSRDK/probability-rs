@@ -128,10 +128,10 @@ where
 {
     fn ln_diff_condition(
         &self,
-        _x: &Self::Value,
+        x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, DistributionError> {
-        let g = (self.condition_diff)(_x, theta)?;
+        let g = (self.condition_diff)(x, theta)?;
         Ok(g)
     }
 }

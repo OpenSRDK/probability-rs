@@ -129,9 +129,9 @@ where
     fn ln_diff_value(
         &self,
         x: &Self::Value,
-        _theta: &Self::Condition,
+        theta: &Self::Condition,
     ) -> Result<Vec<f64>, DistributionError> {
-        let g = (self.value_diff)(x, _theta)?;
+        let g = (self.value_diff)(x, theta)?;
         Ok(g)
     }
 }

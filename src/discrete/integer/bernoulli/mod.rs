@@ -68,7 +68,7 @@ impl ConditionDifferentiableDistribution for Bernoulli {
         let p = theta.p();
         // let x_f64 = if *x { 1.0 } else { 0.0 };
         // let f_p = x_f64 / p - (1.0 - x_f64) / (1.0 - p);
-        let f_p = if *x { 1.0 / p } else { -1.0 / (1.0 - p) };
+        let f_p = if *x { 1.0 } else { -1.0 };
         Ok(vec![f_p])
     }
 }
