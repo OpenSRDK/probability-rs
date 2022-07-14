@@ -108,11 +108,10 @@ where
     ) -> Result<Vec<f64>, crate::DistributionError> {
         // let diff_l = &self.lhs.ln_diff_value(&x.0, &x.1)?;
         // let diff = (diff_l.clone().col_mat() * &self.rhs.fk(&x.1, theta)?).vec();
-        let diff_a = self.lhs.ln_diff_value(&x.0, &x.1)?.col_mat() * self.rhs.fk(&x.1, &theta)?;
+        let diff_a = self.lhs.ln_diff_value(&x.0, &x.1).unwrap();
         let diff_b = self.lhs.ln_diff_condition(&x.0, &x.1)?.col_mat()
-            * self.rhs.fk(&x.1, &theta)?
-            + self.rhs.ln_diff_value(&x.1, &theta)?.col_mat() * self.lhs.fk(&x.0, &x.1)?;
-        let diff = [diff_a.vec(), diff_b.vec()].concat();
+            + self.rhs.ln_diff_value(&x.1, &theta)?.col_mat();
+        let diff = [diff_a, diff_b.vec()].concat();
         Ok(diff)
     }
 }
@@ -130,8 +129,7 @@ where
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, crate::DistributionError> {
-        let diff_r = &self.rhs.ln_diff_condition(&x.1, &theta).unwrap();
-        let diff = (&self.lhs.fk(&x.0, &x.1).unwrap() * diff_r.clone().col_mat()).vec();
+        let diff = self.rhs.ln_diff_condition(&x.1, &theta).unwrap();
         Ok(diff)
     }
 }
