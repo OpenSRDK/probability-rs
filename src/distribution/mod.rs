@@ -17,6 +17,7 @@ pub mod random_variable;
 pub mod sampleable;
 pub mod switched;
 pub mod transformed;
+pub mod valued;
 
 pub use conditionalize_latent::*;
 pub use conditioned::*;
@@ -35,6 +36,7 @@ pub use random_variable::*;
 pub use sampleable::*;
 pub use switched::*;
 pub use transformed::*;
+pub use valued::*;
 
 use opensrdk_kernel_method::KernelError;
 use opensrdk_linear_algebra::MatrixError;

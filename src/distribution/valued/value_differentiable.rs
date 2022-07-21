@@ -14,9 +14,9 @@ use std::{
 pub struct ValueDifferentiableValuedDistribution<D, T1, T2, U, F, G>
 where
     D: Distribution<Value = T1, Condition = U>,
-    T1: Event,
-    T2: Event,
-    U: RandomVariable,
+    T1: RandomVariable,
+    T2: RandomVariable,
+    U: Event,
     F: Fn(&T2) -> Result<T1, DistributionError> + Clone + Send + Sync,
     G: Fn(&T2) -> Matrix + Clone + Send + Sync,
 {
@@ -28,9 +28,9 @@ where
 impl<D, T1, T2, U, F, G> ValueDifferentiableValuedDistribution<D, T1, T2, U, F, G>
 where
     D: Distribution<Value = T1, Condition = U>,
-    T1: Event,
-    T2: Event,
-    U: RandomVariable,
+    T1: RandomVariable,
+    T2: RandomVariable,
+    U: Event,
     F: Fn(&T2) -> Result<T1, DistributionError> + Clone + Send + Sync,
     G: Fn(&T2) -> Matrix + Clone + Send + Sync,
 {
@@ -46,9 +46,9 @@ where
 impl<D, T1, T2, U, F, G> Debug for ValueDifferentiableValuedDistribution<D, T1, T2, U, F, G>
 where
     D: Distribution<Value = T1, Condition = U>,
-    T1: Event,
-    T2: Event,
-    U: RandomVariable,
+    T1: RandomVariable,
+    T2: RandomVariable,
+    U: Event,
     F: Fn(&T2) -> Result<T1, DistributionError> + Clone + Send + Sync,
     G: Fn(&T2) -> Matrix + Clone + Send + Sync,
 {
@@ -64,9 +64,9 @@ where
 impl<D, T1, T2, U, F, G> Distribution for ValueDifferentiableValuedDistribution<D, T1, T2, U, F, G>
 where
     D: Distribution<Value = T1, Condition = U>,
-    T1: Event,
-    T2: Event,
-    U: RandomVariable,
+    T1: RandomVariable,
+    T2: RandomVariable,
+    U: Event,
     F: Fn(&T2) -> Result<T1, DistributionError> + Clone + Send + Sync,
     G: Fn(&T2) -> Matrix + Clone + Send + Sync,
 {
@@ -88,7 +88,7 @@ where
         theta: &Self::Condition,
         rng: &mut dyn RngCore,
     ) -> Result<Self::Value, crate::DistributionError> {
-        self.valued_distribution.distribution.sample(theta, rng)
+        todo!()
     }
 }
 
@@ -96,9 +96,9 @@ impl<D, T1, T2, U, Rhs, TRhs, F, G> Mul<Rhs>
     for ValueDifferentiableValuedDistribution<D, T1, T2, U, F, G>
 where
     D: Distribution<Value = T1, Condition = U>,
-    T1: Event,
-    T2: Event,
-    U: RandomVariable,
+    T1: RandomVariable,
+    T2: RandomVariable,
+    U: Event,
     Rhs: Distribution<Value = TRhs, Condition = U>,
     TRhs: RandomVariable,
     F: Fn(&T2) -> Result<T1, DistributionError> + Clone + Send + Sync,
@@ -115,9 +115,9 @@ impl<D, T1, T2, U, Rhs, URhs, F, G> BitAnd<Rhs>
     for ValueDifferentiableValuedDistribution<D, T1, T2, U, F, G>
 where
     D: Distribution<Value = T1, Condition = U>,
-    T1: Event,
-    T2: Event,
-    U: RandomVariable,
+    T1: RandomVariable,
+    T2: RandomVariable,
+    U: Event,
     Rhs: Distribution<Value = U, Condition = URhs>,
     URhs: RandomVariable,
     F: Fn(&T2) -> Result<T1, DistributionError> + Clone + Send + Sync,
@@ -133,10 +133,10 @@ where
 impl<D, T1, T2, U, F, G> ValueDifferentiableDistribution
     for ValueDifferentiableValuedDistribution<D, T1, T2, U, F, G>
 where
-    D: Distribution<Value = T1, Condition = U>,
-    T1: Event,
-    T2: Event,
-    U: RandomVariable,
+    D: Distribution<Value = T1, Condition = U> + ValueDifferentiableDistribution,
+    T1: RandomVariable,
+    T2: RandomVariable,
+    U: Event,
     F: Fn(&T2) -> Result<T1, DistributionError> + Clone + Send + Sync,
     G: Fn(&T2) -> Matrix + Clone + Send + Sync,
 {
@@ -159,15 +159,15 @@ where
     }
 }
 
-impl<D, T, U1, U2, F, G> ConditionDifferentiableDistribution
-    for ConditionDifferentiableConditionedDistribution<D, T, U1, U2, F, G>
+impl<D, T1, T2, U, F, G> ConditionDifferentiableDistribution
+    for ValueDifferentiableValuedDistribution<D, T1, T2, U, F, G>
 where
-    D: Distribution<Value = T, Condition = U1> + ConditionDifferentiableDistribution,
-    T: RandomVariable,
-    U1: Event,
-    U2: Event,
-    F: Fn(&U2) -> Result<U1, DistributionError> + Clone + Send + Sync,
-    G: Fn(&U2) -> Matrix + Clone + Send + Sync,
+    D: Distribution<Value = T1, Condition = U> + ConditionDifferentiableDistribution,
+    T1: RandomVariable,
+    T2: RandomVariable,
+    U: Event,
+    F: Fn(&T2) -> Result<T1, DistributionError> + Clone + Send + Sync,
+    G: Fn(&T2) -> Matrix + Clone + Send + Sync,
 {
     fn ln_diff_condition(
         &self,
