@@ -1,5 +1,5 @@
-use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{DistributionError, SampleableDistribution};
 use rand::prelude::*;
 use rand_distr::FisherF as RandFisherF;
 use std::{ops::BitAnd, ops::Mul};
@@ -72,6 +72,24 @@ where
         DependentJoint::new(self, rhs)
     }
 }
+
+// impl SampleableDistribution for FisherF {
+//     fn sample(
+//         &self,
+//         theta: &Self::Condition,
+//         rng: &mut dyn RngCore,
+//     ) -> Result<Self::Value, DistributionError> {
+//         let m = theta.m();
+//         let n = theta.n();
+
+//         let fisher_f = match RandFisherF::new(m, n) {
+//             Ok(v) => Ok(v),
+//             Err(e) => Err(DistributionError::Others(e.into())),
+//         }?;
+
+//         Ok(rng.sample(fisher_f))
+//     }
+// }
 
 #[cfg(test)]
 mod tests {

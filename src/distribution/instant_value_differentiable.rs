@@ -1,6 +1,6 @@
 use crate::{
-    ConditionDifferentiableDistribution, DependentJoint, Distribution, DistributionError,
-    IndependentJoint, InstantDistribution, RandomVariable,
+    DependentJoint, Distribution, DistributionError, IndependentJoint, InstantDistribution,
+    RandomVariable, ValueDifferentiableDistribution,
 };
 use rand::prelude::*;
 use std::{
@@ -10,7 +10,7 @@ use std::{
 };
 
 #[derive(Clone)]
-pub struct ConditionDifferentiableInstantDistribution<T, U, FF, FS, G>
+pub struct ValueDifferentiableInstantDistribution<T, U, FF, FS, G>
 where
     T: RandomVariable,
     U: RandomVariable,
@@ -19,11 +19,11 @@ where
     G: Fn(&T, &U) -> Result<Vec<f64>, DistributionError> + Clone + Send + Sync,
 {
     instant_distribution: InstantDistribution<T, U, FF, FS>,
-    condition_diff: G,
+    value_diff: G,
     phantom: PhantomData<U>,
 }
 
-impl<T, U, FF, FS, G> ConditionDifferentiableInstantDistribution<T, U, FF, FS, G>
+impl<T, U, FF, FS, G> ValueDifferentiableInstantDistribution<T, U, FF, FS, G>
 where
     T: RandomVariable,
     U: RandomVariable,
@@ -31,16 +31,16 @@ where
     FS: Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Clone + Send + Sync,
     G: Fn(&T, &U) -> Result<Vec<f64>, DistributionError> + Clone + Send + Sync,
 {
-    pub fn new(instant_distribution: InstantDistribution<T, U, FF, FS>, condition_diff: G) -> Self {
+    pub fn new(instant_distribution: InstantDistribution<T, U, FF, FS>, value_diff: G) -> Self {
         Self {
             instant_distribution,
-            condition_diff,
+            value_diff,
             phantom: PhantomData,
         }
     }
 }
 
-impl<T, U, FF, FS, G> Debug for ConditionDifferentiableInstantDistribution<T, U, FF, FS, G>
+impl<T, U, FF, FS, G> Debug for ValueDifferentiableInstantDistribution<T, U, FF, FS, G>
 where
     T: RandomVariable,
     U: RandomVariable,
@@ -53,7 +53,7 @@ where
     }
 }
 
-impl<T, U, FF, FS, G> Distribution for ConditionDifferentiableInstantDistribution<T, U, FF, FS, G>
+impl<T, U, FF, FS, G> Distribution for ValueDifferentiableInstantDistribution<T, U, FF, FS, G>
 where
     T: RandomVariable,
     U: RandomVariable,
@@ -82,7 +82,7 @@ where
 }
 
 impl<T, U, Rhs, TRhs, FF, FS, G> Mul<Rhs>
-    for ConditionDifferentiableInstantDistribution<T, U, FF, FS, G>
+    for ValueDifferentiableInstantDistribution<T, U, FF, FS, G>
 where
     T: RandomVariable,
     U: RandomVariable,
@@ -100,7 +100,7 @@ where
 }
 
 impl<T, U, Rhs, URhs, FF, FS, G> BitAnd<Rhs>
-    for ConditionDifferentiableInstantDistribution<T, U, FF, FS, G>
+    for ValueDifferentiableInstantDistribution<T, U, FF, FS, G>
 where
     T: RandomVariable,
     U: RandomVariable,
@@ -117,8 +117,8 @@ where
     }
 }
 
-impl<T, U, FF, FS, G> ConditionDifferentiableDistribution
-    for ConditionDifferentiableInstantDistribution<T, U, FF, FS, G>
+impl<T, U, FF, FS, G> ValueDifferentiableDistribution
+    for ValueDifferentiableInstantDistribution<T, U, FF, FS, G>
 where
     T: RandomVariable,
     U: RandomVariable,
@@ -126,12 +126,12 @@ where
     FS: Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Clone + Send + Sync,
     G: Fn(&T, &U) -> Result<Vec<f64>, DistributionError> + Clone + Send + Sync,
 {
-    fn ln_diff_condition(
+    fn ln_diff_value(
         &self,
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, DistributionError> {
-        let g = (self.condition_diff)(x, theta)?;
+        let g = (self.value_diff)(x, theta)?;
         Ok(g)
     }
 }

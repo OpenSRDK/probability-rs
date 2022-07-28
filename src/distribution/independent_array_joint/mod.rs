@@ -168,4 +168,30 @@ mod tests {
 
         println!("{:#?}", x);
     }
+
+    #[test]
+    fn it_works2() {
+        let model = vec![Normal; 3].into_iter().joint();
+        let f = model
+            .ln_diff_value(
+                &vec![0.0, 1.0, 2.0],
+                &vec![NormalParams::new(0.0, 1.0).unwrap(); 3],
+            )
+            .unwrap();
+
+        println!("{:#?}", f);
+    }
+
+    #[test]
+    fn it_works3() {
+        let model = vec![Normal; 3].into_iter().joint();
+        let f = model
+            .ln_diff_condition(
+                &vec![0.0, 1.0, 2.0],
+                &vec![NormalParams::new(0.0, 1.0).unwrap(); 3],
+            )
+            .unwrap();
+
+        println!("{:#?}", f);
+    }
 }

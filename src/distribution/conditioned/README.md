@@ -38,4 +38,4 @@ Conditioned Distribution : $ p(\mathbf{a} \mid f(c))$ ,
 
 and 
 
-Differentiated Condition ( not $\log$ ) : $\frac{\partial f(c)}{\partial c}$
+Differentiated Condition ( not $\log$ ) : $\frac{\partial f(c)}{\partial c}$ ( Matrix )

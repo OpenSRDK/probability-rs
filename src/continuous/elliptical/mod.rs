@@ -10,6 +10,6 @@ pub use student_t::*;
 
 #[derive(thiserror::Error, Debug)]
 pub enum EllipticalError {
-    #[error("dimension mismatch")]
+    #[error("dimension mismatch (Ellptical)")]
     DimensionMismatch,
 }

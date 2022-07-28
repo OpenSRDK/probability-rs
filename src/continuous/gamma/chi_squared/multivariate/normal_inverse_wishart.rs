@@ -1,6 +1,12 @@
 use crate::{
-    DependentJoint, Distribution, ExactMultivariateNormalParams, IndependentJoint, InverseWishart,
-    InverseWishartParams, MultivariateNormal, RandomVariable,
+    DependentJoint,
+    Distribution,
+    ExactMultivariateNormalParams,
+    IndependentJoint,
+    InverseWishart,
+    InverseWishartParams,
+    MultivariateNormal,
+    RandomVariable, //SampleableDistribution,
 };
 use crate::{DistributionError, NormalInverseWishartParams};
 use opensrdk_linear_algebra::pp::trf::PPTRF;
@@ -119,6 +125,40 @@ where
         DependentJoint::new(self, rhs)
     }
 }
+
+// impl SampleableDistribution for NormalInverseWishart {
+//     fn sample(
+//         &self,
+//         theta: &Self::Condition,
+//         rng: &mut dyn RngCore,
+//     ) -> Result<Self::Value, DistributionError> {
+//         let mu0 = theta.mu0().clone();
+//         let lambda = theta.lambda();
+//         let lpsi = theta.lpsi().clone();
+//         let nu = theta.nu();
+//         let dim = mu0.len();
+
+//         let n = MultivariateNormal::new();
+//         let winv = InverseWishart;
+
+//         let lsigma = winv.sample(&InverseWishartParams::new(lpsi, nu)?, rng)?;
+//         let mu = n.sample(
+//             &ExactMultivariateNormalParams::new(
+//                 mu0,
+//                 PPTRF(
+//                     SymmetricPackedMatrix::from(
+//                         dim,
+//                         ((1.0 / lambda).sqrt() * lsigma.0.elems().to_vec().col_mat()).vec(),
+//                     )
+//                     .unwrap(),
+//                 ),
+//             )?,
+//             rng,
+//         )?;
+
+//         Ok(ExactMultivariateNormalParams::new(mu, lsigma)?)
+//     }
+// }
 
 #[cfg(test)]
 mod tests {

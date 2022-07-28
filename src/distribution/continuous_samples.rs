@@ -40,7 +40,7 @@ where
         &mut self.samples
     }
 
-    pub fn mean(&self) -> Result<T, DistributionError> {
+    pub fn sum(&self) -> Result<T, DistributionError> {
         let n = self.samples.len();
         if n == 0 {
             return Err(DistributionError::Others(

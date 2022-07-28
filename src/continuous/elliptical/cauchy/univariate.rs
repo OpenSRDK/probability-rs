@@ -1,6 +1,6 @@
 use crate::{
     CauchyParams, ConditionDifferentiableDistribution, DependentJoint, Distribution,
-    IndependentJoint, RandomVariable, ValueDifferentiableDistribution,
+    IndependentJoint, RandomVariable, SampleableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, StudentT, StudentTParams};
 use rand::prelude::*;
@@ -55,6 +55,18 @@ where
     }
 }
 
+// impl SampleableDistribution for Cauchy {
+//     fn sample(
+//         &self,
+//         theta: &Self::Condition,
+//         rng: &mut dyn RngCore,
+//     ) -> Result<Self::Value, DistributionError> {
+//         let studentt_params = StudentTParams::new(1.0, theta.mu(), theta.sigma())?;
+
+//         StudentT.sample(&studentt_params, rng)
+//     }
+// }
+
 impl ValueDifferentiableDistribution for Cauchy {
     fn ln_diff_value(
         &self,
@@ -103,5 +115,31 @@ mod tests {
             .unwrap();
 
         println!("{}", x);
+    }
+
+    #[test]
+    fn it_works2() {
+        let n = Cauchy;
+
+        let mu = 2.0;
+        let sigma = 3.0;
+
+        let x = 0.5;
+
+        let f = n.ln_diff_value(&x, &CauchyParams::new(mu, sigma).unwrap());
+        println!("{:#?}", f);
+    }
+
+    #[test]
+    fn it_works_3() {
+        let n = Cauchy;
+
+        let mu = 2.0;
+        let sigma = 3.0;
+
+        let x = 0.5;
+
+        let f = n.ln_diff_condition(&x, &CauchyParams::new(mu, sigma).unwrap());
+        println!("{:#?}", f);
     }
 }

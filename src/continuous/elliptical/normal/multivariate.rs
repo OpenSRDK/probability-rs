@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, ExactEllipticalParams,
-    IndependentJoint, RandomVariable, ValueDifferentiableDistribution,
+    IndependentJoint, RandomVariable, SampleableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, EllipticalParams};
 use opensrdk_linear_algebra::Vector;
@@ -87,6 +87,21 @@ where
     }
 }
 
+// impl SampleableDistribution for MultivariateNormal {
+//     fn sample(
+//         &self,
+//         theta: &Self::Condition,
+//         rng: &mut dyn RngCore,
+//     ) -> Result<Self::Value, DistributionError> {
+//         let z = (0..theta.lsigma_cols())
+//             .into_iter()
+//             .map(|_| rng.sample(StandardNormal))
+//             .collect::<Vec<f64>>();
+
+//         Ok(theta.sample(z)?)
+//     }
+// }
+
 impl ValueDifferentiableDistribution for MultivariateNormal {
     fn ln_diff_value(
         &self,
@@ -118,10 +133,9 @@ impl ConditionDifferentiableDistribution for MultivariateNormal {
         let x_mat = x.clone().row_mat();
         let x_mu_mat = x_mat - mu_mat;
         let f_mu = &x_mu_mat * &sigma_inv;
-
         let lsigma_t_inv = theta.lsigma().clone().pptri()?.to_mat().t();
         let x_mu_t = x_mu_mat.t();
-        let f_lsigma = (&sigma_inv * &sigma_inv * &x_mu_mat * &x_mu_t - &lsigma_t_inv) * 0.5;
+        let f_lsigma = (&sigma_inv * &sigma_inv * &x_mu_t * &x_mu_mat - &lsigma_t_inv) * 0.5;
         Ok([f_mu.vec(), f_lsigma.vec()].concat())
     }
 }
@@ -129,8 +143,8 @@ impl ConditionDifferentiableDistribution for MultivariateNormal {
 #[cfg(test)]
 mod tests {
     use crate::{
-        Distribution, ExactMultivariateNormalParams, MultivariateNormal,
-        ValueDifferentiableDistribution,
+        ConditionDifferentiableDistribution, Distribution, ExactMultivariateNormalParams,
+        MultivariateNormal, ValueDifferentiableDistribution,
     };
     use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
     use rand::prelude::*;
@@ -176,6 +190,27 @@ mod tests {
         let x = vec![0.0, 1.0];
 
         let f = normal.ln_diff_value(
+            &x,
+            &ExactMultivariateNormalParams::new(mu, PPTRF(lsigma)).unwrap(),
+        );
+        println!("{:#?}", f);
+    }
+
+    #[test]
+    fn it_works_3() {
+        let normal = MultivariateNormal::new();
+        let mut _rng = StdRng::from_seed([1; 32]);
+
+        let mu = vec![0.0, 1.0];
+        let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
+           1.0,  0.0;
+           2.0,  1.0
+        ))
+        .unwrap();
+
+        let x = vec![0.0, 1.0];
+
+        let f = normal.ln_diff_condition(
             &x,
             &ExactMultivariateNormalParams::new(mu, PPTRF(lsigma)).unwrap(),
         );

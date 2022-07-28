@@ -1,5 +1,5 @@
-use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{DistributionError, SampleableDistribution};
 use rand::prelude::*;
 use rand_distr::Exp as RandExp;
 use std::{ops::BitAnd, ops::Mul};
@@ -67,6 +67,23 @@ where
         DependentJoint::new(self, rhs)
     }
 }
+
+// impl SampleableDistribution for Exp {
+//     fn sample(
+//         &self,
+//         theta: &Self::Condition,
+//         rng: &mut dyn RngCore,
+//     ) -> Result<Self::Value, DistributionError> {
+//         let lambda = theta.lambda();
+
+//         let exp = match RandExp::new(lambda) {
+//             Ok(v) => Ok(v),
+//             Err(e) => Err(DistributionError::Others(e.into())),
+//         }?;
+
+//         Ok(rng.sample(exp))
+//     }
+// }
 
 #[cfg(test)]
 mod tests {

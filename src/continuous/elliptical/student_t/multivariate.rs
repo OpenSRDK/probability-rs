@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, ExactEllipticalParams,
-    IndependentJoint, RandomVariable, ValueDifferentiableDistribution,
+    IndependentJoint, RandomVariable, SampleableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, EllipticalParams};
 use opensrdk_linear_algebra::pp::trf::PPTRF;
@@ -35,7 +35,7 @@ where
 
 #[derive(thiserror::Error, Debug)]
 pub enum MultivariateStudentTError {
-    #[error("dimension mismatch")]
+    #[error("dimension mismatch (StudentT Multivariate)")]
     DimensionMismatch,
 }
 
@@ -92,8 +92,8 @@ impl ValueDifferentiableDistribution for MultivariateStudentT {
         let sigma_inv = theta.lsigma().clone().pptri()?.to_mat();
         let nu = theta.nu();
         let n = x.len() as f64;
-        let d = (&x_mu_t * &sigma_inv * &x_mu)[(0, 0)];
-        let f_x = -(&nu + &n) / &nu * (1.0 + &d).powi(-1) * (x_mu_t * sigma_inv);
+        let d = (&x_mu * &sigma_inv * &x_mu_t)[(0, 0)];
+        let f_x = -(&nu + &n) / &nu * (1.0 + &d).powi(-1) * (x_mu * sigma_inv);
         Ok(f_x.vec())
     }
 }
@@ -111,14 +111,14 @@ impl ConditionDifferentiableDistribution for MultivariateStudentT {
         let sigma_inv = theta.lsigma().clone().pptri()?.to_mat();
         let nu = theta.nu();
         let n = x.len() as f64;
-        let d = (&x_mu_t * &sigma_inv * &x_mu)[(0, 0)];
+        let d = (&x_mu * &sigma_inv * &x_mu_t)[(0, 0)];
         // Hadamard product (L*L*L)
         let m = sigma_inv
             .clone()
             .hadamard_prod(&sigma_inv)
             .hadamard_prod(&sigma_inv);
-        let f_mu = (&nu + &n) / &nu * (1.0 + &d).powi(-1) * (&x_mu_t * &sigma_inv);
-        let f_lsigma = (&nu + &n) / &nu * (1.0 + &d / &nu).powi(-1) * (&x_mu_t * &m * &x_mu);
+        let f_mu = (&nu + &n) / &nu * (1.0 + &d).powi(-1) * (&x_mu * &sigma_inv);
+        let f_lsigma = (&nu + &n) / &nu * (1.0 + &d / &nu).powi(-1) * (&x_mu * &m * &x_mu_t);
         let f_nu = 0.5
             * ((0.5 * (nu + n)).digamma()
                 - (n / nu)
@@ -223,9 +223,35 @@ where
     }
 }
 
+// impl SampleableDistribution for MultivariateStudentT {
+//     fn sample(
+//         &self,
+//         theta: &Self::Condition,
+//         rng: &mut dyn RngCore,
+//     ) -> Result<Self::Value, DistributionError> {
+//         let nu = theta.nu();
+//         let elliptical = theta.elliptical();
+
+//         let student_t = match RandStudentT::new(nu) {
+//             Ok(v) => Ok(v),
+//             Err(e) => Err(DistributionError::Others(e.into())),
+//         }?;
+
+//         let z = (0..elliptical.lsigma_cols())
+//             .into_iter()
+//             .map(|_| rng.sample(student_t))
+//             .collect::<Vec<_>>();
+
+//         Ok(elliptical.sample(z)?)
+//     }
+// }
+
 #[cfg(test)]
 mod tests {
-    use crate::{Distribution, ExactMultivariateStudentTParams, MultivariateStudentT};
+    use crate::{
+        ConditionDifferentiableDistribution, Distribution, ExactMultivariateStudentTParams,
+        MultivariateStudentT, ValueDifferentiableDistribution,
+    };
     use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
     use rand::prelude::*;
     #[test]
@@ -253,5 +279,55 @@ mod tests {
             .unwrap();
 
         println!("{:#?}", x);
+    }
+
+    #[test]
+    fn it_works2() {
+        let student_t = MultivariateStudentT::new();
+
+        let mu = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
+        let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
+           1.0,  0.0,  0.0,  0.0,  0.0,  0.0;
+           2.0,  3.0,  0.0,  0.0,  0.0,  0.0;
+           4.0,  5.0,  6.0,  0.0,  0.0,  0.0;
+           7.0,  8.0,  9.0, 10.0,  0.0,  0.0;
+          11.0, 12.0, 13.0, 14.0, 15.0,  0.0;
+          16.0, 17.0, 18.0, 19.0, 20.0, 21.0
+        ))
+        .unwrap();
+        println!("{:#?}", lsigma);
+
+        let x = vec![0.0, 1.0, 2.0, 0.0, 1.0, 2.0];
+
+        let f = student_t.ln_diff_value(
+            &x,
+            &ExactMultivariateStudentTParams::new(1.0, mu, PPTRF(lsigma)).unwrap(),
+        );
+        println!("{:#?}", f);
+    }
+
+    #[test]
+    fn it_works_3() {
+        let student_t = MultivariateStudentT::new();
+
+        let mu = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
+        let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
+           1.0,  0.0,  0.0,  0.0,  0.0,  0.0;
+           2.0,  3.0,  0.0,  0.0,  0.0,  0.0;
+           4.0,  5.0,  6.0,  0.0,  0.0,  0.0;
+           7.0,  8.0,  9.0, 10.0,  0.0,  0.0;
+          11.0, 12.0, 13.0, 14.0, 15.0,  0.0;
+          16.0, 17.0, 18.0, 19.0, 20.0, 21.0
+        ))
+        .unwrap();
+        println!("{:#?}", lsigma);
+
+        let x = vec![0.0, 1.0, 2.0, 0.0, 1.0, 2.0];
+
+        let f = student_t.ln_diff_condition(
+            &x,
+            &ExactMultivariateStudentTParams::new(1.0, mu, PPTRF(lsigma)).unwrap(),
+        );
+        println!("{:#?}", f);
     }
 }

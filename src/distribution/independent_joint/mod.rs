@@ -147,4 +147,24 @@ mod tests {
 
         println!("{:#?}", x);
     }
+
+    #[test]
+    fn it_works2() {
+        let model = Normal * Normal;
+        let f = model
+            .ln_diff_value(&(1.0, 2.0), &NormalParams::new(0.0, 1.0).unwrap())
+            .unwrap();
+
+        println!("{:#?}", f);
+    }
+
+    #[test]
+    fn it_works3() {
+        let model = Normal * Normal;
+        let f = model
+            .ln_diff_condition(&(1.0, 2.0), &NormalParams::new(0.0, 1.0).unwrap())
+            .unwrap();
+
+        println!("{:#?}", f);
+    }
 }
