@@ -1,3 +1,5 @@
+// Already finished the implementation of "sampleable distribution".　The implement has commented out.
+
 use crate::{Distribution, SampleableDistribution};
 use rand::prelude::*;
 use std::ops::Range;

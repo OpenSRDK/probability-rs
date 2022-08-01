@@ -1,3 +1,5 @@
+// Already finished the implementation of "sampleable distribution".　The implement has commented out.
+
 use crate::{
     DependentJoint, Distribution, IndependentJoint, RandomVariable, SampleableDistribution,
 };

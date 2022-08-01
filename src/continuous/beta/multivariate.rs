@@ -1,5 +1,5 @@
-use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{DistributionError, SampleableDistribution};
 use rand::prelude::*;
 use rand_distr::Dirichlet as RandDirichlet;
 use rayon::{iter::IntoParallelIterator, prelude::*};
@@ -127,6 +127,23 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl SampleableDistribution for Dirichlet {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let alpha = theta.alpha();
+
+        let dirichlet = match RandDirichlet::new(alpha) {
+            Ok(n) => n,
+            Err(e) => return Err(DistributionError::Others(e.into())),
+        };
+
+        Ok(rng.sample(dirichlet))
     }
 }
 

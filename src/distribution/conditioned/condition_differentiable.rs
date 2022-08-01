@@ -2,7 +2,7 @@ use crate::{
     ConditionDifferentiableDistribution, ConditionedDistribution, DependentJoint, Distribution,
     DistributionError, Event, IndependentJoint, RandomVariable, ValueDifferentiableDistribution,
 };
-use opensrdk_linear_algebra::{Matrix, MatrixError, Vector};
+use opensrdk_linear_algebra::{Matrix, Vector};
 use rand::prelude::*;
 use std::{
     fmt::Debug,
@@ -195,7 +195,6 @@ mod tests {
     use crate::{
         ConditionDifferentiableConditionedDistribution, ConditionDifferentiableDistribution,
         ConditionableDistribution, Distribution, ExactMultivariateNormalParams, MultivariateNormal,
-        ValueDifferentiableDistribution,
     };
     use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
     use rand::prelude::*;
@@ -276,7 +275,7 @@ mod tests {
 
     #[test]
     fn it_works2() {
-        let mut rng = StdRng::from_seed([1; 32]);
+        //let mut _rng = StdRng::from_seed([1; 32]);
 
         let mu = vec![0.0, 1.0];
         let lsigma = SymmetricPackedMatrix::from_mat(&mat!(

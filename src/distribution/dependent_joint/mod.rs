@@ -137,10 +137,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::*;
-    use crate::{
-        ConditionDifferentiableDistribution, Distribution, ExactMultivariateNormalParams,
-        MultivariateNormal, ValueDifferentiableDistribution,
-    };
+    use crate::{ConditionDifferentiableDistribution, Distribution};
     use opensrdk_linear_algebra::mat;
     use rand::prelude::*;
 

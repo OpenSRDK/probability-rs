@@ -1,5 +1,6 @@
 use crate::{
-    ConditionDifferentiableDistribution, DistributionError, ValueDifferentiableDistribution,
+    ConditionDifferentiableDistribution, DistributionError, SampleableDistribution,
+    ValueDifferentiableDistribution,
 };
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
@@ -142,6 +143,24 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl SampleableDistribution for Beta {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let alpha = theta.alpha();
+        let beta = theta.beta();
+
+        let beta = match RandBeta::new(alpha, beta) {
+            Ok(v) => Ok(v),
+            Err(e) => Err(DistributionError::Others(e.into())),
+        }?;
+
+        Ok(rng.sample(beta))
     }
 }
 
