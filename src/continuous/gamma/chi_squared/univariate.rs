@@ -25,21 +25,6 @@ impl Distribution for ChiSquared {
 
         Ok(x.powf(k / 2.0 - 1.0) * (-x / 2.0).exp())
     }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let k = theta.k();
-
-        let chi_squared = match RandChiSquared::new(k) {
-            Ok(v) => Ok(v),
-            Err(e) => Err(DistributionError::Others(e.into())),
-        }?;
-
-        Ok(rng.sample(chi_squared))
-    }
 }
 
 impl<Rhs, TRhs> Mul<Rhs> for ChiSquared
@@ -66,22 +51,22 @@ where
     }
 }
 
-// impl SampleableDistribution for ChiSquared {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let k = theta.k();
+impl SampleableDistribution for ChiSquared {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let k = theta.k();
 
-//         let chi_squared = match RandChiSquared::new(k) {
-//             Ok(v) => Ok(v),
-//             Err(e) => Err(DistributionError::Others(e.into())),
-//         }?;
+        let chi_squared = match RandChiSquared::new(k) {
+            Ok(v) => Ok(v),
+            Err(e) => Err(DistributionError::Others(e.into())),
+        }?;
 
-//         Ok(rng.sample(chi_squared))
-//     }
-// }
+        Ok(rng.sample(chi_squared))
+    }
+}
 
 #[cfg(test)]
 mod tests {

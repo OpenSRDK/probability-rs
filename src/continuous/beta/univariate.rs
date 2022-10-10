@@ -30,22 +30,6 @@ impl Distribution for Beta {
 
         Ok(x.powf(alpha - 1.0) * (1.0 - x).powf(beta - 1.0))
     }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let alpha = theta.alpha();
-        let beta = theta.beta();
-
-        let beta = match RandBeta::new(alpha, beta) {
-            Ok(v) => Ok(v),
-            Err(e) => Err(DistributionError::Others(e.into())),
-        }?;
-
-        Ok(rng.sample(beta))
-    }
 }
 
 impl ValueDifferentiableDistribution for Beta {
@@ -168,7 +152,7 @@ impl SampleableDistribution for Beta {
 mod tests {
     use crate::{
         Beta, BetaParams, ConditionDifferentiableDistribution, Distribution,
-        ValueDifferentiableDistribution,
+        SampleableDistribution, ValueDifferentiableDistribution,
     };
     use rand::prelude::*;
 

@@ -39,21 +39,6 @@ impl Distribution for Dirichlet {
             .map(|(&xi, &alphai)| xi.powf(alphai - 1.0))
             .product::<f64>())
     }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let alpha = theta.alpha();
-
-        let dirichlet = match RandDirichlet::new(alpha) {
-            Ok(n) => n,
-            Err(e) => return Err(DistributionError::Others(e.into())),
-        };
-
-        Ok(rng.sample(dirichlet))
-    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -149,7 +134,7 @@ impl SampleableDistribution for Dirichlet {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Dirichlet, DirichletParams, Distribution};
+    use crate::{Dirichlet, DirichletParams, Distribution, SampleableDistribution};
     use rand::prelude::*;
     #[test]
     fn it_works() {

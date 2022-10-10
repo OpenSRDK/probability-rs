@@ -1,4 +1,6 @@
-use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{
+    DependentJoint, Distribution, IndependentJoint, RandomVariable, SampleableDistribution,
+};
 use rand::prelude::*;
 use std::{
     fmt::Debug,
@@ -49,14 +51,6 @@ where
         theta: &Self::Condition,
     ) -> Result<f64, crate::DistributionError> {
         self.distribution.fk(&x.0, &theta.0)
-    }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, crate::DistributionError> {
-        Ok((self.distribution.sample(&theta.0, rng)?, theta.1.clone()))
     }
 }
 pub trait TransformableDistribution: Distribution + Sized {
@@ -115,5 +109,21 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl<D, T, U, V> SampleableDistribution for TransformedDistribution<D, T, U, V>
+where
+    D: SampleableDistribution<Value = T, Condition = U>,
+    T: RandomVariable,
+    U: RandomVariable,
+    V: RandomVariable,
+{
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, crate::DistributionError> {
+        Ok((self.distribution.sample(&theta.0, rng)?, theta.1.clone()))
     }
 }

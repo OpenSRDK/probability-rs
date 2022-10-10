@@ -57,38 +57,6 @@ impl Distribution for NormalInverseWishart {
             )?,
         )? * w_inv.fk(lsigma, &InverseWishartParams::new(lpsi, nu)?)?)
     }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let mu0 = theta.mu0().clone();
-        let lambda = theta.lambda();
-        let lpsi = theta.lpsi().clone();
-        let nu = theta.nu();
-        let dim = mu0.len();
-
-        let n = MultivariateNormal::new();
-        let winv = InverseWishart;
-
-        let lsigma = winv.sample(&InverseWishartParams::new(lpsi, nu)?, rng)?;
-        let mu = n.sample(
-            &ExactMultivariateNormalParams::new(
-                mu0,
-                PPTRF(
-                    SymmetricPackedMatrix::from(
-                        dim,
-                        ((1.0 / lambda).sqrt() * lsigma.0.elems().to_vec().col_mat()).vec(),
-                    )
-                    .unwrap(),
-                ),
-            )?,
-            rng,
-        )?;
-
-        Ok(ExactMultivariateNormalParams::new(mu, lsigma)?)
-    }
 }
 
 impl<Rhs, TRhs> Mul<Rhs> for NormalInverseWishart
@@ -122,39 +90,39 @@ where
     }
 }
 
-// impl SampleableDistribution for NormalInverseWishart {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let mu0 = theta.mu0().clone();
-//         let lambda = theta.lambda();
-//         let lpsi = theta.lpsi().clone();
-//         let nu = theta.nu();
-//         let dim = mu0.len();
+impl SampleableDistribution for NormalInverseWishart {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let mu0 = theta.mu0().clone();
+        let lambda = theta.lambda();
+        let lpsi = theta.lpsi().clone();
+        let nu = theta.nu();
+        let dim = mu0.len();
 
-//         let n = MultivariateNormal::new();
-//         let winv = InverseWishart;
+        let n = MultivariateNormal::new();
+        let winv = InverseWishart;
 
-//         let lsigma = winv.sample(&InverseWishartParams::new(lpsi, nu)?, rng)?;
-//         let mu = n.sample(
-//             &ExactMultivariateNormalParams::new(
-//                 mu0,
-//                 PPTRF(
-//                     SymmetricPackedMatrix::from(
-//                         dim,
-//                         ((1.0 / lambda).sqrt() * lsigma.0.elems().to_vec().col_mat()).vec(),
-//                     )
-//                     .unwrap(),
-//                 ),
-//             )?,
-//             rng,
-//         )?;
+        let lsigma = winv.sample(&InverseWishartParams::new(lpsi, nu)?, rng)?;
+        let mu = n.sample(
+            &ExactMultivariateNormalParams::new(
+                mu0,
+                PPTRF(
+                    SymmetricPackedMatrix::from(
+                        dim,
+                        ((1.0 / lambda).sqrt() * lsigma.0.elems().to_vec().col_mat()).vec(),
+                    )
+                    .unwrap(),
+                ),
+            )?,
+            rng,
+        )?;
 
-//         Ok(ExactMultivariateNormalParams::new(mu, lsigma)?)
-//     }
-// }
+        Ok(ExactMultivariateNormalParams::new(mu, lsigma)?)
+    }
+}
 
 #[cfg(test)]
 mod tests {

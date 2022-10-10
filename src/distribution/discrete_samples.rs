@@ -1,4 +1,4 @@
-use crate::{Categorical, CategoricalParams, DistributionError};
+use crate::{Categorical, CategoricalParams, DistributionError, SampleableDistribution};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
@@ -105,23 +105,6 @@ where
     fn fk(&self, x: &Self::Value, _: &Self::Condition) -> Result<f64, DistributionError> {
         Ok(*self.n_map.get(x).unwrap_or(&0) as f64 / self.n as f64)
     }
-
-    fn sample(
-        &self,
-        _theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let keys = self.n_map.keys().collect::<Vec<_>>();
-        let pi = keys
-            .iter()
-            .map(|&k| *self.n_map.get(k).unwrap())
-            .map(|ni| ni as f64 / self.n as f64)
-            .collect();
-        let params = CategoricalParams::new(pi)?;
-        let sampled = Categorical.sample(&params, rng)?;
-
-        Ok(keys[sampled].clone())
-    }
 }
 
 impl<T, Rhs, TRhs> Mul<Rhs> for DiscreteSamplesDistribution<T>
@@ -147,5 +130,27 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl<T> SampleableDistribution for DiscreteSamplesDistribution<T>
+where
+    T: RandomVariable + Eq + Hash,
+{
+    fn sample(
+        &self,
+        _theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let keys = self.n_map.keys().collect::<Vec<_>>();
+        let pi = keys
+            .iter()
+            .map(|&k| *self.n_map.get(k).unwrap())
+            .map(|ni| ni as f64 / self.n as f64)
+            .collect();
+        let params = CategoricalParams::new(pi)?;
+        let sampled = Categorical.sample(&params, rng)?;
+
+        Ok(keys[sampled].clone())
     }
 }

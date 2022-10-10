@@ -2,7 +2,9 @@ pub mod params;
 
 pub use params::*;
 
-use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{
+    DependentJoint, Distribution, IndependentJoint, RandomVariable, SampleableDistribution,
+};
 use crate::{DiscreteDistribution, DistributionError};
 use rand::prelude::*;
 use rand_distr::Geometric as RandGeometric;
@@ -26,21 +28,6 @@ impl Distribution for Geometric {
         let p = theta.p();
 
         Ok((1.0 - p).powi((x - 1) as i32) * p)
-    }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let p = theta.p();
-
-        let geometric = match RandGeometric::new(p) {
-            Ok(v) => Ok(v),
-            Err(e) => Err(DistributionError::Others(e.into())),
-        }?;
-
-        Ok(rng.sample(geometric))
     }
 }
 
@@ -70,6 +57,22 @@ where
     }
 }
 
+impl SampleableDistribution for Geometric {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let p = theta.p();
+
+        let geometric = match RandGeometric::new(p) {
+            Ok(v) => Ok(v),
+            Err(e) => Err(DistributionError::Others(e.into())),
+        }?;
+
+        Ok(rng.sample(geometric))
+    }
+}
 #[cfg(test)]
 mod tests {
     #[test]

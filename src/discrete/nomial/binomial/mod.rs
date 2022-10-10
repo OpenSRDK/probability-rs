@@ -2,7 +2,9 @@ pub mod params;
 
 pub use params::*;
 
-use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{
+    DependentJoint, Distribution, IndependentJoint, RandomVariable, SampleableDistribution,
+};
 use crate::{DiscreteDistribution, DistributionError};
 use num_integer::binomial;
 use rand::prelude::*;
@@ -31,22 +33,6 @@ impl Distribution for Binomial {
 
         Ok(binomial(n, *x) as f64 * p.powi(*x as i32) * (1.0 - p).powi((n - x) as i32))
     }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let n = theta.n();
-        let p = theta.p();
-
-        let binominal = match RandBinominal::new(n, p) {
-            Ok(v) => Ok(v),
-            Err(e) => Err(DistributionError::Others(e.into())),
-        }?;
-
-        Ok(rng.sample(binominal))
-    }
 }
 
 impl DiscreteDistribution for Binomial {}
@@ -72,6 +58,24 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl SampleableDistribution for Binomial {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let n = theta.n();
+        let p = theta.p();
+
+        let binominal = match RandBinominal::new(n, p) {
+            Ok(v) => Ok(v),
+            Err(e) => Err(DistributionError::Others(e.into())),
+        }?;
+
+        Ok(rng.sample(binominal))
     }
 }
 

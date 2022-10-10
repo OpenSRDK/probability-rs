@@ -37,25 +37,6 @@ impl Distribution for InverseWishart {
         Ok(lx.trdet().powf(-(nu + p + 1.0) / 2.0)
             * (-0.5 * x.clone().pptrs(&lpsi * lpsi.t())?.tr()).exp())
     }
-
-    /// output is cholesky decomposed
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let lpsi = theta.lpsi();
-        let nu = theta.nu();
-
-        let lpsi_inv = lpsi.clone().pptri()?;
-        let w = Wishart;
-        let w_params = WishartParams::new(PPTRF(lpsi_inv), nu)?;
-
-        let x = w.sample(&w_params, rng)?;
-        let x_inv = x.pptri()?;
-
-        Ok(x_inv.pptrf().unwrap())
-    }
 }
 
 impl<Rhs, TRhs> Mul<Rhs> for InverseWishart
@@ -82,25 +63,25 @@ where
     }
 }
 
-// impl SampleableDistribution for InverseWishart {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let lpsi = theta.lpsi();
-//         let nu = theta.nu();
+impl SampleableDistribution for InverseWishart {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let lpsi = theta.lpsi();
+        let nu = theta.nu();
 
-//         let lpsi_inv = lpsi.clone().pptri()?;
-//         let w = Wishart;
-//         let w_params = WishartParams::new(PPTRF(lpsi_inv), nu)?;
+        let lpsi_inv = lpsi.clone().pptri()?;
+        let w = Wishart;
+        let w_params = WishartParams::new(PPTRF(lpsi_inv), nu)?;
 
-//         let x = w.sample(&w_params, rng)?;
-//         let x_inv = x.pptri()?;
+        let x = w.sample(&w_params, rng)?;
+        let x_inv = x.pptri()?;
 
-//         Ok(x_inv.pptrf().unwrap())
-//     }
-// }
+        Ok(x_inv.pptrf().unwrap())
+    }
+}
 
 #[cfg(test)]
 mod tests {

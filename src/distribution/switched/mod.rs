@@ -1,4 +1,6 @@
-use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{
+    DependentJoint, Distribution, IndependentJoint, RandomVariable, SampleableDistribution,
+};
 use crate::{DistributionError, Event};
 use rand::prelude::*;
 use std::{
@@ -67,24 +69,6 @@ where
             SwitchedParams::Direct(theta) => self.distribution.fk(x, theta),
         }
     }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let s = theta;
-
-        match s {
-            SwitchedParams::Key(k) => match self.map.get(k) {
-                Some(theta) => self.distribution.sample(theta, rng),
-                None => Err(DistributionError::InvalidParameters(
-                    SwitchedError::KeyNotFound.into(),
-                )),
-            },
-            SwitchedParams::Direct(theta) => self.distribution.sample(theta, rng),
-        }
-    }
 }
 
 pub trait SwitchableDistribution<U>: Distribution + Sized
@@ -138,6 +122,31 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl<'a, D, T, U> SampleableDistribution for SwitchedDistribution<'a, D, T, U>
+where
+    D: SampleableDistribution<Value = T, Condition = U>,
+    T: RandomVariable,
+    U: Event,
+{
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let s = theta;
+
+        match s {
+            SwitchedParams::Key(k) => match self.map.get(k) {
+                Some(theta) => self.distribution.sample(theta, rng),
+                None => Err(DistributionError::InvalidParameters(
+                    SwitchedError::KeyNotFound.into(),
+                )),
+            },
+            SwitchedParams::Direct(theta) => self.distribution.sample(theta, rng),
+        }
     }
 }
 

@@ -1,4 +1,4 @@
-use crate::{Distribution, RandomVariable};
+use crate::{Distribution, RandomVariable, SampleableDistribution};
 
 #[derive(Clone, Debug)]
 pub struct Degenerate<T>
@@ -35,7 +35,12 @@ where
             Ok(0.0)
         }
     }
+}
 
+impl<T> SampleableDistribution for Degenerate<T>
+where
+    T: RandomVariable + PartialEq,
+{
     fn sample(
         &self,
         _theta: &Self::Condition,

@@ -36,20 +36,6 @@ impl Distribution for Categorical {
         }
         Ok(theta.p()[k])
     }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn rand::RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let index = match WeightedIndex::new(theta.p().clone()) {
-            Ok(v) => Ok(v),
-            Err(e) => Err(DistributionError::Others(e.into())),
-        }?
-        .sample(rng);
-
-        Ok(index)
-    }
 }
 
 impl DiscreteDistribution for Categorical {}
@@ -78,9 +64,25 @@ where
     }
 }
 
+impl SampleableDistribution for Categorical {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn rand::RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let index = match WeightedIndex::new(theta.p().clone()) {
+            Ok(v) => Ok(v),
+            Err(e) => Err(DistributionError::Others(e.into())),
+        }?
+        .sample(rng);
+
+        Ok(index)
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{Categorical, CategoricalParams, Distribution};
+    use crate::{Categorical, CategoricalParams, Distribution, SampleableDistribution};
     use rand::prelude::*;
     #[test]
     fn it_works() {

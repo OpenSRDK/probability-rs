@@ -1,6 +1,7 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, ExactEllipticalParams,
-    IndependentJoint, MultivariateStudentT, MultivariateStudentTWrapper, RandomVariable,
+    ExactMultivariateStudentTParams, IndependentJoint, MultivariateStudentT,
+    MultivariateStudentTParams, MultivariateStudentTWrapper, RandomVariable,
     SampleableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, EllipticalParams};
@@ -45,15 +46,15 @@ where
         MultivariateStudentT::new().fk(x, &studentt_params)
     }
 
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let studentt_params = MultivariateStudentTWrapper::new(theta);
+    // fn sample(
+    //     &self,
+    //     theta: &Self::Condition,
+    //     rng: &mut dyn RngCore,
+    // ) -> Result<Self::Value, DistributionError> {
+    //     let studentt_params = MultivariateStudentTWrapper::new(theta);
 
-        MultivariateStudentT::new().sample(&studentt_params, rng)
-    }
+    //     MultivariateStudentT::new().sample(&studentt_params, rng)
+    // }
 }
 
 impl<T, Rhs, TRhs> Mul<Rhs> for MultivariateCauchy<T>
@@ -82,17 +83,22 @@ where
     }
 }
 
-// impl SampleableDistribution for MultivariateCauchy {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let studentt_params = MultivariateStudentTWrapper::new(theta);
-
-//         MultivariateStudentT::new().sample(&studentt_params, rng)
-//     }
-// }
+impl SampleableDistribution for MultivariateCauchy {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let studentt_params_orig = MultivariateStudentTWrapper::new(theta);
+        let studentt_params = ExactMultivariateStudentTParams::new(
+            studentt_params_orig.nu(),
+            *studentt_params_orig.elliptical().mu(),
+            *studentt_params_orig.elliptical().lsigma(),
+        )
+        .unwrap();
+        MultivariateStudentT::new().sample(&studentt_params, rng)
+    }
+}
 
 impl ValueDifferentiableDistribution for MultivariateCauchy {
     fn ln_diff_value(
@@ -140,7 +146,7 @@ impl ConditionDifferentiableDistribution for MultivariateCauchy {
 mod tests {
     use crate::{
         ConditionDifferentiableDistribution, Distribution, ExactMultivariateCauchyParams,
-        MultivariateCauchy, ValueDifferentiableDistribution,
+        MultivariateCauchy, SampleableDistribution, ValueDifferentiableDistribution,
     };
     use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
     use rand::prelude::*;

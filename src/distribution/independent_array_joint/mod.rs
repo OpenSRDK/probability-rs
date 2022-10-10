@@ -1,5 +1,6 @@
 use crate::{
-    ConditionDifferentiableDistribution, DistributionError, ValueDifferentiableDistribution,
+    ConditionDifferentiableDistribution, DistributionError, SampleableDistribution,
+    ValueDifferentiableDistribution,
 };
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
@@ -32,18 +33,6 @@ where
             .enumerate()
             .map(|(i, (xi, thetai))| self.distributions[i].fk(xi, thetai))
             .product()
-    }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        self.distributions
-            .iter()
-            .zip(theta.iter())
-            .map(|(di, thetai)| di.sample(thetai, rng))
-            .collect()
     }
 }
 
@@ -148,6 +137,25 @@ where
             })
             .collect::<Vec<f64>>();
         Ok(f)
+    }
+}
+
+impl<D, T, U> SampleableDistribution for IndependentArrayJoint<D, T, U>
+where
+    D: SampleableDistribution<Value = T, Condition = U>,
+    T: RandomVariable,
+    U: RandomVariable,
+{
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        self.distributions
+            .iter()
+            .zip(theta.iter())
+            .map(|(di, thetai)| di.sample(thetai, rng))
+            .collect()
     }
 }
 

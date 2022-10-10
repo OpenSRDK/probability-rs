@@ -46,19 +46,6 @@ where
         // For preventing the result from being zero, dividing e^n
         Ok((-1.0 / 2.0 * (x_mu.t() * theta.sigma_inv_mul(x_mu)?)[(0, 0)] / (n as f64).exp()).exp())
     }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let z = (0..theta.lsigma_cols())
-            .into_iter()
-            .map(|_| rng.sample(StandardNormal))
-            .collect::<Vec<f64>>();
-
-        Ok(theta.sample(z)?)
-    }
 }
 
 impl<T, Rhs, TRhs> Mul<Rhs> for MultivariateNormal<T>
@@ -87,20 +74,20 @@ where
     }
 }
 
-// impl SampleableDistribution for MultivariateNormal {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let z = (0..theta.lsigma_cols())
-//             .into_iter()
-//             .map(|_| rng.sample(StandardNormal))
-//             .collect::<Vec<f64>>();
+impl SampleableDistribution for MultivariateNormal {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let z = (0..theta.lsigma_cols())
+            .into_iter()
+            .map(|_| rng.sample(StandardNormal))
+            .collect::<Vec<f64>>();
 
-//         Ok(theta.sample(z)?)
-//     }
-// }
+        Ok(theta.sample(z)?)
+    }
+}
 
 impl ValueDifferentiableDistribution for MultivariateNormal {
     fn ln_diff_value(
@@ -144,7 +131,7 @@ impl ConditionDifferentiableDistribution for MultivariateNormal {
 mod tests {
     use crate::{
         ConditionDifferentiableDistribution, Distribution, ExactMultivariateNormalParams,
-        MultivariateNormal, ValueDifferentiableDistribution,
+        MultivariateNormal, SampleableDistribution, ValueDifferentiableDistribution,
     };
     use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
     use rand::prelude::*;

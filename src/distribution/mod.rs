@@ -82,11 +82,11 @@ pub trait Distribution: Clone + Debug + Send + Sync {
     type Condition: Clone + Debug + Send + Sync;
 
     fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError>;
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError>;
+    // fn sample(
+    //     &self,
+    //     theta: &Self::Condition,
+    //     rng: &mut dyn RngCore,
+    // ) -> Result<Self::Value, DistributionError>;
 }
 
 pub trait DiscreteDistribution: Distribution {

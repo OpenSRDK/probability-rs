@@ -1,6 +1,7 @@
 use crate::{
     ConditionDifferentiableDistribution, ConditionedDistribution, DependentJoint, Distribution,
-    DistributionError, Event, IndependentJoint, RandomVariable, ValueDifferentiableDistribution,
+    DistributionError, Event, IndependentJoint, RandomVariable, SampleableDistribution,
+    ValueDifferentiableDistribution,
 };
 use opensrdk_linear_algebra::{Matrix, Vector};
 use rand::prelude::*;
@@ -86,16 +87,6 @@ where
         self.conditioned_distribution
             .distribution
             .fk(x, &(self.conditioned_distribution.condition)(theta)?)
-    }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, crate::DistributionError> {
-        self.conditioned_distribution
-            .distribution
-            .sample(&(self.conditioned_distribution.condition)(theta)?, rng)
     }
 }
 
@@ -190,11 +181,33 @@ where
     }
 }
 
+impl<D, T, U1, U2, F, G> SampleableDistribution
+    for ConditionDifferentiableConditionedDistribution<D, T, U1, U2, F, G>
+where
+    D: SampleableDistribution<Value = T, Condition = U1>,
+    T: RandomVariable,
+    U1: Event,
+    U2: Event,
+    F: Fn(&U2) -> Result<U1, DistributionError> + Clone + Send + Sync,
+    G: Fn(&U2) -> Matrix + Clone + Send + Sync,
+{
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, crate::DistributionError> {
+        self.conditioned_distribution
+            .distribution
+            .sample(&(self.conditioned_distribution.condition)(theta)?, rng)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{
         ConditionDifferentiableConditionedDistribution, ConditionDifferentiableDistribution,
         ConditionableDistribution, Distribution, ExactMultivariateNormalParams, MultivariateNormal,
+        SampleableDistribution,
     };
     use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
     use rand::prelude::*;

@@ -56,27 +56,6 @@ where
 
         Ok((1.0 + (x_mu.t() * elliptical.sigma_inv_mul(x_mu)?)[(0, 0)] / nu).powf(-(nu + n) / 2.0))
     }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let nu = theta.nu();
-        let elliptical = theta.elliptical();
-
-        let student_t = match RandStudentT::new(nu) {
-            Ok(v) => Ok(v),
-            Err(e) => Err(DistributionError::Others(e.into())),
-        }?;
-
-        let z = (0..elliptical.lsigma_cols())
-            .into_iter()
-            .map(|_| rng.sample(student_t))
-            .collect::<Vec<_>>();
-
-        Ok(elliptical.sample(z)?)
-    }
 }
 
 impl ValueDifferentiableDistribution for MultivariateStudentT {
@@ -223,34 +202,34 @@ where
     }
 }
 
-// impl SampleableDistribution for MultivariateStudentT {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let nu = theta.nu();
-//         let elliptical = theta.elliptical();
+impl SampleableDistribution for MultivariateStudentT {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let nu = theta.nu();
+        let elliptical = theta.elliptical();
 
-//         let student_t = match RandStudentT::new(nu) {
-//             Ok(v) => Ok(v),
-//             Err(e) => Err(DistributionError::Others(e.into())),
-//         }?;
+        let student_t = match RandStudentT::new(nu) {
+            Ok(v) => Ok(v),
+            Err(e) => Err(DistributionError::Others(e.into())),
+        }?;
 
-//         let z = (0..elliptical.lsigma_cols())
-//             .into_iter()
-//             .map(|_| rng.sample(student_t))
-//             .collect::<Vec<_>>();
+        let z = (0..elliptical.lsigma_cols())
+            .into_iter()
+            .map(|_| rng.sample(student_t))
+            .collect::<Vec<_>>();
 
-//         Ok(elliptical.sample(z)?)
-//     }
-// }
+        Ok(elliptical.sample(z)?)
+    }
+}
 
 #[cfg(test)]
 mod tests {
     use crate::{
         ConditionDifferentiableDistribution, Distribution, ExactMultivariateStudentTParams,
-        MultivariateStudentT, ValueDifferentiableDistribution,
+        MultivariateStudentT, SampleableDistribution, ValueDifferentiableDistribution,
     };
     use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
     use rand::prelude::*;
