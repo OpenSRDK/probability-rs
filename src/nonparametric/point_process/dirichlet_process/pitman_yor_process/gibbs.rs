@@ -57,13 +57,13 @@ where
         }
     }
 
-    fn sample(
-        &self,
-        _theta: &Self::Condition,
-        _rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        todo!()
-    }
+    // fn sample(
+    //     &self,
+    //     _theta: &Self::Condition,
+    //     _rng: &mut dyn RngCore,
+    // ) -> Result<Self::Value, DistributionError> {
+    //     todo!()
+    // }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
