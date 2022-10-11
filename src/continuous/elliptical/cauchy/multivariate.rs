@@ -92,8 +92,8 @@ impl SampleableDistribution for MultivariateCauchy {
         let studentt_params_orig = MultivariateStudentTWrapper::new(theta);
         let studentt_params = ExactMultivariateStudentTParams::new(
             studentt_params_orig.nu(),
-            *studentt_params_orig.elliptical().mu(),
-            *studentt_params_orig.elliptical().lsigma(),
+            studentt_params_orig.elliptical().mu().clone(),
+            studentt_params_orig.elliptical().lsigma().clone(),
         )
         .unwrap();
         MultivariateStudentT::new().sample(&studentt_params, rng)
