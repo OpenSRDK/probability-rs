@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, Distribution, IndependentJoint, RandomVariable,
-    ValueDifferentiableDistribution,
+    SampleableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, Event};
 use opensrdk_linear_algebra::Vector;
@@ -47,11 +47,6 @@ where
 
     fn fk(&self, x: &(T, UL), theta: &UR) -> Result<f64, DistributionError> {
         Ok(self.lhs.fk(&x.0, &x.1)? * self.rhs.fk(&x.1, theta)?)
-    }
-
-    fn sample(&self, theta: &UR, rng: &mut dyn RngCore) -> Result<(T, UL), DistributionError> {
-        let rhs = self.rhs.sample(theta, rng)?;
-        Ok((self.lhs.sample(&rhs, rng)?, rhs))
     }
 }
 
@@ -134,13 +129,24 @@ where
     }
 }
 
+impl<L, R, T, UL, UR> SampleableDistribution for DependentJoint<L, R, T, UL, UR>
+where
+    L: SampleableDistribution<Value = T, Condition = UL>,
+    R: SampleableDistribution<Value = UL, Condition = UR>,
+    T: RandomVariable,
+    UL: RandomVariable,
+    UR: Event,
+{
+    fn sample(&self, theta: &UR, rng: &mut dyn RngCore) -> Result<(T, UL), DistributionError> {
+        let rhs = self.rhs.sample(theta, rng)?;
+        Ok((self.lhs.sample(&rhs, rng)?, rhs))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::*;
-    use crate::{
-        ConditionDifferentiableDistribution, Distribution, ExactMultivariateNormalParams,
-        MultivariateNormal, ValueDifferentiableDistribution,
-    };
+    use crate::{ConditionDifferentiableDistribution, Distribution};
     use opensrdk_linear_algebra::mat;
     use rand::prelude::*;
 

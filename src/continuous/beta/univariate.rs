@@ -1,5 +1,6 @@
 use crate::{
-    ConditionDifferentiableDistribution, DistributionError, ValueDifferentiableDistribution,
+    ConditionDifferentiableDistribution, DistributionError, SampleableDistribution,
+    ValueDifferentiableDistribution,
 };
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
@@ -28,22 +29,6 @@ impl Distribution for Beta {
         let beta = theta.beta();
 
         Ok(x.powf(alpha - 1.0) * (1.0 - x).powf(beta - 1.0))
-    }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let alpha = theta.alpha();
-        let beta = theta.beta();
-
-        let beta = match RandBeta::new(alpha, beta) {
-            Ok(v) => Ok(v),
-            Err(e) => Err(DistributionError::Others(e.into())),
-        }?;
-
-        Ok(rng.sample(beta))
     }
 }
 
@@ -145,11 +130,29 @@ where
     }
 }
 
+impl SampleableDistribution for Beta {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let alpha = theta.alpha();
+        let beta = theta.beta();
+
+        let beta = match RandBeta::new(alpha, beta) {
+            Ok(v) => Ok(v),
+            Err(e) => Err(DistributionError::Others(e.into())),
+        }?;
+
+        Ok(rng.sample(beta))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{
         Beta, BetaParams, ConditionDifferentiableDistribution, Distribution,
-        ValueDifferentiableDistribution,
+        SampleableDistribution, ValueDifferentiableDistribution,
     };
     use rand::prelude::*;
 

@@ -1,6 +1,7 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, DistributionError, Event,
-    IndependentJoint, RandomVariable, ValueDifferentiableDistribution, ValuedDistribution,
+    IndependentJoint, RandomVariable, SampleableDistribution, ValueDifferentiableDistribution,
+    ValuedDistribution,
 };
 use opensrdk_linear_algebra::{Matrix, MatrixError, Vector};
 use rand::prelude::*;
@@ -81,14 +82,6 @@ where
         self.valued_distribution
             .distribution
             .fk(&(self.valued_distribution.value)(x)?, theta)
-    }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, crate::DistributionError> {
-        todo!()
     }
 }
 
@@ -180,6 +173,25 @@ where
             .ln_diff_condition(&(self.valued_distribution.value)(x)?, theta)
             .unwrap();
         Ok(f)
+    }
+}
+
+impl<D, T1, T2, U, F, G> SampleableDistribution
+    for ValueDifferentiableValuedDistribution<D, T1, T2, U, F, G>
+where
+    D: Distribution<Value = T1, Condition = U>,
+    T1: RandomVariable,
+    T2: RandomVariable,
+    U: Event,
+    F: Fn(&T2) -> Result<T1, DistributionError> + Clone + Send + Sync,
+    G: Fn(&T2) -> Matrix + Clone + Send + Sync,
+{
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, crate::DistributionError> {
+        todo!()
     }
 }
 

@@ -4,7 +4,7 @@ pub use condition_differentiable::*;
 
 use crate::{
     DependentJoint, Distribution, DistributionError, Event, IndependentJoint, RandomVariable,
-    ValueDifferentiableDistribution,
+    SampleableDistribution, ValueDifferentiableDistribution,
 };
 use rand::prelude::*;
 use std::{
@@ -78,14 +78,6 @@ where
         theta: &Self::Condition,
     ) -> Result<f64, crate::DistributionError> {
         self.distribution.fk(x, &(self.condition)(theta)?)
-    }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, crate::DistributionError> {
-        self.distribution.sample(&(self.condition)(theta)?, rng)
     }
 }
 
@@ -179,11 +171,28 @@ where
     }
 }
 
+impl<D, T, U1, U2, F> SampleableDistribution for ConditionedDistribution<D, T, U1, U2, F>
+where
+    D: SampleableDistribution<Value = T, Condition = U1>,
+    T: RandomVariable,
+    U1: Event,
+    U2: Event,
+    F: Fn(&U2) -> Result<U1, DistributionError> + Clone + Send + Sync,
+{
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, crate::DistributionError> {
+        self.distribution.sample(&(self.condition)(theta)?, rng)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{
-        ConditionDifferentiableDistribution, ConditionableDistribution, Distribution,
-        ExactMultivariateNormalParams, MultivariateNormal, ValueDifferentiableDistribution,
+        ConditionableDistribution, Distribution, ExactMultivariateNormalParams, MultivariateNormal,
+        SampleableDistribution, ValueDifferentiableDistribution,
     };
     use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
     use rand::prelude::*;
@@ -222,7 +231,7 @@ mod tests {
 
     #[test]
     fn it_works2() {
-        let mut rng = StdRng::from_seed([1; 32]);
+        //let mut rng = StdRng::from_seed([1; 32]);
 
         let mu = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
         let lsigma = SymmetricPackedMatrix::from_mat(&mat!(

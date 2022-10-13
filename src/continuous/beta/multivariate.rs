@@ -1,5 +1,5 @@
-use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{DistributionError, SampleableDistribution};
 use rand::prelude::*;
 use rand_distr::Dirichlet as RandDirichlet;
 use rayon::{iter::IntoParallelIterator, prelude::*};
@@ -38,21 +38,6 @@ impl Distribution for Dirichlet {
             .zip(alpha.into_par_iter())
             .map(|(&xi, &alphai)| xi.powf(alphai - 1.0))
             .product::<f64>())
-    }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let alpha = theta.alpha();
-
-        let dirichlet = match RandDirichlet::new(alpha) {
-            Ok(n) => n,
-            Err(e) => return Err(DistributionError::Others(e.into())),
-        };
-
-        Ok(rng.sample(dirichlet))
     }
 }
 
@@ -130,9 +115,26 @@ where
     }
 }
 
+impl SampleableDistribution for Dirichlet {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let alpha = theta.alpha();
+
+        let dirichlet = match RandDirichlet::new(alpha) {
+            Ok(n) => n,
+            Err(e) => return Err(DistributionError::Others(e.into())),
+        };
+
+        Ok(rng.sample(dirichlet))
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{Dirichlet, DirichletParams, Distribution};
+    use crate::{Dirichlet, DirichletParams, Distribution, SampleableDistribution};
     use rand::prelude::*;
     #[test]
     fn it_works() {

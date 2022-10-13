@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, RandomVariable,
-    ValueDifferentiableDistribution,
+    SampleableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, Event};
 use rand::prelude::*;
@@ -47,10 +47,6 @@ where
 
     fn fk(&self, x: &(TL, TR), theta: &U) -> Result<f64, DistributionError> {
         Ok(self.lhs.fk(&x.0, theta)? * self.rhs.fk(&x.1, theta)?)
-    }
-
-    fn sample(&self, theta: &U, rng: &mut dyn RngCore) -> Result<(TL, TR), DistributionError> {
-        Ok((self.lhs.sample(theta, rng)?, self.rhs.sample(theta, rng)?))
     }
 }
 
@@ -130,6 +126,20 @@ where
         Ok(f)
     }
 }
+
+impl<L, R, TL, TR, U> SampleableDistribution for IndependentJoint<L, R, TL, TR, U>
+where
+    L: SampleableDistribution<Value = TL, Condition = U>,
+    R: SampleableDistribution<Value = TR, Condition = U>,
+    TL: RandomVariable,
+    TR: RandomVariable,
+    U: Event,
+{
+    fn sample(&self, theta: &U, rng: &mut dyn RngCore) -> Result<(TL, TR), DistributionError> {
+        Ok((self.lhs.sample(theta, rng)?, self.rhs.sample(theta, rng)?))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::distribution::Distribution;

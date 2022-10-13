@@ -1,4 +1,4 @@
-use crate::{Categorical, CategoricalParams, DistributionError};
+use crate::{Categorical, CategoricalParams, DistributionError, SampleableDistribution};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
@@ -84,17 +84,6 @@ where
             .sum::<f64>();
         Ok(eq_num / self.samples.len() as f64)
     }
-
-    fn sample(
-        &self,
-        _theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let pi = vec![1.0 / self.samples.len() as f64; self.samples.len()];
-        let params = CategoricalParams::new(pi)?;
-        let sampled = Categorical.sample(&params, rng)?;
-        Ok(self.samples[sampled].clone())
-    }
 }
 
 impl<T, Rhs, TRhs> Mul<Rhs> for ContinuousSamplesDistribution<T>
@@ -120,5 +109,21 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl<T> SampleableDistribution for ContinuousSamplesDistribution<T>
+where
+    T: RandomVariable + PartialEq,
+{
+    fn sample(
+        &self,
+        _theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let pi = vec![1.0 / self.samples.len() as f64; self.samples.len()];
+        let params = CategoricalParams::new(pi)?;
+        let sampled = Categorical.sample(&params, rng)?;
+        Ok(self.samples[sampled].clone())
     }
 }

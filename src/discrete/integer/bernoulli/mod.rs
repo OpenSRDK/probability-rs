@@ -22,15 +22,6 @@ impl Distribution for Bernoulli {
     fn fk(&self, _x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         Ok(theta.p())
     }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn rand::RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let u = rng.gen_range(0.0..=1.0);
-        Ok(u <= theta.p())
-    }
 }
 
 impl DiscreteDistribution for Bernoulli {}
@@ -69,5 +60,16 @@ impl ConditionDifferentiableDistribution for Bernoulli {
         let x_f64 = if *x { 1.0 } else { 0.0 };
         let f_p = x_f64 / p - (1.0 - x_f64) / (1.0 - p);
         Ok(vec![f_p])
+    }
+}
+
+impl SampleableDistribution for Bernoulli {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn rand::RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let u = rng.gen_range(0.0..=1.0);
+        Ok(u <= theta.p())
     }
 }

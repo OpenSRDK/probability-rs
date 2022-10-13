@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, IndependentJoint,
-    RandomVariable,
+    RandomVariable, SampleableDistribution,
 };
 use crate::{DistributionError, ValueDifferentiableDistribution};
 use opensrdk_linear_algebra::Vector;
@@ -33,17 +33,6 @@ where
             .enumerate()
             .map(|(i, xi)| self.distributions[i].fk(xi, theta))
             .product()
-    }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        self.distributions
-            .iter()
-            .map(|di| di.sample(theta, rng))
-            .collect()
     }
 }
 
@@ -159,6 +148,24 @@ where
             )
             .vec();
         Ok(f)
+    }
+}
+
+impl<D, T, U> SampleableDistribution for IndependentValueArrayJoint<D, T, U>
+where
+    D: SampleableDistribution<Value = T, Condition = U>,
+    T: RandomVariable,
+    U: RandomVariable,
+{
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        self.distributions
+            .iter()
+            .map(|di| di.sample(theta, rng))
+            .collect()
     }
 }
 

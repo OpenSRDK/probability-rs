@@ -1,5 +1,5 @@
-use crate::DistributionError;
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
+use crate::{DistributionError, SampleableDistribution};
 use rand::prelude::*;
 use std::marker::PhantomData;
 use std::{
@@ -61,14 +61,6 @@ where
     fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         (self.fk)(x, theta)
     }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        (self.sample)(theta, rng)
-    }
 }
 
 impl<T, U, Rhs, TRhs, FF, FS> Mul<Rhs> for InstantDistribution<T, U, FF, FS>
@@ -100,5 +92,21 @@ where
 
     fn bitand(self, rhs: Rhs) -> Self::Output {
         DependentJoint::new(self, rhs)
+    }
+}
+
+impl<T, U, FF, FS> SampleableDistribution for InstantDistribution<T, U, FF, FS>
+where
+    T: RandomVariable,
+    U: RandomVariable,
+    FF: Fn(&T, &U) -> Result<f64, DistributionError> + Clone + Send + Sync,
+    FS: Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Clone + Send + Sync,
+{
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        (self.sample)(theta, rng)
     }
 }

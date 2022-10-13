@@ -19,16 +19,6 @@ impl Distribution for Cauchy {
 
         StudentT.fk(x, &studentt_params)
     }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let studentt_params = StudentTParams::new(1.0, theta.mu(), theta.sigma())?;
-
-        StudentT.sample(&studentt_params, rng)
-    }
 }
 
 impl<Rhs, TRhs> Mul<Rhs> for Cauchy
@@ -55,17 +45,17 @@ where
     }
 }
 
-// impl SampleableDistribution for Cauchy {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let studentt_params = StudentTParams::new(1.0, theta.mu(), theta.sigma())?;
+impl SampleableDistribution for Cauchy {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let studentt_params = StudentTParams::new(1.0, theta.mu(), theta.sigma())?;
 
-//         StudentT.sample(&studentt_params, rng)
-//     }
-// }
+        StudentT.sample(&studentt_params, rng)
+    }
+}
 
 impl ValueDifferentiableDistribution for Cauchy {
     fn ln_diff_value(
@@ -116,7 +106,6 @@ mod tests {
 
         println!("{}", x);
     }
-
     #[test]
     fn it_works2() {
         let n = Cauchy;

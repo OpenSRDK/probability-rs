@@ -1,3 +1,5 @@
+// Already finished the implementation of "sampleable distribution".　The implement has commented out.
+
 pub mod chi_squared;
 pub mod params;
 
@@ -32,22 +34,6 @@ impl Distribution for Gamma {
 
         Ok(x.powf(shape - 1.0) * (-x / scale).exp())
     }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let shape = theta.shape();
-        let scale = theta.scale();
-
-        let gamma = match RandGamma::new(shape, scale) {
-            Ok(v) => Ok(v),
-            Err(e) => Err(DistributionError::Others(e.into())),
-        }?;
-
-        Ok(rng.sample(gamma))
-    }
 }
 
 impl<Rhs, TRhs> Mul<Rhs> for Gamma
@@ -74,23 +60,23 @@ where
     }
 }
 
-// impl SampleableDistribution for Gamma {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let shape = theta.shape();
-//         let scale = theta.scale();
+impl SampleableDistribution for Gamma {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let shape = theta.shape();
+        let scale = theta.scale();
 
-//         let gamma = match RandGamma::new(shape, scale) {
-//             Ok(v) => Ok(v),
-//             Err(e) => Err(DistributionError::Others(e.into())),
-//         }?;
+        let gamma = match RandGamma::new(shape, scale) {
+            Ok(v) => Ok(v),
+            Err(e) => Err(DistributionError::Others(e.into())),
+        }?;
 
-//         Ok(rng.sample(gamma))
-//     }
-// }
+        Ok(rng.sample(gamma))
+    }
+}
 
 #[cfg(test)]
 mod tests {

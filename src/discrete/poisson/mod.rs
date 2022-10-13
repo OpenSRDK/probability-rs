@@ -4,7 +4,7 @@ pub use params::*;
 
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, IndependentJoint,
-    RandomVariable,
+    RandomVariable, SampleableDistribution,
 };
 use crate::{DiscreteDistribution, DistributionError};
 use rand::prelude::*;
@@ -36,21 +36,6 @@ impl Distribution for Poisson {
         let lambda = theta.lambda();
 
         Ok(lambda.powi(*x as i32) / factorial(*x) as f64 * (-lambda).exp())
-    }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let lambda = theta.lambda();
-
-        let poisson = match RandPoisson::new(lambda) {
-            Ok(v) => Ok(v),
-            Err(e) => Err(DistributionError::Others(e.into())),
-        }?;
-
-        Ok(rng.sample(poisson) as u64)
     }
 }
 
@@ -89,6 +74,23 @@ impl ConditionDifferentiableDistribution for Poisson {
         let labmda = theta.lambda();
         let f_lambda = *x as f64 / labmda - 1.0;
         Ok(vec![f_lambda])
+    }
+}
+
+impl SampleableDistribution for Poisson {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let lambda = theta.lambda();
+
+        let poisson = match RandPoisson::new(lambda) {
+            Ok(v) => Ok(v),
+            Err(e) => Err(DistributionError::Others(e.into())),
+        }?;
+
+        Ok(rng.sample(poisson) as u64)
     }
 }
 

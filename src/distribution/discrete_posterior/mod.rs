@@ -67,7 +67,15 @@ where
     fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         Ok(self.likelihood.fk(theta, x)? * self.prior.fk(x, &())?)
     }
+}
 
+impl<L, P, A, B> SampleableDistribution for DiscretePosterior<L, P, A, B>
+where
+    L: Distribution<Value = A, Condition = B>,
+    P: Distribution<Value = B, Condition = ()>,
+    A: RandomVariable,
+    B: RandomVariable + Eq + Hash,
+{
     fn sample(
         &self,
         theta: &Self::Condition,

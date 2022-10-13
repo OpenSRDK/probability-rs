@@ -27,21 +27,6 @@ impl Distribution for Exp {
 
         Ok(lambda * (-lambda * x).exp())
     }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let lambda = theta.lambda();
-
-        let exp = match RandExp::new(lambda) {
-            Ok(v) => Ok(v),
-            Err(e) => Err(DistributionError::Others(e.into())),
-        }?;
-
-        Ok(rng.sample(exp))
-    }
 }
 
 impl<Rhs, TRhs> Mul<Rhs> for Exp
@@ -68,22 +53,22 @@ where
     }
 }
 
-// impl SampleableDistribution for Exp {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let lambda = theta.lambda();
+impl SampleableDistribution for Exp {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let lambda = theta.lambda();
 
-//         let exp = match RandExp::new(lambda) {
-//             Ok(v) => Ok(v),
-//             Err(e) => Err(DistributionError::Others(e.into())),
-//         }?;
+        let exp = match RandExp::new(lambda) {
+            Ok(v) => Ok(v),
+            Err(e) => Err(DistributionError::Others(e.into())),
+        }?;
 
-//         Ok(rng.sample(exp))
-//     }
-// }
+        Ok(rng.sample(exp))
+    }
+}
 
 #[cfg(test)]
 mod tests {

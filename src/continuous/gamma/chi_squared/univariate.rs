@@ -1,3 +1,5 @@
+// Already finished the implementation of "sampleable distribution".　The implement has commented out.
+
 use crate::{ChiSquaredParams, DistributionError, SampleableDistribution};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
@@ -22,21 +24,6 @@ impl Distribution for ChiSquared {
         let k = theta.k();
 
         Ok(x.powf(k / 2.0 - 1.0) * (-x / 2.0).exp())
-    }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let k = theta.k();
-
-        let chi_squared = match RandChiSquared::new(k) {
-            Ok(v) => Ok(v),
-            Err(e) => Err(DistributionError::Others(e.into())),
-        }?;
-
-        Ok(rng.sample(chi_squared))
     }
 }
 
@@ -64,22 +51,22 @@ where
     }
 }
 
-// impl SampleableDistribution for ChiSquared {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let k = theta.k();
+impl SampleableDistribution for ChiSquared {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let k = theta.k();
 
-//         let chi_squared = match RandChiSquared::new(k) {
-//             Ok(v) => Ok(v),
-//             Err(e) => Err(DistributionError::Others(e.into())),
-//         }?;
+        let chi_squared = match RandChiSquared::new(k) {
+            Ok(v) => Ok(v),
+            Err(e) => Err(DistributionError::Others(e.into())),
+        }?;
 
-//         Ok(rng.sample(chi_squared))
-//     }
-// }
+        Ok(rng.sample(chi_squared))
+    }
+}
 
 #[cfg(test)]
 mod tests {

@@ -31,22 +31,6 @@ impl Distribution for FisherF {
 
         Ok((((m * x).powf(m) * n.powf(n)) / ((m * x + n).powf(m + n))).sqrt())
     }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let m = theta.m();
-        let n = theta.n();
-
-        let fisher_f = match RandFisherF::new(m, n) {
-            Ok(v) => Ok(v),
-            Err(e) => Err(DistributionError::Others(e.into())),
-        }?;
-
-        Ok(rng.sample(fisher_f))
-    }
 }
 
 impl<Rhs, TRhs> Mul<Rhs> for FisherF
@@ -73,23 +57,23 @@ where
     }
 }
 
-// impl SampleableDistribution for FisherF {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let m = theta.m();
-//         let n = theta.n();
+impl SampleableDistribution for FisherF {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let m = theta.m();
+        let n = theta.n();
 
-//         let fisher_f = match RandFisherF::new(m, n) {
-//             Ok(v) => Ok(v),
-//             Err(e) => Err(DistributionError::Others(e.into())),
-//         }?;
+        let fisher_f = match RandFisherF::new(m, n) {
+            Ok(v) => Ok(v),
+            Err(e) => Err(DistributionError::Others(e.into())),
+        }?;
 
-//         Ok(rng.sample(fisher_f))
-//     }
-// }
+        Ok(rng.sample(fisher_f))
+    }
+}
 
 #[cfg(test)]
 mod tests {

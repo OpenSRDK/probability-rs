@@ -28,14 +28,14 @@ impl Distribution for StickBreakingProcess {
         Ok(accumulated_p)
     }
 
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        rng.gen_range(0..1);
-        todo!("{:?}", theta);
-    }
+    // fn sample(
+    //     &self,
+    //     theta: &Self::Condition,
+    //     rng: &mut dyn RngCore,
+    // ) -> Result<Self::Value, DistributionError> {
+    //     rng.gen_range(0..1);
+    //     todo!("{:?}", theta);
+    // }
 }
 
 #[derive(Clone, Debug)]

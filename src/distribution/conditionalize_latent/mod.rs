@@ -111,16 +111,23 @@
 //     U: RandomVariable,
 //     V: RandomVariable,
 //     W: RandomVariable,
-//     Rhs: Distribution<Value = T, Condition = URhs>,
+//     Rhs: Distribution<Value = U, Condition = URhs>,
 //     URhs: RandomVariable,
 // {
-//     type Output =
-//         ConditionalizeLatentVariableDistribution<DependentJoint<D, Rhs, T, U, URhs>, F, T, U, V, W>;
+//     type Output = ConditionalizeLatentVariableDistribution<
+//         DependentJoint<D, Rhs, T, U, URhs>,
+//         F,
+//         (T, U),
+//         URhs,
+//         V,
+//         W,
+//     >;
 
 //     fn bitand(self, rhs: Rhs) -> Self::Output {
+//         let converter_new = |result: (V, W, URhs)| ((result.0, result.1).converter(), result.2);
 //         ConditionalizeLatentVariableDistribution::new(
 //             DependentJoint::new(self.distribution, rhs),
-//             self.converter,
+//             converter_new,
 //         )
 //     }
 // }

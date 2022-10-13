@@ -23,21 +23,6 @@ impl Distribution for StudentT {
 
         Ok((1.0 + ((x - mu) / sigma).powi(2) / nu).powf(-((nu + 1.0) / 2.0)))
     }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let nu = theta.nu();
-
-        let student_t = match RandStudentT::new(nu) {
-            Ok(v) => Ok(v),
-            Err(e) => Err(DistributionError::Others(e.into())),
-        }?;
-
-        Ok(rng.sample(student_t))
-    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -94,21 +79,21 @@ where
     }
 }
 
-// impl SampleableDistribution for StudentT {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let nu = theta.nu();
+impl SampleableDistribution for StudentT {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let nu = theta.nu();
 
-//         let student_t = match RandStudentT::new(nu) {
-//             Ok(v) => Ok(v),
-//             Err(e) => Err(DistributionError::Others(e.into())),
-//         }?;
-//         Ok(rng.sample(student_t))
-//     }
-// }
+        let student_t = match RandStudentT::new(nu) {
+            Ok(v) => Ok(v),
+            Err(e) => Err(DistributionError::Others(e.into())),
+        }?;
+        Ok(rng.sample(student_t))
+    }
+}
 
 impl ValueDifferentiableDistribution for StudentT {
     fn ln_diff_value(
@@ -171,8 +156,8 @@ impl RandomVariable for StudentTParams {
 #[cfg(test)]
 mod tests {
     use crate::{
-        ConditionDifferentiableDistribution, Distribution, StudentT, StudentTParams,
-        ValueDifferentiableDistribution,
+        ConditionDifferentiableDistribution, Distribution, SampleableDistribution, StudentT,
+        StudentTParams, ValueDifferentiableDistribution,
     };
     use rand::prelude::*;
 

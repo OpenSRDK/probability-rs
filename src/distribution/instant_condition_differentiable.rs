@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, DistributionError,
-    IndependentJoint, InstantDistribution, RandomVariable,
+    IndependentJoint, InstantDistribution, RandomVariable, SampleableDistribution,
 };
 use rand::prelude::*;
 use std::{
@@ -71,14 +71,6 @@ where
     ) -> Result<f64, crate::DistributionError> {
         self.instant_distribution.fk(x, theta)
     }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, crate::DistributionError> {
-        self.instant_distribution.sample(theta, rng)
-    }
 }
 
 impl<T, U, Rhs, TRhs, FF, FS, G> Mul<Rhs>
@@ -133,5 +125,23 @@ where
     ) -> Result<Vec<f64>, DistributionError> {
         let g = (self.condition_diff)(x, theta)?;
         Ok(g)
+    }
+}
+
+impl<T, U, FF, FS, G> SampleableDistribution
+    for ConditionDifferentiableInstantDistribution<T, U, FF, FS, G>
+where
+    T: RandomVariable,
+    U: RandomVariable,
+    FF: Fn(&T, &U) -> Result<f64, DistributionError> + Clone + Send + Sync,
+    FS: Fn(&U, &mut dyn RngCore) -> Result<T, DistributionError> + Clone + Send + Sync,
+    G: Fn(&T, &U) -> Result<Vec<f64>, DistributionError> + Clone + Send + Sync,
+{
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, crate::DistributionError> {
+        self.instant_distribution.sample(theta, rng)
     }
 }

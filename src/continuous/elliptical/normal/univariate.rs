@@ -21,26 +21,6 @@ impl Distribution for Normal {
 
         Ok((-(x - mu).powi(2) / (2.0 * sigma.powi(2))).exp())
     }
-
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError> {
-        let mu = theta.mu();
-        let sigma = theta.sigma();
-
-        let normal = match RandNormal::new(mu, sigma) {
-            Ok(n) => n,
-            Err(_) => {
-                return Err(DistributionError::InvalidParameters(
-                    NormalError::SigmaMustBePositive.into(),
-                ))
-            }
-        };
-
-        Ok(rng.sample(normal))
-    }
 }
 
 impl<Rhs, TRhs> Mul<Rhs> for Normal
@@ -67,27 +47,27 @@ where
     }
 }
 
-// impl SampleableDistribution for Normal {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let mu = theta.mu();
-//         let sigma = theta.sigma();
+impl SampleableDistribution for Normal {
+    fn sample(
+        &self,
+        theta: &Self::Condition,
+        rng: &mut dyn RngCore,
+    ) -> Result<Self::Value, DistributionError> {
+        let mu = theta.mu();
+        let sigma = theta.sigma();
 
-//         let normal = match RandNormal::new(mu, sigma) {
-//             Ok(n) => n,
-//             Err(_) => {
-//                 return Err(DistributionError::InvalidParameters(
-//                     NormalError::SigmaMustBePositive.into(),
-//                 ))
-//             }
-//         };
+        let normal = match RandNormal::new(mu, sigma) {
+            Ok(n) => n,
+            Err(_) => {
+                return Err(DistributionError::InvalidParameters(
+                    NormalError::SigmaMustBePositive.into(),
+                ))
+            }
+        };
 
-//         Ok(rng.sample(normal))
-//     }
-// }
+        Ok(rng.sample(normal))
+    }
+}
 
 impl ValueDifferentiableDistribution for Normal {
     fn ln_diff_value(
@@ -120,7 +100,7 @@ impl ConditionDifferentiableDistribution for Normal {
 mod tests {
     use crate::{
         ConditionDifferentiableDistribution, Distribution, Normal, NormalParams,
-        ValueDifferentiableDistribution,
+        SampleableDistribution, ValueDifferentiableDistribution,
     };
     use rand::prelude::*;
 

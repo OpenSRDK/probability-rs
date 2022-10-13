@@ -1,3 +1,5 @@
+// Already finished the implementation of "sampleable distribution".　The implement has commented out.
+
 use crate::{Distribution, SampleableDistribution};
 use rand::prelude::*;
 use std::ops::Range;
@@ -17,7 +19,9 @@ impl Distribution for ContinuousUniform {
     ) -> Result<f64, crate::DistributionError> {
         Ok(1.0)
     }
+}
 
+impl SampleableDistribution for ContinuousUniform {
     fn sample(
         &self,
         theta: &Self::Condition,
@@ -26,13 +30,3 @@ impl Distribution for ContinuousUniform {
         Ok(rng.gen_range(theta.clone()))
     }
 }
-
-// impl SampleableDistribution for ContinuousUniform {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, crate::DistributionError> {
-//         Ok(rng.gen_range(theta.clone()))
-//     }
-// }
