@@ -44,12 +44,12 @@ where
 
         while count < iter {
             let candidate = self.proposal.sample(&state, rng)?;
-            let r = (self.likelihood.fk(self.value, &candidate)?
-                * self.prior.fk(&candidate, &())?
-                * self.proposal.fk(&state, &candidate)?)
-                / (self.likelihood.fk(self.value, &state)?
-                    * self.prior.fk(&state, &())?
-                    * self.proposal.fk(&candidate, &state)?);
+            let r = (self.likelihood.p_kernel(self.value, &candidate)?
+                * self.prior.p_kernel(&candidate, &())?
+                * self.proposal.p_kernel(&state, &candidate)?)
+                / (self.likelihood.p_kernel(self.value, &state)?
+                    * self.prior.p_kernel(&state, &())?
+                    * self.proposal.p_kernel(&candidate, &state)?);
             let r = r.min(1.0);
             let p = rng.gen_range(0.0..=1.0);
 

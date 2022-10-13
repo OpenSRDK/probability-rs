@@ -28,7 +28,7 @@ impl Distribution for Gamma {
     type Value = f64;
     type Condition = GammaParams;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let shape = theta.shape();
         let scale = theta.scale();
 

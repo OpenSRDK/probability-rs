@@ -56,17 +56,17 @@ where
     type Value = T;
     type Condition = SwitchedParams<U>;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let s = theta;
 
         match s {
             SwitchedParams::Key(k) => match self.map.get(k) {
-                Some(theta) => self.distribution.fk(x, theta),
+                Some(theta) => self.distribution.p_kernel(x, theta),
                 None => Err(DistributionError::InvalidParameters(
                     SwitchedError::KeyNotFound.into(),
                 )),
             },
-            SwitchedParams::Direct(theta) => self.distribution.fk(x, theta),
+            SwitchedParams::Direct(theta) => self.distribution.p_kernel(x, theta),
         }
     }
 }
@@ -163,9 +163,9 @@ mod tests {
         theta.insert(3u32, NormalParams::new(3.0, 2.0).unwrap());
         theta.insert(4u32, NormalParams::new(4.0, 2.0).unwrap());
         let distr = Normal.switch(&theta);
-        let switched_fk = distr.fk(&0f64, &SwitchedParams::Key(1u32)).unwrap();
+        let switched_fk = distr.p_kernel(&0f64, &SwitchedParams::Key(1u32)).unwrap();
         let fk = Normal
-            .fk(&0f64, &NormalParams::new(1.0, 2.0).unwrap())
+            .p_kernel(&0f64, &NormalParams::new(1.0, 2.0).unwrap())
             .unwrap();
 
         assert_eq!(switched_fk, fk);

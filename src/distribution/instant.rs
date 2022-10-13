@@ -58,7 +58,7 @@ where
     type Value = T;
     type Condition = U;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         (self.fk)(x, theta)
     }
 }

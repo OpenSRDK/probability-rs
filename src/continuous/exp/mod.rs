@@ -22,7 +22,7 @@ impl Distribution for Exp {
     type Value = f64;
     type Condition = ExpParams;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let lambda = theta.lambda();
 
         Ok(lambda * (-lambda * x).exp())

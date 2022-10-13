@@ -102,7 +102,7 @@ where
     type Value = T;
     type Condition = ();
 
-    fn fk(&self, x: &Self::Value, _: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, _: &Self::Condition) -> Result<f64, DistributionError> {
         Ok(*self.n_map.get(x).unwrap_or(&0) as f64 / self.n as f64)
     }
 }

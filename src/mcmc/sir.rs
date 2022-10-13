@@ -87,9 +87,9 @@ where
                     .into_iter()
                     .map(|i| -> Result<_, DistributionError> {
                         let wi_orig = w_previous[i]
-                            * self.distr_y.fk(&self.observable[t], &p[i])?
-                            * self.distr_x.fk(&p[i], &p_previous[i])?
-                            / self.proposal.fk(
+                            * self.distr_y.p_kernel(&self.observable[t], &p[i])?
+                            * self.distr_x.p_kernel(&p[i], &p_previous[i])?
+                            / self.proposal.p_kernel(
                                 &p[i],
                                 &(
                                     (vecvec_p[i][0..t + 1]).to_vec(),

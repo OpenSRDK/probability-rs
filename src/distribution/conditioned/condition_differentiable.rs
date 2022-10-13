@@ -79,14 +79,14 @@ where
     type Value = T;
     type Condition = U2;
 
-    fn fk(
+    fn p_kernel(
         &self,
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<f64, crate::DistributionError> {
         self.conditioned_distribution
             .distribution
-            .fk(x, &(self.conditioned_distribution.condition)(theta)?)
+            .p_kernel(x, &(self.conditioned_distribution.condition)(theta)?)
     }
 }
 

@@ -81,7 +81,7 @@ pub trait Distribution: Clone + Debug + Send + Sync {
     type Value: RandomVariable;
     type Condition: Clone + Debug + Send + Sync;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError>;
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError>;
     // fn sample(
     //     &self,
     //     theta: &Self::Condition,
@@ -91,6 +91,6 @@ pub trait Distribution: Clone + Debug + Send + Sync {
 
 pub trait DiscreteDistribution: Distribution {
     fn fm(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
-        self.fk(x, theta)
+        self.p_kernel(x, theta)
     }
 }

@@ -70,7 +70,7 @@ where
     type Value = T;
     type Condition = ();
 
-    fn fk(&self, x: &Self::Value, _: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, _: &Self::Condition) -> Result<f64, DistributionError> {
         let eq_num = &self
             .samples
             .iter()

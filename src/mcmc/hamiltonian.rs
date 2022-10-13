@@ -41,7 +41,7 @@ where
     }
 
     pub fn sample(&self, rng: &mut dyn RngCore) -> Result<B, DistributionError> {
-        // (self.likelihood.fk(self.value, hoge)? * self.likelihood.fk(hoge, &())?).ln();
+        // (self.likelihood.p_kernel(self.value, hoge)? * self.likelihood.p_kernel(hoge, &())?).ln();
         // is ln probability density function kernel of posterior
         // self.likelihood.ln_diff_condition(self.value, hoge)?.col_mat() + self.prior.ln_diff_value(hoge, &())?.col_mat();
         // is ln diff of posterior
