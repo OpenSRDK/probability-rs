@@ -27,7 +27,7 @@ impl Distribution for Categorical {
     type Value = usize;
     type Condition = CategoricalParams;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let k = *x;
         if k < theta.p().len() {
             return Err(DistributionError::InvalidParameters(

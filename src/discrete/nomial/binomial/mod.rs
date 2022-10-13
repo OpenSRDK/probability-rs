@@ -27,7 +27,7 @@ impl Distribution for Binomial {
     type Value = u64;
     type Condition = BinomialParams;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let n = theta.n();
         let p = theta.p();
 

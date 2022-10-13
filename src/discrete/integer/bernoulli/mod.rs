@@ -19,7 +19,11 @@ impl Distribution for Bernoulli {
     type Value = bool;
     type Condition = BernoulliParams;
 
-    fn fk(&self, _x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(
+        &self,
+        _x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<f64, DistributionError> {
         Ok(theta.p())
     }
 }

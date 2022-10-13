@@ -28,10 +28,10 @@ where
     type Value = Vec<T>;
     type Condition = U;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         x.iter()
             .enumerate()
-            .map(|(i, xi)| self.distributions[i].fk(xi, theta))
+            .map(|(i, xi)| self.distributions[i].p_kernel(xi, theta))
             .product()
     }
 }

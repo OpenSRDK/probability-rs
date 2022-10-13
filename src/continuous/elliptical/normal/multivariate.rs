@@ -39,7 +39,7 @@ where
     type Value = Vec<f64>;
     type Condition = T;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let x_mu = theta.x_mu(x)?.col_mat();
         let n = x.len();
 

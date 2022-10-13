@@ -12,7 +12,7 @@ impl Distribution for ContinuousUniform {
     type Value = f64;
     type Condition = Range<f64>;
 
-    fn fk(
+    fn p_kernel(
         &self,
         _: &Self::Value,
         _theta: &Self::Condition,

@@ -25,7 +25,7 @@ impl Distribution for FisherF {
     type Value = f64;
     type Condition = FisherFParams;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let m = theta.m();
         let n = theta.n();
 

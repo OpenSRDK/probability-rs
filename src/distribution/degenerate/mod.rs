@@ -24,7 +24,7 @@ where
     type Value = T;
     type Condition = ();
 
-    fn fk(
+    fn p_kernel(
         &self,
         x: &Self::Value,
         _theta: &Self::Condition,

@@ -64,12 +64,12 @@ where
     type Value = T;
     type Condition = U;
 
-    fn fk(
+    fn p_kernel(
         &self,
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<f64, crate::DistributionError> {
-        self.instant_distribution.fk(x, theta)
+        self.instant_distribution.p_kernel(x, theta)
     }
 }
 

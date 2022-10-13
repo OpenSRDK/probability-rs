@@ -13,7 +13,7 @@ impl Distribution for StickBreakingProcess {
     type Value = Vec<f64>;
     type Condition = StickBreakingProcessParams;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let mut accumulated_w = 0.0;
         let mut accumulated_p = 1.0;
         let beta_params = BetaParams::new(1.0, theta.alpha)?;
@@ -21,7 +21,7 @@ impl Distribution for StickBreakingProcess {
         for &wi in x.iter() {
             let vi = wi / (1.0 - accumulated_w);
 
-            accumulated_p *= Beta.fk(&vi, &beta_params)?;
+            accumulated_p *= Beta.p_kernel(&vi, &beta_params)?;
             accumulated_w += wi;
         }
 

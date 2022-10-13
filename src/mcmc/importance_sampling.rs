@@ -37,7 +37,8 @@ where
         let wi_fxi = x
             .iter()
             .map(|xi| -> Result<_, DistributionError> {
-                let wi = self.distribution.fk(&xi, &())? / self.proposal.fk(&xi, &())?;
+                let wi =
+                    self.distribution.p_kernel(&xi, &())? / self.proposal.p_kernel(&xi, &())?;
                 let fxi = f(xi);
                 Ok((wi, fxi))
             })

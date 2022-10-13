@@ -45,8 +45,8 @@ where
     type Value = (T, UL);
     type Condition = UR;
 
-    fn fk(&self, x: &(T, UL), theta: &UR) -> Result<f64, DistributionError> {
-        Ok(self.lhs.fk(&x.0, &x.1)? * self.rhs.fk(&x.1, theta)?)
+    fn p_kernel(&self, x: &(T, UL), theta: &UR) -> Result<f64, DistributionError> {
+        Ok(self.lhs.p_kernel(&x.0, &x.1)? * self.rhs.p_kernel(&x.1, theta)?)
     }
 }
 
@@ -102,7 +102,7 @@ where
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, crate::DistributionError> {
         // let diff_l = &self.lhs.ln_diff_value(&x.0, &x.1)?;
-        // let diff = (diff_l.clone().col_mat() * &self.rhs.fk(&x.1, theta)?).vec();
+        // let diff = (diff_l.clone().col_mat() * &self.rhs.p_kernel(&x.1, theta)?).vec();
         let diff_a = self.lhs.ln_diff_value(&x.0, &x.1).unwrap();
         let diff_b = self.lhs.ln_diff_condition(&x.0, &x.1)?.col_mat()
             + self.rhs.ln_diff_value(&x.1, &theta)?.col_mat();
