@@ -14,8 +14,7 @@ where
 {
     history: Vec<(S, A)>,
     kernel: K,
-    kernel_params: Vec<f64>, //基本的にはカーネル密度推定をしたいが、標本の空間が実数スカラー(wikiみたいなナイーブな例)ではなく任意の集合としたい
-                             //sとa_othersの関係を学習したい
+    kernel_params: Vec<f64>,
 }
 
 impl<S, A, K> GeneralizedKernelDensity<S, A, K>
@@ -77,7 +76,7 @@ where
         rng: &mut dyn rand::RngCore,
     ) -> Result<Self::Value, DistributionError> {
         let len = self.history.len();
-        let n = rng.gen_range(0usize..=len) - 1usize;
+        let n = rng.gen_range(0usize..len);
         let result = self.history[n].1.clone();
         Ok(result)
     }
