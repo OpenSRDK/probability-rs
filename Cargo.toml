@@ -12,7 +12,7 @@ categories = ["mathematics", "science"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rand = "0.8.4"
+rand = "0.8.5"
 rand_distr = "0.4.1"
 thiserror = "1.0.28"
 rayon = "1.5.1"
