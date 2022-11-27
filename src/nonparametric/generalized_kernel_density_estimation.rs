@@ -12,9 +12,9 @@ where
     A: RandomVariable,
     K: PositiveDefiniteKernel<Vec<f64>>,
 {
-    history: Vec<(S, A)>,
-    kernel: K,
-    kernel_params: Vec<f64>,
+    pub history: Vec<(S, A)>,
+    pub kernel: K,
+    pub kernel_params: Vec<f64>,
 }
 
 impl<S, A, K> GeneralizedKernelDensity<S, A, K>
