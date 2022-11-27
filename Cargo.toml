@@ -1,6 +1,6 @@
 [package]
 name = "opensrdk-probability"
-version = "0.8.4"
+version = "0.8.5"
 authors = ["Kimura Yu <33382781+KimuraYu45z@users.noreply.github.com>"]
 edition = "2018"
 description = "Standard probability library for OpenSRDK toolchain."
@@ -12,7 +12,7 @@ categories = ["mathematics", "science"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rand = "0.8.5"
+rand = "0.8.4"
 rand_distr = "0.4.1"
 thiserror = "1.0.28"
 rayon = "1.5.1"
