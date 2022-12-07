@@ -6,7 +6,7 @@ use opensrdk_kernel_method::PositiveDefiniteKernel;
 use rand::Rng;
 
 #[derive(Clone, Debug)]
-pub struct GeneralizedKernelDensity<S, A, K>
+pub struct GeneralizedKernelDensityEstimation<S, A, K>
 where
     S: RandomVariable,
     A: RandomVariable,
@@ -17,7 +17,7 @@ where
     pub kernel_params: Vec<f64>,
 }
 
-impl<S, A, K> GeneralizedKernelDensity<S, A, K>
+impl<S, A, K> GeneralizedKernelDensityEstimation<S, A, K>
 where
     S: RandomVariable,
     A: RandomVariable,
@@ -32,7 +32,7 @@ where
     }
 }
 
-impl<S, A, K> Distribution for GeneralizedKernelDensity<S, A, K>
+impl<S, A, K> Distribution for GeneralizedKernelDensityEstimation<S, A, K>
 where
     S: RandomVariable,
     A: RandomVariable,
@@ -64,7 +64,7 @@ where
     }
 }
 
-impl<S, A, K> SampleableDistribution for GeneralizedKernelDensity<S, A, K>
+impl<S, A, K> SampleableDistribution for GeneralizedKernelDensityEstimation<S, A, K>
 where
     S: RandomVariable,
     A: RandomVariable,
@@ -84,7 +84,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::nonparametric::GeneralizedKernelDensity;
+    use crate::nonparametric::GeneralizedKernelDensityEstimation;
     use crate::*;
     use opensrdk_kernel_method::RBF;
     use rand::prelude::*;
@@ -93,7 +93,8 @@ mod tests {
         let history = vec![(2.0, 1.0); 20];
         let kernel = RBF;
         let kernel_params = [0.5, 0.5];
-        let model = GeneralizedKernelDensity::new(history, kernel, kernel_params.to_vec());
+        let model =
+            GeneralizedKernelDensityEstimation::new(history, kernel, kernel_params.to_vec());
 
         let mut rng = StdRng::from_seed([1; 32]);
 
