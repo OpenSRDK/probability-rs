@@ -128,3 +128,59 @@ where
         self.mahalanobis_squared
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        nonparametric::BaseEllipticalProcessParams, ConditionDifferentiableDistribution,
+        Distribution, ExactMultivariateNormalParams, MultivariateNormal,
+        ValueDifferentiableDistribution,
+    };
+    use opensrdk_kernel_method::*;
+    use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
+    use rand::prelude::*;
+    use rand_distr::StandardNormal;
+    use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+
+    #[test]
+    fn it_works() {
+        let normal = MultivariateNormal::new();
+        let mut _rng = StdRng::from_seed([1; 32]);
+
+        let samples = samples(10);
+        let x = samples.par_iter().map(|v| vec![v.0]).collect::<Vec<_>>();
+        let y = samples.par_iter().map(|v| v.1).collect::<Vec<_>>();
+        let y2 = vec![1.0; y.len()];
+        let kernel = RBF + Periodic;
+        let theta = vec![1.0; kernel.params_len()];
+        let sigma = 1.0;
+
+        let params = &BaseEllipticalProcessParams::new(kernel, x, theta, sigma)
+            .unwrap()
+            .exact(&y)
+            .unwrap();
+
+        let p = normal.p_kernel(&y2, params);
+        let f = normal.ln_diff_condition(&y2, params);
+        println!("{:#?}", f);
+    }
+
+    fn func(x: f64) -> f64 {
+        0.1 * x + x.sin() + 2.0 * (-x.powi(2)).exp()
+    }
+
+    fn samples(size: usize) -> Vec<(f64, f64)> {
+        let mut rng = StdRng::from_seed([1; 32]);
+        let mut rng2 = StdRng::from_seed([32; 32]);
+
+        (0..size)
+            .into_iter()
+            .map(|_| {
+                let x = rng2.gen_range(-8.0..=8.0);
+                let y = func(x) + rng.sample::<f64, _>(StandardNormal);
+
+                (x, y)
+            })
+            .collect()
+    }
+}
