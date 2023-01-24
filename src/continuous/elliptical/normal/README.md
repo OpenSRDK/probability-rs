@@ -25,7 +25,7 @@ $$
 ### Diff sigma
 
 $$
-  \frac{\partial \log{p(x \mid \mu, \sigma)}}{\partial \sigma} = \frac{1}{\sigma^3} (x-\mu)^2
+  \frac{\partial \log{p(x \mid \mu, \sigma)}}{\partial \sigma} = - \frac{1}{2 \sigma} + \frac{1}{\sigma^3} (x-\mu)^2
 $$
 
 ## Mutivariate
