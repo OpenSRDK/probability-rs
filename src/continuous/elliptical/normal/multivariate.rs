@@ -1,9 +1,11 @@
+use crate::nonparametric::ExactEllipticalProcessParams;
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, ExactEllipticalParams,
     IndependentJoint, RandomVariable, SampleableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, EllipticalParams};
-use opensrdk_linear_algebra::{DiagonalMatrix, Vector};
+use opensrdk_kernel_method::PositiveDefiniteKernel;
+use opensrdk_linear_algebra::{DiagonalMatrix, Matrix, SymmetricPackedMatrix, Vector};
 use rand::prelude::*;
 use rand_distr::StandardNormal;
 use std::marker::PhantomData;
@@ -74,7 +76,10 @@ where
     }
 }
 
-impl SampleableDistribution for MultivariateNormal {
+impl<T> SampleableDistribution for MultivariateNormal<T>
+where
+    T: EllipticalParams,
+{
     fn sample(
         &self,
         theta: &Self::Condition,
@@ -89,59 +94,85 @@ impl SampleableDistribution for MultivariateNormal {
     }
 }
 
-impl ValueDifferentiableDistribution for MultivariateNormal {
+impl<T> ValueDifferentiableDistribution for MultivariateNormal<T>
+where
+    T: EllipticalParams,
+{
     fn ln_diff_value(
         &self,
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, DistributionError> {
-        let sigma_inv = theta.lsigma().clone().pptri()?.to_mat();
         let mu_mat = theta.x_mu(x)?.row_mat();
         let x_mat = x.clone().row_mat();
         let x_mu_mat = x_mat - mu_mat;
-        let f_x = &-x_mu_mat * &sigma_inv;
+        let f_x = theta.sigma_inv_mul(x_mu_mat).unwrap();
         Ok(f_x.vec())
     }
 }
 
-impl<T> ConditionDifferentiableDistribution for MultivariateNormal<T>
+impl ConditionDifferentiableDistribution for MultivariateNormal {
+    fn ln_diff_condition(
+        &self,
+        x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<Vec<f64>, DistributionError> {
+        let x_mu_mat = theta.x_mu(x)?.col_mat();
+        // let x_mat = x.clone().col_mat();
+        // let x_mu_mat = x_mat - mu_mat;
+        let f_mu = theta.sigma_inv_mul(x_mu_mat.clone()).unwrap();
+
+        let n = theta.lsigma_cols();
+        let identity = DiagonalMatrix::<f64>::identity(n).mat();
+        let sigma_inv_t = theta.sigma_inv_mul(identity).unwrap().t();
+        let x_mu_t = x_mu_mat.t();
+        let sigma_inv_mul_x_mu = theta.sigma_inv_mul(x_mu_t.clone()).unwrap();
+        let sigma_inv_mul_sigma_inv_mul_x_mu = theta.sigma_inv_mul(sigma_inv_mul_x_mu).unwrap();
+        let x_mul_sigma = x_mu_mat * sigma_inv_mul_sigma_inv_mul_x_mu;
+
+        let lsigma = theta.lsigma.0.to_mat();
+
+        let f_sigma = (x_mul_sigma - sigma_inv_t) * lsigma;
+        let f_mu_vec = f_mu.vec();
+        let f_sigma_vec = f_sigma.vec();
+        let result_orig = [f_mu_vec, f_sigma_vec];
+        let result = result_orig.concat();
+
+        Ok(result)
+    }
+}
+
+impl<K, T> ConditionDifferentiableDistribution
+    for MultivariateNormal<ExactEllipticalProcessParams<K, T>>
 where
-    T: EllipticalParams,
+    K: PositiveDefiniteKernel<T>,
+    T: RandomVariable,
 {
     fn ln_diff_condition(
         &self,
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, DistributionError> {
-        // let lsigma = theta.lsigma().0.to_mat();
-        // let _sigma = &lsigma * &lsigma.t();
-        // let sigma_inv = theta.lsigma().clone().pptri()?.to_mat();
-        // let sigma_inv = DiagonalMatrix::new((&lsigma_mat * lsigma_mat.t()).vec())
-        //     .powf(-1.0)
-        //     .mat();
-        let mu_mat = theta.x_mu(x)?.row_mat();
-        let x_mat = x.clone().row_mat();
-        let x_mu_mat = x_mat - mu_mat;
-
+        let x_mu_mat = theta.x_mu(x)?.col_mat();
+        // let x_mat = x.clone().col_mat();
+        // let x_mu_mat = x_mat - mu_mat;
         let f_mu = theta.sigma_inv_mul(x_mu_mat.clone()).unwrap();
 
         let n = theta.lsigma_cols();
         let identity = DiagonalMatrix::<f64>::identity(n).mat();
-        let lsigma_inv_t = theta.sigma_inv_mul(identity).unwrap();
+        let sigma_inv_t = theta.sigma_inv_mul(identity).unwrap().t();
         let x_mu_t = x_mu_mat.t();
-        let lsigma_inv_mul_x_mu = theta.sigma_inv_mul(x_mu_mat).unwrap();
-        let lsigma_inv_mul_lsigma_inv_mul_x_mu = theta.sigma_inv_mul(lsigma_inv_mul_x_mu).unwrap();
+        let sigma_inv_mul_x_mu = theta.sigma_inv_mul(x_mu_t.clone()).unwrap();
+        let sigma_inv_mul_sigma_inv_mul_x_mu = theta.sigma_inv_mul(sigma_inv_mul_x_mu).unwrap();
+        let x_mul_sigma = x_mu_mat * sigma_inv_mul_sigma_inv_mul_x_mu;
 
-        println!("{:#?}", &lsigma_inv_t);
-        println!("{:#?}", &x_mu_t);
-        //println!("{:#?}", &lsigma_inv_mul_x_mu);
-        println!("{:#?}", &lsigma_inv_mul_lsigma_inv_mul_x_mu);
+        let lsigma = theta.lsigma.clone().0;
 
-        let f_lsigma = (&x_mu_t * lsigma_inv_mul_lsigma_inv_mul_x_mu - &lsigma_inv_t) * 0.5;
-        println!("{:#?}", f_mu.clone().vec());
-        println!("{:#?}", f_lsigma.clone().vec());
-        let result = [f_mu.vec(), f_lsigma.vec()].concat();
-        println!("{:#?}", &result);
+        let f_sigma = (x_mul_sigma - sigma_inv_t) * lsigma;
+        let f_mu_vec = f_mu.vec();
+        let f_sigma_vec = f_sigma.vec();
+        let result_orig = [f_mu_vec, f_sigma_vec];
+        let result = result_orig.concat();
 
         Ok(result)
     }
@@ -150,8 +181,8 @@ where
 #[cfg(test)]
 mod tests {
     use crate::{
-        ConditionDifferentiableDistribution, ExactMultivariateNormalParams, MultivariateNormal,
-        SampleableDistribution, ValueDifferentiableDistribution,
+        ConditionDifferentiableDistribution, Distribution, ExactMultivariateNormalParams,
+        MultivariateNormal, SampleableDistribution, ValueDifferentiableDistribution,
     };
     use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
     use rand::prelude::*;
@@ -210,14 +241,40 @@ mod tests {
         let normal = MultivariateNormal::new();
         let mut _rng = StdRng::from_seed([1; 32]);
 
-        let mu = vec![0.0, 1.0];
-        let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
-           1.0,  0.0;
-           2.0,  1.0
-        ))
-        .unwrap();
+        // let mu = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
+        // let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
+        //    1.0,  0.0,  0.0,  0.0,  0.0,  0.0;
+        //    2.0,  3.0,  0.0,  0.0,  0.0,  0.0;
+        //    4.0,  5.0,  6.0,  0.0,  0.0,  0.0;
+        //    7.0,  8.0,  9.0, 10.0,  0.0,  0.0;
+        //   11.0, 12.0, 13.0, 14.0, 15.0,  0.0;
+        //   16.0, 17.0, 18.0, 19.0, 20.0, 21.0
+        // ))
+        // .unwrap();
 
-        let x = vec![0.0, 1.0];
+        // let x = vec![0.0, 1.0, 0.0, 1.0, 2.0, 3.0];
+
+        // let mu = vec![0.0, 1.0];
+        // let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
+        //    1.0,  0.0;
+        //    2.0,  1.0
+        // ))
+        // .unwrap();
+
+        // let x = vec![0.0, 1.0];
+
+        let mu = vec![0.0];
+        let lsigma = SymmetricPackedMatrix::from_mat(&mat!(2.0)).unwrap();
+
+        let x = vec![1.0];
+
+        let p = normal
+            .p_kernel(
+                &x,
+                &ExactMultivariateNormalParams::new(mu.clone(), PPTRF(lsigma.clone())).unwrap(),
+            )
+            .unwrap();
+        println!("{:#?}", p);
 
         let f = normal
             .ln_diff_condition(

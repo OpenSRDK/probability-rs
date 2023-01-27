@@ -4,6 +4,7 @@ pub mod regressor;
 
 pub use axis::*;
 pub use grid::*;
+use opensrdk_linear_algebra::pp::trf::PPTRF;
 pub use regressor::*;
 
 use super::{BaseEllipticalProcessParams, EllipticalProcessParams};
