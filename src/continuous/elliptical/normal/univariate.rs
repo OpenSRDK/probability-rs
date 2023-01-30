@@ -137,7 +137,7 @@ mod tests {
         let n = Normal;
 
         let mu = 0.0;
-        let sigma = 2.0;
+        let sigma = 5.0;
 
         let x = 1.0;
 
