@@ -2,11 +2,13 @@ pub mod expected_improvement;
 pub mod upper_confidence_bound;
 
 pub use expected_improvement::*;
+use ndarray::{Array, ArrayView1};
 use opensrdk_kernel_method::{Periodic, RBF};
-use rand::{rngs::StdRng, Rng, RngCore};
+use rand::rngs::StdRng;
 pub use upper_confidence_bound::*;
 
 use crate::{nonparametric::GaussianProcessRegressor, NormalParams};
+use optimize::NelderMeadBuilder;
 
 use super::BaseEllipticalProcessParams;
 
@@ -40,8 +42,14 @@ fn test_main() {
         }
     }
 
-    let theta: NormalParams = gp_regression(&data.x_data, &data.y_data);
-    //let xs = (UCB(mu,sigma)を最大化するx);
+    loop {
+        let xs = maximize_ucb(&data, n);
+        // let xs = maximize_ei(&data);
+
+        sampling(&data, &xs);
+
+        n += 1;
+    }
 }
 
 fn objective(x: &f64) -> f64 {
@@ -54,20 +62,59 @@ fn sampling(mut data: &Data, x: &f64) {
     data.y_data.push(y);
 }
 
-fn gp_regression(x: &Vec<f64>, y: &Vec<f64>) -> NormalParams {
+fn gp_regression(x: &Vec<f64>, y: &Vec<f64>, xs: f64) -> NormalParams {
     let kernel = RBF + Periodic;
     let theta = vec![1.0; kernel.params_len()];
     let sigma = 1.0;
 
-    //これで出るmuとsigmaを用いて計算されるUCBが最大になるxが次のx_n+1.だからこれではダメで、これを最大化するようなxを求められるようにする.
-    let x = x[0..x.len() - 1];
-    let xs = x[x.len()];
-    let y = x[0..x.len() - 1];
-
     let base_params = BaseEllipticalProcessParams::new(kernel, x, theta, sigma).unwrap();
     let params_y = base_params.exact(&y).unwrap();
-    let mu = params_y.gp_predict(&xs).unwrap().mu();
-    let sigma = params_y.gp_predict(&xs).unwrap().sigma();
+    let mu = params_y.gp_predict(xs).unwrap().mu();
+    let sigma = params_y.gp_predict(xs).unwrap().sigma();
 
     [mu, sigma]
+}
+
+fn maximize_ucb(data: &Data, n: usize) -> f64 {
+    let func_to_minimize = |xs: ArrayView1<f64>| {
+        let theta: NormalParams = gp_regression(&data.x_data, &data.y_data, xs);
+        let ucb = UpperConfidenceBound { trial: n };
+        -ucb.value(&theta)
+    };
+
+    let minimizer = NelderMeadBuilder::default()
+        .xtol(1e-6f64)
+        .ftol(1e-6f64)
+        .maxiter(50000)
+        .build()
+        .unwrap();
+
+    // Set the starting guess
+    let args = Array::from_vec(vec![3.0, -8.3]);
+    let xs = minimizer.minimize(&func_to_minimize, args.view());
+
+    xs
+}
+
+fn maximize_ei(data: &Data) -> f64 {
+    let func_to_minimize = |xs: ArrayView1<f64>| {
+        let theta: NormalParams = gp_regression(&data.x_data, &data.y_data, xs);
+        let ei = ExpectedImprovement {
+            f_vec: &data.y_data,
+        };
+        -ei.value(&theta)
+    };
+
+    let minimizer = NelderMeadBuilder::default()
+        .xtol(1e-6f64)
+        .ftol(1e-6f64)
+        .maxiter(50000)
+        .build()
+        .unwrap();
+
+    // Set the starting guess
+    let args = Array::from_vec(vec![3.0, -8.3]);
+    let xs = minimizer.minimize(&func_to_minimize, args.view());
+
+    xs
 }

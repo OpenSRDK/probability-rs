@@ -20,6 +20,8 @@ num-integer = "0.1"
 opensrdk-linear-algebra = "0.8.4"
 opensrdk-kernel-method = "0.2.0"
 special = "0.8.1"
+optimize = "0.1.0"
+ndarray = "0.15.6"
 
 [dev-dependencies]
 blas-src = { version = "0.8", features = ["intel-mkl"] } 
