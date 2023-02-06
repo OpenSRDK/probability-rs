@@ -117,6 +117,7 @@ mod tests {
             .unwrap();
 
         println!("{}", x);
+        let result = n.p_kernel(&0.5, &NormalParams::new(0.0, 1.0).unwrap());
     }
 
     #[test]
