@@ -29,9 +29,7 @@ where
     P: Distribution<Value = B, Condition = ()> + ValueDifferentiableDistribution,
     A: RandomVariable,
     B: RandomVariable,
-    K: PositiveDefiniteKernel<Vec<f64>>
-        + ValueDifferentiableKernel<Vec<f64>>
-        + ValueDiffKernel<Vec<f64>>,
+    K: PositiveDefiniteKernel<Vec<f64>> + ValueDifferentiableKernel<Vec<f64>>,
 {
     pub fn new(
         value: &'a A,
@@ -70,7 +68,7 @@ where
                     .unwrap();
                 let kernel_diff = self
                     .kernel
-                    .diff_value(self.kernel_params, &theta_vec, &theta_j)
+                    .ln_diff_value(self.kernel_params, &theta_vec, &theta_j)
                     .unwrap()
                     .col_mat();
                 let p_diff = self
