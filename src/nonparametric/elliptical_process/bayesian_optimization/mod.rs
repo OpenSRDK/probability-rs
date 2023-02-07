@@ -3,8 +3,8 @@ pub mod upper_confidence_bound;
 
 pub use expected_improvement::*;
 use ndarray::{Array, ArrayView1};
-use opensrdk_kernel_method::{Periodic, RBF};
-use rand::rngs::StdRng;
+use opensrdk_kernel_method::{Periodic, PositiveDefiniteKernel, RBF};
+use rand::{rngs::StdRng, Rng, SeedableRng};
 pub use upper_confidence_bound::*;
 
 use crate::{nonparametric::GaussianProcessRegressor, NormalParams};
@@ -17,7 +17,7 @@ pub trait AcquisitionFunctions {
 }
 
 struct Data {
-    x_data: Vec<f64>,
+    x_data: Vec<Vec<f64>>,
     y_data: Vec<f64>,
 }
 
@@ -52,27 +52,27 @@ fn test_main() {
     }
 }
 
-fn objective(x: &f64) -> f64 {
-    x + x ^ 2.0
+fn objective(x: &Vec<f64>) -> f64 {
+    x + x.powf(2.0)
 }
 
-fn sampling(mut data: &Data, x: &f64) {
+fn sampling(mut data: &Data, x: &Vec<f64>) {
     let y = objective(x);
-    data.x_data.push(x);
+    data.x_data.push(*x);
     data.y_data.push(y);
 }
 
-fn gp_regression(x: &Vec<f64>, y: &Vec<f64>, xs: f64) -> NormalParams {
+fn gp_regression(x: Vec<Vec<f64>>, y: &Vec<f64>, xs: &Vec<f64>) -> NormalParams {
     let kernel = RBF + Periodic;
     let theta = vec![1.0; kernel.params_len()];
     let sigma = 1.0;
 
     let base_params = BaseEllipticalProcessParams::new(kernel, x, theta, sigma).unwrap();
-    let params_y = base_params.exact(&y).unwrap();
+    let params_y = base_params.exact(y).unwrap();
     let mu = params_y.gp_predict(xs).unwrap().mu();
     let sigma = params_y.gp_predict(xs).unwrap().sigma();
 
-    [mu, sigma]
+    NormalParams { mu, sigma }
 }
 
 fn maximize_ucb(data: &Data, n: usize) -> f64 {
