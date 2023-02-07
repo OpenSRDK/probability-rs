@@ -161,8 +161,8 @@ mod tests {
             .unwrap();
 
         let p = normal.p_kernel(&y2, params);
-        let f = normal.ln_diff_condition(&y2, params);
-        println!("{:#?}", f);
+        // let f = normal.ln_diff_condition(&y2, params);
+        // println!("{:#?}", f);
     }
 
     fn func(x: f64) -> f64 {
