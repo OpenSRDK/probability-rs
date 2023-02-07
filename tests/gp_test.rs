@@ -23,7 +23,7 @@ pub enum Type {
 
 #[test]
 fn test_main() {
-    let is_not_ci = true;
+    let is_not_ci = false;
     let is_gif = false;
     let tp = Type::Sparse;
 

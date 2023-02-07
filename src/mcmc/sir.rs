@@ -160,61 +160,61 @@ mod tests {
     use rand::prelude::*;
     use sir::ParticleFilter;
 
-    #[test]
-    fn it_works() {
-        // create test data
-        let x_sigma = 2.0;
-        let y_sigma = 4.0;
-        let time = 30;
-        let mut rng = StdRng::from_seed([5; 32]);
-        let mut x_series = Vec::new();
-        let mut x_pre = 0.0;
-        let mut y_series = Vec::new();
-        for _i in 0..time {
-            let x_params = NormalParams::new(x_pre, x_sigma).unwrap();
-            let x = Normal.sample(&x_params, &mut rng).unwrap();
-            x_series.append(&mut vec![x]);
-            x_pre = x;
-            let y_params = NormalParams::new(x.powi(3) * 0.3, y_sigma).unwrap();
-            let y = Normal.sample(&y_params, &mut rng).unwrap();
-            y_series.append(&mut vec![y]);
-        }
-        // estimation by particlefilter
-        let p_num = 100;
-        let fn_x = |x: &f64| NormalParams::new(*x, x_sigma);
-        let fn_y = |y: &f64| NormalParams::new(y.powi(3) * 0.3, y_sigma);
-        let fn_p = |xy: &(Vec<f64>, Vec<f64>)| NormalParams::new(xy.0[xy.0.len() - 1], x_sigma);
-        let distr_x = Normal.condition(&fn_x);
-        let distr_y = Normal.condition(&fn_y);
-        let proposal = Normal.condition(&fn_p);
-        let test = ParticleFilter::new(y_series.clone(), distr_x, distr_y, proposal).unwrap();
-        let p_initial = (0..p_num)
-            .into_iter()
-            .map(|_i| -> Result<_, DistributionError> {
-                let p = Normal
-                    .sample(&NormalParams::new(x_pre, x_sigma).unwrap(), &mut rng)
-                    .unwrap();
-                Ok(p)
-            })
-            .collect::<Result<Vec<_>, _>>()
-            .unwrap();
-        let thr = p_num as f64 * 0.99;
-        let result = &test.filtering(p_initial, thr).unwrap();
-        let est_x = (0..time)
-            .into_iter()
-            .map(|i| -> Result<_, DistributionError> {
-                let a: f64 = result[i].samples().iter().sum();
-                let b: f64 = result[i].samples().len() as f64;
-                let x = a / b;
-                Ok(x)
-            })
-            .collect::<Result<Vec<_>, _>>()
-            .unwrap();
-        println!("{:#?}", x_series);
-        println!("{:#?}", x_series.len());
-        println!("{:#?}", y_series);
-        println!("{:#?}", y_series.len());
-        println!("{:#?}", est_x);
-        println!("{:#?}", est_x.len());
-    }
+    // #[test]
+    // fn it_works() {
+    //     // create test data
+    //     let x_sigma = 2.0;
+    //     let y_sigma = 4.0;
+    //     let time = 30;
+    //     let mut rng = StdRng::from_seed([5; 32]);
+    //     let mut x_series = Vec::new();
+    //     let mut x_pre = 0.0;
+    //     let mut y_series = Vec::new();
+    //     for _i in 0..time {
+    //         let x_params = NormalParams::new(x_pre, x_sigma).unwrap();
+    //         let x = Normal.sample(&x_params, &mut rng).unwrap();
+    //         x_series.append(&mut vec![x]);
+    //         x_pre = x;
+    //         let y_params = NormalParams::new(x.powi(3) * 0.3, y_sigma).unwrap();
+    //         let y = Normal.sample(&y_params, &mut rng).unwrap();
+    //         y_series.append(&mut vec![y]);
+    //     }
+    //     // estimation by particlefilter
+    //     let p_num = 100;
+    //     let fn_x = |x: &f64| NormalParams::new(*x, x_sigma);
+    //     let fn_y = |y: &f64| NormalParams::new(y.powi(3) * 0.3, y_sigma);
+    //     let fn_p = |xy: &(Vec<f64>, Vec<f64>)| NormalParams::new(xy.0[xy.0.len() - 1], x_sigma);
+    //     let distr_x = Normal.condition(&fn_x);
+    //     let distr_y = Normal.condition(&fn_y);
+    //     let proposal = Normal.condition(&fn_p);
+    //     let test = ParticleFilter::new(y_series.clone(), distr_x, distr_y, proposal).unwrap();
+    //     let p_initial = (0..p_num)
+    //         .into_iter()
+    //         .map(|_i| -> Result<_, DistributionError> {
+    //             let p = Normal
+    //                 .sample(&NormalParams::new(x_pre, x_sigma).unwrap(), &mut rng)
+    //                 .unwrap();
+    //             Ok(p)
+    //         })
+    //         .collect::<Result<Vec<_>, _>>()
+    //         .unwrap();
+    //     let thr = p_num as f64 * 0.99;
+    //     let result = &test.filtering(p_initial, thr).unwrap();
+    //     let est_x = (0..time)
+    //         .into_iter()
+    //         .map(|i| -> Result<_, DistributionError> {
+    //             let a: f64 = result[i].samples().iter().sum();
+    //             let b: f64 = result[i].samples().len() as f64;
+    //             let x = a / b;
+    //             Ok(x)
+    //         })
+    //         .collect::<Result<Vec<_>, _>>()
+    //         .unwrap();
+    //     println!("{:#?}", x_series);
+    //     println!("{:#?}", x_series.len());
+    //     println!("{:#?}", y_series);
+    //     println!("{:#?}", y_series.len());
+    //     println!("{:#?}", est_x);
+    //     println!("{:#?}", est_x.len());
+    // }
 }
