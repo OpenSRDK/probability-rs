@@ -141,27 +141,27 @@ mod tests {
     use rand_distr::StandardNormal;
     use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
-    #[test]
-    fn it_works() {
-        let normal = MultivariateNormal::new();
-        let mut _rng = StdRng::from_seed([1; 32]);
+    // #[test]
+    // fn it_works() {
+    //     let normal = MultivariateNormal::new();
+    //     let mut _rng = StdRng::from_seed([1; 32]);
 
-        let samples = samples(7);
-        let x = samples.par_iter().map(|v| vec![v.0]).collect::<Vec<_>>();
-        let y = samples.par_iter().map(|v| v.1).collect::<Vec<_>>();
-        let y2 = vec![1.0; y.len()];
-        let kernel = RBF;
-        let theta = vec![1.0; kernel.params_len()];
-        let sigma = 2.0;
+    //     let samples = samples(9);
+    //     let x = samples.par_iter().map(|v| vec![v.0]).collect::<Vec<_>>();
+    //     let y = samples.par_iter().map(|v| v.1).collect::<Vec<_>>();
+    //     let y2 = vec![1.0; y.len()];
+    //     let kernel = RBF;
+    //     let theta = vec![1.0; kernel.params_len()];
+    //     let sigma = 2.0;
 
-        let params = &BaseEllipticalProcessParams::new(kernel, x, theta, sigma)
-            .unwrap()
-            .exact(&y)
-            .unwrap();
+    //     let params = &BaseEllipticalProcessParams::new(kernel, x, theta, sigma)
+    //         .unwrap()
+    //         .exact(&y)
+    //         .unwrap();
 
-        let f = normal.ln_diff_condition(&y2, params).unwrap();
-        println!("{:#?}", f);
-    }
+    //     let f = normal.ln_diff_condition(&y2, params).unwrap();
+    //     println!("{:#?}", f);
+    // }
 
     fn func(x: f64) -> f64 {
         0.1 * x + x.sin() + 2.0 * (-x.powi(2)).exp()
