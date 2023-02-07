@@ -9,7 +9,7 @@ impl AcquisitionFunctions for ExpectedImprovement {
     fn value(&self, theta: &crate::NormalParams) -> f64 {
         let mu = theta.mu();
         let sigma = theta.sigma();
-        let tau = self.f_vec.iter().max().unwrap();
+        let tau = self.f_vec.into_iter().fold(0.0 / 0.0, f64::max);
         let t = (mu - tau) / sigma;
         // let n = Normal;
         // let phi_large = n.p_kernel(n, t, &NormalParams::new(0.0, 1.0).unwrap());
