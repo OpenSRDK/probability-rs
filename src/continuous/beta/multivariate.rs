@@ -25,7 +25,7 @@ impl Distribution for Dirichlet {
     type Value = Vec<f64>;
     type Condition = DirichletParams;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let alpha = theta.alpha();
 
         if x.len() != alpha.len() {

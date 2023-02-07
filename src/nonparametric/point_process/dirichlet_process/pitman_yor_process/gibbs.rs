@@ -37,7 +37,7 @@ where
     type Value = PitmanYorGibbsSample;
     type Condition = PitmanYorGibbsParams<'a, G0, TH>;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let alpha = theta.base.alpha;
         let d = theta.base.d;
         let n = theta.n;

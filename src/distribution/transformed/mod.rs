@@ -45,12 +45,12 @@ where
     type Value = (T, V);
     type Condition = (U, V);
 
-    fn fk(
+    fn p_kernel(
         &self,
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<f64, crate::DistributionError> {
-        self.distribution.fk(&x.0, &theta.0)
+        self.distribution.p_kernel(&x.0, &theta.0)
     }
 }
 pub trait TransformableDistribution: Distribution + Sized {

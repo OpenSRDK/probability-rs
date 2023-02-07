@@ -3,7 +3,7 @@ extern crate blas_src;
 #[cfg(test)]
 extern crate lapack_src;
 extern crate num_integer;
-extern crate opensrdk_kernel_method;
+pub extern crate opensrdk_kernel_method;
 pub extern crate opensrdk_linear_algebra;
 pub extern crate rand;
 extern crate rand_distr;

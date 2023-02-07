@@ -38,7 +38,11 @@ where
     type Value = T;
     type Condition = HashSet<T>;
 
-    fn fk(&self, _x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(
+        &self,
+        _x: &Self::Value,
+        theta: &Self::Condition,
+    ) -> Result<f64, DistributionError> {
         Ok(1.0 / theta.len() as f64)
     }
 }

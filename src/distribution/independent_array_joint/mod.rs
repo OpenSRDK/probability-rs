@@ -27,11 +27,11 @@ where
     type Value = Vec<T>;
     type Condition = Vec<U>;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         x.iter()
             .zip(theta.iter())
             .enumerate()
-            .map(|(i, (xi, thetai))| self.distributions[i].fk(xi, thetai))
+            .map(|(i, (xi, thetai))| self.distributions[i].p_kernel(xi, thetai))
             .product()
     }
 }

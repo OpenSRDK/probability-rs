@@ -54,13 +54,13 @@
 //     type Value = V;
 //     type Condition = W;
 
-//     fn fk(
+//     fn p_kernel(
 //         &self,
 //         x: &Self::Value,
 //         theta: &Self::Condition,
 //     ) -> Result<f64, crate::DistributionError> {
 //         let converted = (x, theta).converter();
-//         self.distribution.fk(converted.0, converted.1)
+//         self.distribution.p_kernel(converted.0, converted.1)
 //     }
 
 //     fn sample(

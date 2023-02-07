@@ -71,7 +71,7 @@ impl<T> DiscreteSamplesDistribution<T>
 where
     T: RandomVariable + Eq + Hash,
 {
-    pub fn mean(&self) -> Result<T, DistributionError> {
+    pub fn sum(&self) -> Result<T, DistributionError> {
         let n = self.n;
         if n == 0 {
             return Err(DistributionError::InvalidParameters(
@@ -93,6 +93,15 @@ where
 
         T::restore(sum.elems(), &info)
     }
+
+    pub fn mean(&mut self) -> Result<T, DistributionError> {
+        let (sum, info) = self.sum().unwrap().transform_vec();
+        let elems = sum
+            .iter()
+            .map(|elem| elem / self.n_map.len() as f64)
+            .collect::<Vec<f64>>();
+        T::restore(&elems, &info)
+    }
 }
 
 impl<T> Distribution for DiscreteSamplesDistribution<T>
@@ -102,7 +111,7 @@ where
     type Value = T;
     type Condition = ();
 
-    fn fk(&self, x: &Self::Value, _: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, _: &Self::Condition) -> Result<f64, DistributionError> {
         Ok(*self.n_map.get(x).unwrap_or(&0) as f64 / self.n as f64)
     }
 }

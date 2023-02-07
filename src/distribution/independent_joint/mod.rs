@@ -45,8 +45,8 @@ where
     type Value = (TL, TR);
     type Condition = U;
 
-    fn fk(&self, x: &(TL, TR), theta: &U) -> Result<f64, DistributionError> {
-        Ok(self.lhs.fk(&x.0, theta)? * self.rhs.fk(&x.1, theta)?)
+    fn p_kernel(&self, x: &(TL, TR), theta: &U) -> Result<f64, DistributionError> {
+        Ok(self.lhs.p_kernel(&x.0, theta)? * self.rhs.p_kernel(&x.1, theta)?)
     }
 }
 

@@ -15,7 +15,7 @@ impl Distribution for Normal {
     type Value = f64;
     type Condition = NormalParams;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let mu = theta.mu();
         let sigma = theta.sigma();
 
