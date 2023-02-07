@@ -146,7 +146,7 @@ mod tests {
         let normal = MultivariateNormal::new();
         let mut _rng = StdRng::from_seed([1; 32]);
 
-        let samples = samples(7);
+        let samples = samples(8);
         let x = samples.par_iter().map(|v| vec![v.0]).collect::<Vec<_>>();
         let y = samples.par_iter().map(|v| v.1).collect::<Vec<_>>();
         let y2 = vec![1.0; y.len()];

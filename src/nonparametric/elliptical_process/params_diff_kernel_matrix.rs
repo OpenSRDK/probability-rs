@@ -54,7 +54,8 @@ mod tests {
         let y = samples.par_iter().map(|v| v.1).collect::<Vec<_>>();
         let y2 = vec![1.0; y.len()];
         let kernel = RBF;
-        let theta = vec![1.0; kernel.params_len()];
+        let kernel_len = kernel.params_len();
+        let theta = vec![0.8; kernel_len];
         let sigma = 2.0;
         let base = &BaseEllipticalProcessParams::new(kernel, x, theta, sigma)
             .unwrap()
@@ -62,7 +63,7 @@ mod tests {
             .unwrap();
         let kxx = params_diff_kernel_matrix(
             &base.base.kernel,
-            &base.base.theta,
+            &vec![1.8; kernel_len],
             &base.base.x,
             &base.base.x,
         )
