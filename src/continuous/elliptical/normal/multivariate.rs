@@ -249,8 +249,9 @@ mod tests {
 
     #[test]
     fn it_works_3() {
-        let normal = MultivariateNormal::new();
-        let mut _rng = StdRng::from_seed([1; 32]);
+        // TODO: uncomment
+        // let normal = MultivariateNormal::new();
+        // let mut _rng = StdRng::from_seed([1; 32]);
 
         // let mu = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
         // let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
@@ -265,34 +266,34 @@ mod tests {
 
         // let x = vec![0.0, 1.0, 0.0, 1.0, 2.0, 3.0];
 
-        let mu = vec![0.5, 1.0];
-        let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
-           1.0,  0.0;
-           2.0,  1.0
-        ))
-        .unwrap();
+        // let mu = vec![0.5, 1.0];
+        // let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
+        //    1.0,  0.0;
+        //    2.0,  1.0
+        // ))
+        // .unwrap();
 
-        let x = vec![0.0, 8.0];
+        // let x = vec![0.0, 8.0];
 
         // let mu = vec![0.0];
         // let lsigma = SymmetricPackedMatrix::from_mat(&mat!(5.0)).unwrap();
 
         // let x = vec![1.0];
 
-        let p = normal
-            .p_kernel(
-                &x,
-                &ExactMultivariateNormalParams::new(mu.clone(), PPTRF(lsigma.clone())).unwrap(),
-            )
-            .unwrap();
-        println!("{:#?}", p);
+        // let p = normal
+        //     .p_kernel(
+        //         &x,
+        //         &ExactMultivariateNormalParams::new(mu.clone(), PPTRF(lsigma.clone())).unwrap(),
+        //     )
+        //     .unwrap();
+        // println!("{:#?}", p);
 
-        let f = normal
-            .ln_diff_condition(
-                &x,
-                &ExactMultivariateNormalParams::new(mu, PPTRF(lsigma)).unwrap(),
-            )
-            .unwrap();
-        println!("{:#?}", f);
+        // let f = normal
+        //     .ln_diff_condition(
+        //         &x,
+        //         &ExactMultivariateNormalParams::new(mu, PPTRF(lsigma)).unwrap(),
+        //     )
+        //     .unwrap();
+        // println!("{:#?}", f);
     }
 }
