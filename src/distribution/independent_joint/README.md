@@ -4,6 +4,12 @@ $$
   p(a, b \mid c) = p(a \mid c) p(b \mid c)
 $$
 
+TODO:
+
+$$
+  p(a, b \mid c, d) = p(a \mid c) p(b \mid d)
+$$
+
 Log
 
 $$
