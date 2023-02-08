@@ -3,8 +3,12 @@
 ## Univariate
 
 $$
-  \log{p(x \mid \mu, \sigma)} = -\frac{1}{2} \log{2\pi} -\frac{1}{2} \log{\sigma^{2}} -\frac{1}{2\sigma^{2}} (x-\mu)^2
+  \log{p(x \mid \mu, \sigma)} = -\frac{1}{2} \log{2\pi} -\frac{1}{2} \log{\sigma} -\frac{1}{2\sigma^{2}} (x-\mu)^2
 $$
+
+<!-- $$
+  \log{p(x \mid \mu, \sigma)} = -\frac{1}{2} \log{2\pi} -\frac{1}{2\sigma^{2}} (x-\mu)^2
+$$ -->
 
 ### Diff x
 
@@ -21,7 +25,7 @@ $$
 ### Diff sigma
 
 $$
-  \frac{\partial \log{p(x \mid \mu, \sigma)}}{\partial \sigma} = \frac{1}{\sigma^3} (x-\mu)^2 - \frac{1}{\sigma}
+  \frac{\partial \log{p(x \mid \mu, \sigma)}}{\partial \sigma} = - \frac{1}{2 \sigma} + \frac{1}{\sigma^3} (x-\mu)^2
 $$
 
 ## Mutivariate
