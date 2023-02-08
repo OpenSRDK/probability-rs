@@ -184,9 +184,9 @@ mod tests {
         let fn_x = |x: &f64| NormalParams::new(*x, x_sigma);
         let fn_y = |y: &f64| NormalParams::new(y.powi(3) * 0.3, y_sigma);
         let fn_p = |xy: &(Vec<f64>, Vec<f64>)| NormalParams::new(xy.0[xy.0.len() - 1], x_sigma);
-        let distr_x = Normal.condition(&fn_x);
-        let distr_y = Normal.condition(&fn_y);
-        let proposal = Normal.condition(&fn_p);
+        let distr_x = Normal.map_condition(&fn_x);
+        let distr_y = Normal.map_condition(&fn_y);
+        let proposal = Normal.map_condition(&fn_p);
         let test = ParticleFilter::new(y_series.clone(), distr_x, distr_y, proposal).unwrap();
         let p_initial = (0..p_num)
             .into_iter()

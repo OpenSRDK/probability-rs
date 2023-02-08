@@ -1,5 +1,5 @@
+pub mod condition_mapped;
 pub mod conditionalize_latent;
-pub mod conditioned;
 pub mod continuous_samples;
 pub mod degenerate;
 pub mod dependent_joint;
@@ -19,8 +19,8 @@ pub mod switched;
 pub mod transformed;
 pub mod valued;
 
+pub use condition_mapped::*;
 pub use conditionalize_latent::*;
-pub use conditioned::*;
 pub use continuous_samples::*;
 pub use degenerate::*;
 pub use dependent_joint::*;

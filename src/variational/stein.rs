@@ -97,8 +97,8 @@ mod tests {
     use rand_distr::StandardNormal;
 
     use crate::{
-        ConditionDifferentiableConditionedDistribution, ConditionableDistribution,
-        ContinuousSamplesDistribution, DistributionValueProduct, ExactEllipticalParams,
+        ConditionMappableDistribution, ContinuousSamplesDistribution,
+        DifferentiableConditionMappedDistribution, DistributionValueProduct, ExactEllipticalParams,
         MultivariateNormal, Normal, NormalParams,
     };
 
@@ -131,17 +131,15 @@ mod tests {
         let likelihood = x
             .into_iter()
             .map(|xi| {
-                let likelihood_i = Normal.condition(move |theta: &Vec<f64>| {
+                let likelihood_i = Normal.map_condition(move |theta: &Vec<f64>| {
                     NormalParams::new(theta[0] * xi[0] + theta[1] * xi[1], sigma)
                 });
                 let condition_diff = move |_theta: &Vec<f64>| {
                     mat!(xi[0],0.0;
                       xi[1], 0.0)
                 };
-                let likelihood_i_diff = ConditionDifferentiableConditionedDistribution::new(
-                    likelihood_i,
-                    condition_diff,
-                );
+                let likelihood_i_diff =
+                    DifferentiableConditionMappedDistribution::new(likelihood_i, condition_diff);
                 likelihood_i_diff
             })
             .only_value_joint();
@@ -154,7 +152,7 @@ mod tests {
         let prior_mu = vec![0.5; dim];
         let prior_params =
             ExactEllipticalParams::new(prior_mu.clone(), prior_sigma.clone()).unwrap();
-        let prior = MultivariateNormal::new().condition(|_| Ok(prior_params.clone()));
+        let prior = MultivariateNormal::new().map_condition(|_| Ok(prior_params.clone()));
 
         let kernel = RBF;
         let kernel_params = [0.5, 0.5];
