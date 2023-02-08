@@ -152,7 +152,8 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let model = Normal.condition(|x: &f64| NormalParams::new(1.0, x.powi(2) + 1.0)) & Normal;
+        let model =
+            Normal.map_condition(|x: &f64| NormalParams::new(1.0, x.powi(2) + 1.0)) & Normal;
         let mut rng = StdRng::from_seed([1; 32]);
 
         let x = model
@@ -175,9 +176,9 @@ mod tests {
 
     #[test]
     fn it_works3() {
-        let model_prior = Normal.condition(|x: &f64| NormalParams::new(1.0, x.powi(2) + 1.0));
+        let model_prior = Normal.map_condition(|x: &f64| NormalParams::new(1.0, x.powi(2) + 1.0));
         let g = |theta: &f64| mat!(0.0, 2.0 * theta);
-        let model = ConditionDifferentiableConditionedDistribution::new(model_prior, g) & Normal;
+        let model = DifferentiableConditionMappedDistribution::new(model_prior, g) & Normal;
 
         let f = model
             .ln_diff_condition(&(1.0, 2.0), &NormalParams::new(0.0, 1.0).unwrap())
