@@ -30,7 +30,7 @@ $$
 
 ## Mutivariate
 
-$$ \mathbf{L} \mathbf{L}^{ \top} = \bm{\Sigma} $$
+$$ \mathbf{L}^{ \top} \mathbf{L} = \bm{\Sigma} $$
 
 $$
   \log{p(\mathbf{x} \mid \bm{\mu}, \mathbf{L})} = -\frac{1}{2}n\log{2\pi} -\frac{1}{2}\log{|\Sigma|}-\frac{1}{2}(\mathbf{x}-\bm{\mu})^T\Sigma^{-1}(\mathbf{x}-\bm{\mu})
@@ -52,7 +52,7 @@ $$
   \begin{aligned}
     \frac{\partial \log{p(\mathbf{x} \mid \bm{\mu}, \mathbf{L})}}{\partial \bm{\mu}}
     & = \frac{1}{2} \Sigma^{-1} (2\mathbf{x}-2\bm{\mu})
-    \\ & = (\mathbf{L}{ \mathbf{L}^\top})^{-1} (\mathbf{x}-\bm{\mu})
+    \\ & = (\mathbf{L}^{ \top} \mathbf{L})^{-1} (\mathbf{x}-\bm{\mu})
   \end{aligned}
 $$
 
@@ -61,7 +61,8 @@ $$
 $$
   \begin{aligned}
     \frac{\partial \log{p(\mathbf{x} \mid \bm{\mu}, \mathbf{L})}}{\partial \mathbf{L}}
-    & = -\frac{1}{2}(\Sigma^T)^{-1} - \frac{1}{2}(-\Sigma^T\Sigma^T) (\mathbf{x}-\bm{\mu}) (\mathbf{x}-\bm{\mu})^T
-    \\ & = \frac{1}{2} (\mathbf{L} \mathbf{L}^{\top} \mathbf{L} \mathbf{L}^{\top} (\mathbf{x}-\bm{\mu}) (\mathbf{x}-\bm{\mu})^{\top} - (\mathbf{L} \mathbf{L}^{\top})^{-1})
+    & = \frac{\partial \log{p(\mathbf{x} \mid \bm{\mu}, \mathbf{L})}}{\partial \Sigma} 	\times \frac{\partial \Sigma}{\partial \mathbf{L}}
+    \\ & = (-\frac{1}{2}(\Sigma^{-1})^T + \frac{1}{2}  (\mathbf{x}-\bm{\mu})^T \Sigma^{-1}\Sigma^{-1} (\mathbf{x}-\bm{\mu}))  	\times 2\mathbf{L}
+    \\ & = ((\mathbf{x}-\bm{\mu})(\mathbf{L}^{ \top} \mathbf{L})^{-1}(\mathbf{L}^{ \top} \mathbf{L})^{-1}(\mathbf{x}-\bm{\mu})^{\top} - ((\mathbf{L}^{ \top} \mathbf{L})^{-1})^T) \times \mathbf{L}
   \end{aligned}
 $$

@@ -3,8 +3,8 @@ use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
 
 #[derive(Clone, Debug)]
 pub struct ExactEllipticalParams {
-    mu: Vec<f64>,
-    lsigma: PPTRF,
+    pub mu: Vec<f64>,
+    pub lsigma: PPTRF,
 }
 
 impl ExactEllipticalParams {
@@ -65,6 +65,10 @@ impl EllipticalParams for ExactEllipticalParams {
     }
 
     fn sigma_inv_mul(&self, v: Matrix) -> Result<Matrix, DistributionError> {
+        // let lsigma = self.lsigma.0.to_mat();
+        // let sigma_orig = lsigma.clone() * lsigma.t();
+        // let sigma = PPTRF(SymmetricPackedMatrix::from_mat(&sigma_orig).unwrap());
+        // Ok(sigma.pptrs(v)?)
         Ok(self.lsigma.pptrs(v)?)
     }
 
@@ -79,5 +83,31 @@ impl EllipticalParams for ExactEllipticalParams {
             .col_mat()
             .gemm(&self.lsigma.0.to_mat(), &z.col_mat(), 1.0, 1.0)?
             .vec())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{EllipticalParams, ExactMultivariateNormalParams};
+    use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
+
+    #[test]
+    fn it_works() {
+        let mu = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
+        let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
+           1.0,  0.0,  0.0,  0.0,  0.0,  0.0;
+           2.0,  3.0,  0.0,  0.0,  0.0,  0.0;
+           4.0,  5.0,  6.0,  0.0,  0.0,  0.0;
+           7.0,  8.0,  9.0, 10.0,  0.0,  0.0;
+          11.0, 12.0, 13.0, 14.0, 15.0,  0.0;
+          16.0, 17.0, 18.0, 19.0, 20.0, 21.0
+        ))
+        .unwrap();
+        println!("{:#?}", lsigma);
+
+        let theta = &ExactMultivariateNormalParams::new(mu, PPTRF(lsigma)).unwrap();
+        let result = theta.lsigma.clone();
+
+        println!("{:#?}", result);
     }
 }
