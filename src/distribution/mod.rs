@@ -1,5 +1,4 @@
 pub mod condition_mapped;
-pub mod conditionalize_latent;
 pub mod continuous_samples;
 pub mod degenerate;
 pub mod dependent_joint;
@@ -13,14 +12,12 @@ pub mod independent_value_array_joint;
 pub mod instant;
 pub mod instant_condition_differentiable;
 pub mod instant_value_differentiable;
+pub mod obsolete;
 pub mod random_variable;
 pub mod samplable;
 pub mod switched;
-pub mod transformed;
-pub mod valued;
 
 pub use condition_mapped::*;
-pub use conditionalize_latent::*;
 pub use continuous_samples::*;
 pub use degenerate::*;
 pub use dependent_joint::*;
@@ -32,15 +29,13 @@ pub use independent_array_joint::*;
 pub use independent_joint::*;
 pub use independent_value_array_joint::*;
 pub use instant::*;
+pub use obsolete::*;
 pub use random_variable::*;
 pub use samplable::*;
 pub use switched::*;
-pub use transformed::*;
-pub use valued::*;
 
 use opensrdk_kernel_method::KernelError;
 use opensrdk_linear_algebra::MatrixError;
-use rand::prelude::*;
 use std::{error::Error, fmt::Debug};
 
 #[derive(thiserror::Error, Debug)]
