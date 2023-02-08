@@ -1,4 +1,4 @@
-use crate::{Distribution, DistributionError, RandomVariable, SampleableDistribution};
+use crate::{Distribution, DistributionError, RandomVariable, SamplableDistribution};
 use rand::prelude::*;
 use rayon::prelude::*;
 use std::f64::consts::PI;
@@ -8,7 +8,7 @@ use std::f64::consts::PI;
 pub struct EllipticalSliceSampler<'a, L, P, A, B>
 where
     L: Distribution<Value = A, Condition = B>,
-    P: SampleableDistribution<Value = B, Condition = ()>,
+    P: SamplableDistribution<Value = B, Condition = ()>,
     A: RandomVariable,
     B: RandomVariable,
 {
@@ -20,7 +20,7 @@ where
 impl<'a, L, P, A, B> EllipticalSliceSampler<'a, L, P, A, B>
 where
     L: Distribution<Value = A, Condition = B>,
-    P: SampleableDistribution<Value = B, Condition = ()>,
+    P: SamplableDistribution<Value = B, Condition = ()>,
     A: RandomVariable,
     B: RandomVariable,
 {

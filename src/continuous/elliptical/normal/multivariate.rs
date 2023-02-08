@@ -1,7 +1,7 @@
 use crate::nonparametric::ExactEllipticalProcessParams;
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, ExactEllipticalParams,
-    IndependentJoint, RandomVariable, SampleableDistribution, ValueDifferentiableDistribution,
+    IndependentJoint, RandomVariable, SamplableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, EllipticalParams};
 use opensrdk_kernel_method::PositiveDefiniteKernel;
@@ -76,7 +76,7 @@ where
     }
 }
 
-impl<T> SampleableDistribution for MultivariateNormal<T>
+impl<T> SamplableDistribution for MultivariateNormal<T>
 where
     T: EllipticalParams,
 {
@@ -195,7 +195,7 @@ where
 mod tests {
     use crate::{
         ConditionDifferentiableDistribution, Distribution, ExactMultivariateNormalParams,
-        MultivariateNormal, SampleableDistribution, ValueDifferentiableDistribution,
+        MultivariateNormal, SamplableDistribution, ValueDifferentiableDistribution,
     };
     use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
     use rand::prelude::*;

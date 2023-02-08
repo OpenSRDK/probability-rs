@@ -64,7 +64,7 @@ where
     }
 }
 
-impl SampleableDistribution for Categorical {
+impl SamplableDistribution for Categorical {
     fn sample(
         &self,
         theta: &Self::Condition,
@@ -82,7 +82,7 @@ impl SampleableDistribution for Categorical {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Categorical, CategoricalParams, Distribution, SampleableDistribution};
+    use crate::{Categorical, CategoricalParams, Distribution, SamplableDistribution};
     use rand::prelude::*;
     #[test]
     fn it_works() {

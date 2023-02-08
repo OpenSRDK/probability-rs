@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, IndependentJoint,
-    NormalParams, RandomVariable, SampleableDistribution, ValueDifferentiableDistribution,
+    NormalParams, RandomVariable, SamplableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, NormalError};
 use rand::prelude::*;
@@ -47,7 +47,7 @@ where
     }
 }
 
-impl SampleableDistribution for Normal {
+impl SamplableDistribution for Normal {
     fn sample(
         &self,
         theta: &Self::Condition,
@@ -100,7 +100,7 @@ impl ConditionDifferentiableDistribution for Normal {
 mod tests {
     use crate::{
         ConditionDifferentiableDistribution, Distribution, Normal, NormalParams,
-        SampleableDistribution, ValueDifferentiableDistribution,
+        SamplableDistribution, ValueDifferentiableDistribution,
     };
     use rand::prelude::*;
 

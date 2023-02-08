@@ -1,6 +1,6 @@
 use crate::{
     nonparametric::kernel_matrix, Distribution, DistributionError, RandomVariable,
-    SampleableDistribution,
+    SamplableDistribution,
 };
 use opensrdk_kernel_method::PositiveDefiniteKernel;
 use rand::Rng;
@@ -64,7 +64,7 @@ where
     }
 }
 
-impl<S, A, K> SampleableDistribution for GeneralizedKernelDensityEstimation<S, A, K>
+impl<S, A, K> SamplableDistribution for GeneralizedKernelDensityEstimation<S, A, K>
 where
     S: RandomVariable,
     A: RandomVariable,

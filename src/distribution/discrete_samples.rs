@@ -1,4 +1,4 @@
-use crate::{Categorical, CategoricalParams, DistributionError, SampleableDistribution};
+use crate::{Categorical, CategoricalParams, DistributionError, SamplableDistribution};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
@@ -142,7 +142,7 @@ where
     }
 }
 
-impl<T> SampleableDistribution for DiscreteSamplesDistribution<T>
+impl<T> SamplableDistribution for DiscreteSamplesDistribution<T>
 where
     T: RandomVariable + Eq + Hash,
 {

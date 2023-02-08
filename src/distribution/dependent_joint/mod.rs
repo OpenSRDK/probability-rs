@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, Distribution, IndependentJoint, RandomVariable,
-    SampleableDistribution, ValueDifferentiableDistribution,
+    SamplableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, Event};
 use opensrdk_linear_algebra::Vector;
@@ -129,10 +129,10 @@ where
     }
 }
 
-impl<L, R, T, UL, UR> SampleableDistribution for DependentJoint<L, R, T, UL, UR>
+impl<L, R, T, UL, UR> SamplableDistribution for DependentJoint<L, R, T, UL, UR>
 where
-    L: SampleableDistribution<Value = T, Condition = UL>,
-    R: SampleableDistribution<Value = UL, Condition = UR>,
+    L: SamplableDistribution<Value = T, Condition = UL>,
+    R: SamplableDistribution<Value = UL, Condition = UR>,
     T: RandomVariable,
     UL: RandomVariable,
     UR: Event,

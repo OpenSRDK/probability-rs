@@ -1,6 +1,6 @@
 // Already finished the implementation of "sampleable distribution".　The implement has commented out.
 
-use crate::{Distribution, SampleableDistribution};
+use crate::{Distribution, SamplableDistribution};
 use rand::prelude::*;
 use std::ops::Range;
 
@@ -21,7 +21,7 @@ impl Distribution for ContinuousUniform {
     }
 }
 
-impl SampleableDistribution for ContinuousUniform {
+impl SamplableDistribution for ContinuousUniform {
     fn sample(
         &self,
         theta: &Self::Condition,

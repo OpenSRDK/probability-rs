@@ -1,5 +1,5 @@
 use crate::{
-    DiscreteDistribution, Distribution, DistributionError, RandomVariable, SampleableDistribution,
+    DiscreteDistribution, Distribution, DistributionError, RandomVariable, SamplableDistribution,
 };
 use rand::prelude::*;
 use std::{collections::HashSet, hash::Hash, marker::PhantomData};
@@ -49,7 +49,7 @@ where
 
 impl<T> DiscreteDistribution for DiscreteUniform<T> where T: RandomVariable + Eq + Hash {}
 
-impl<T> SampleableDistribution for DiscreteUniform<T>
+impl<T> SamplableDistribution for DiscreteUniform<T>
 where
     T: RandomVariable + Eq + Hash,
 {

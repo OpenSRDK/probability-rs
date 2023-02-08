@@ -7,7 +7,7 @@ pub use chi_squared::*;
 pub use params::*;
 
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
-use crate::{DistributionError, SampleableDistribution};
+use crate::{DistributionError, SamplableDistribution};
 use rand::prelude::*;
 use rand_distr::Gamma as RandGamma;
 use std::{ops::BitAnd, ops::Mul};
@@ -60,7 +60,7 @@ where
     }
 }
 
-impl SampleableDistribution for Gamma {
+impl SamplableDistribution for Gamma {
     fn sample(
         &self,
         theta: &Self::Condition,
