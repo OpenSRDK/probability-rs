@@ -4,7 +4,7 @@ pub use params::*;
 
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, IndependentJoint,
-    RandomVariable, SampleableDistribution,
+    RandomVariable, SamplableDistribution,
 };
 use crate::{DiscreteDistribution, DistributionError};
 use rand::prelude::*;
@@ -77,7 +77,7 @@ impl ConditionDifferentiableDistribution for Poisson {
     }
 }
 
-impl SampleableDistribution for Poisson {
+impl SamplableDistribution for Poisson {
     fn sample(
         &self,
         theta: &Self::Condition,

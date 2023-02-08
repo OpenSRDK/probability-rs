@@ -3,7 +3,7 @@ pub mod params;
 pub use params::*;
 
 use crate::{
-    DependentJoint, Distribution, IndependentJoint, RandomVariable, SampleableDistribution,
+    DependentJoint, Distribution, IndependentJoint, RandomVariable, SamplableDistribution,
 };
 use crate::{DiscreteDistribution, DistributionError};
 use rand::prelude::*;
@@ -57,7 +57,7 @@ where
     }
 }
 
-impl SampleableDistribution for Geometric {
+impl SamplableDistribution for Geometric {
     fn sample(
         &self,
         theta: &Self::Condition,

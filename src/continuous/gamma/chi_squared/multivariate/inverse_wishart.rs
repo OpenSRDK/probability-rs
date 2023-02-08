@@ -1,6 +1,6 @@
 use super::wishart::Wishart;
 use crate::{
-    DependentJoint, Distribution, IndependentJoint, RandomVariable, SampleableDistribution,
+    DependentJoint, Distribution, IndependentJoint, RandomVariable, SamplableDistribution,
     WishartParams,
 };
 use crate::{DistributionError, InverseWishartParams};
@@ -63,7 +63,7 @@ where
     }
 }
 
-impl SampleableDistribution for InverseWishart {
+impl SamplableDistribution for InverseWishart {
     fn sample(
         &self,
         theta: &Self::Condition,

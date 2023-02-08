@@ -1,5 +1,5 @@
 use crate::{
-    ConditionDifferentiableDistribution, DistributionError, SampleableDistribution,
+    ConditionDifferentiableDistribution, DistributionError, SamplableDistribution,
     ValueDifferentiableDistribution,
 };
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
@@ -130,7 +130,7 @@ where
     }
 }
 
-impl SampleableDistribution for Beta {
+impl SamplableDistribution for Beta {
     fn sample(
         &self,
         theta: &Self::Condition,
@@ -151,8 +151,8 @@ impl SampleableDistribution for Beta {
 #[cfg(test)]
 mod tests {
     use crate::{
-        Beta, BetaParams, ConditionDifferentiableDistribution, Distribution,
-        SampleableDistribution, ValueDifferentiableDistribution,
+        Beta, BetaParams, ConditionDifferentiableDistribution, Distribution, SamplableDistribution,
+        ValueDifferentiableDistribution,
     };
     use rand::prelude::*;
 

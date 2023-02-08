@@ -4,7 +4,7 @@ pub use condition_differentiable::*;
 
 use crate::{
     DependentJoint, Distribution, DistributionError, Event, IndependentJoint, RandomVariable,
-    SampleableDistribution, ValueDifferentiableDistribution,
+    SamplableDistribution, ValueDifferentiableDistribution,
 };
 use rand::prelude::*;
 use std::{
@@ -171,9 +171,9 @@ where
     }
 }
 
-impl<D, T, U1, U2, F> SampleableDistribution for ConditionedDistribution<D, T, U1, U2, F>
+impl<D, T, U1, U2, F> SamplableDistribution for ConditionedDistribution<D, T, U1, U2, F>
 where
-    D: SampleableDistribution<Value = T, Condition = U1>,
+    D: SamplableDistribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: Event,
     U2: Event,
@@ -192,7 +192,7 @@ where
 mod tests {
     use crate::{
         ConditionableDistribution, Distribution, ExactMultivariateNormalParams, MultivariateNormal,
-        SampleableDistribution, ValueDifferentiableDistribution,
+        SamplableDistribution, ValueDifferentiableDistribution,
     };
     use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
     use rand::prelude::*;

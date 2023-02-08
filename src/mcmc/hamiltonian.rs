@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, ContinuousUniform, Distribution, DistributionError,
-    RandomVariable, SampleableDistribution, ValueDifferentiableDistribution,
+    RandomVariable, SamplableDistribution, ValueDifferentiableDistribution,
 };
 use rand::prelude::*;
 

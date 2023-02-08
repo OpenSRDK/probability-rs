@@ -1,5 +1,5 @@
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
-use crate::{DistributionError, SampleableDistribution};
+use crate::{DistributionError, SamplableDistribution};
 use rand::prelude::*;
 use std::marker::PhantomData;
 use std::{
@@ -95,7 +95,7 @@ where
     }
 }
 
-impl<T, U, FF, FS> SampleableDistribution for InstantDistribution<T, U, FF, FS>
+impl<T, U, FF, FS> SamplableDistribution for InstantDistribution<T, U, FF, FS>
 where
     T: RandomVariable,
     U: RandomVariable,

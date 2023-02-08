@@ -1,5 +1,5 @@
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
-use crate::{DistributionError, SampleableDistribution};
+use crate::{DistributionError, SamplableDistribution};
 use rand::prelude::*;
 use rand_distr::Dirichlet as RandDirichlet;
 use rayon::{iter::IntoParallelIterator, prelude::*};
@@ -115,7 +115,7 @@ where
     }
 }
 
-impl SampleableDistribution for Dirichlet {
+impl SamplableDistribution for Dirichlet {
     fn sample(
         &self,
         theta: &Self::Condition,
@@ -134,7 +134,7 @@ impl SampleableDistribution for Dirichlet {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Dirichlet, DirichletParams, Distribution, SampleableDistribution};
+    use crate::{Dirichlet, DirichletParams, Distribution, SamplableDistribution};
     use rand::prelude::*;
     #[test]
     fn it_works() {

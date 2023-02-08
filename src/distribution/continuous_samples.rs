@@ -1,4 +1,4 @@
-use crate::{Categorical, CategoricalParams, DistributionError, SampleableDistribution};
+use crate::{Categorical, CategoricalParams, DistributionError, SamplableDistribution};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
@@ -121,7 +121,7 @@ where
     }
 }
 
-impl<T> SampleableDistribution for ContinuousSamplesDistribution<T>
+impl<T> SamplableDistribution for ContinuousSamplesDistribution<T>
 where
     T: RandomVariable + PartialEq,
 {

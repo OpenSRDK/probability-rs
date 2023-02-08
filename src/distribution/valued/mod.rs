@@ -4,7 +4,7 @@ pub use value_differentiable::*;
 
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, DistributionError, Event,
-    IndependentJoint, RandomVariable, SampleableDistribution,
+    IndependentJoint, RandomVariable, SamplableDistribution,
 };
 use rand::prelude::*;
 use std::{
@@ -168,9 +168,9 @@ where
     }
 }
 
-impl<D, T1, T2, U, F> SampleableDistribution for ValuedDistribution<D, T1, T2, U, F>
+impl<D, T1, T2, U, F> SamplableDistribution for ValuedDistribution<D, T1, T2, U, F>
 where
-    D: SampleableDistribution<Value = T1, Condition = U>,
+    D: SamplableDistribution<Value = T1, Condition = U>,
     T1: RandomVariable,
     T2: RandomVariable,
     U: Event,
