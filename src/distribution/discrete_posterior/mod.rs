@@ -72,7 +72,7 @@ where
     }
 }
 
-impl<L, P, A, B> SampleableDistribution for DiscretePosterior<L, P, A, B>
+impl<L, P, A, B> SamplableDistribution for DiscretePosterior<L, P, A, B>
 where
     L: Distribution<Value = A, Condition = B>,
     P: Distribution<Value = B, Condition = ()>,

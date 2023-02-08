@@ -1,5 +1,5 @@
 use crate::{
-    DependentJoint, Distribution, IndependentJoint, RandomVariable, SampleableDistribution,
+    DependentJoint, Distribution, IndependentJoint, RandomVariable, SamplableDistribution,
 };
 use rand::prelude::*;
 use std::{
@@ -112,9 +112,9 @@ where
     }
 }
 
-impl<D, T, U, V> SampleableDistribution for TransformedDistribution<D, T, U, V>
+impl<D, T, U, V> SamplableDistribution for TransformedDistribution<D, T, U, V>
 where
-    D: SampleableDistribution<Value = T, Condition = U>,
+    D: SamplableDistribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
     V: RandomVariable,

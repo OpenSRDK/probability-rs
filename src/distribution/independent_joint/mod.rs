@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, RandomVariable,
-    SampleableDistribution, ValueDifferentiableDistribution,
+    SamplableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, Event};
 use rand::prelude::*;
@@ -127,10 +127,10 @@ where
     }
 }
 
-impl<L, R, TL, TR, U> SampleableDistribution for IndependentJoint<L, R, TL, TR, U>
+impl<L, R, TL, TR, U> SamplableDistribution for IndependentJoint<L, R, TL, TR, U>
 where
-    L: SampleableDistribution<Value = TL, Condition = U>,
-    R: SampleableDistribution<Value = TR, Condition = U>,
+    L: SamplableDistribution<Value = TL, Condition = U>,
+    R: SamplableDistribution<Value = TR, Condition = U>,
     TL: RandomVariable,
     TR: RandomVariable,
     U: Event,

@@ -1,5 +1,5 @@
 use crate::{
-    ConditionDifferentiableDistribution, DistributionError, SampleableDistribution,
+    ConditionDifferentiableDistribution, DistributionError, SamplableDistribution,
     ValueDifferentiableDistribution,
 };
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
@@ -140,9 +140,9 @@ where
     }
 }
 
-impl<D, T, U> SampleableDistribution for IndependentArrayJoint<D, T, U>
+impl<D, T, U> SamplableDistribution for IndependentArrayJoint<D, T, U>
 where
-    D: SampleableDistribution<Value = T, Condition = U>,
+    D: SamplableDistribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
 {

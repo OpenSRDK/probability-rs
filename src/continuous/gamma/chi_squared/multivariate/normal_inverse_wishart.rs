@@ -3,7 +3,7 @@
 use crate::{
     DependentJoint, Distribution, EllipticalParams, ExactMultivariateNormalParams,
     IndependentJoint, InverseWishart, InverseWishartParams, MultivariateNormal, RandomVariable,
-    SampleableDistribution,
+    SamplableDistribution,
 };
 use crate::{DistributionError, NormalInverseWishartParams};
 use opensrdk_linear_algebra::pp::trf::PPTRF;
@@ -91,7 +91,7 @@ where
     }
 }
 
-impl SampleableDistribution for NormalInverseWishart {
+impl SamplableDistribution for NormalInverseWishart {
     fn sample(
         &self,
         theta: &Self::Condition,

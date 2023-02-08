@@ -1,5 +1,5 @@
 use crate::{
-    DependentJoint, Distribution, IndependentJoint, RandomVariable, SampleableDistribution,
+    DependentJoint, Distribution, IndependentJoint, RandomVariable, SamplableDistribution,
 };
 use crate::{DistributionError, Event};
 use rand::prelude::*;
@@ -125,9 +125,9 @@ where
     }
 }
 
-impl<'a, D, T, U> SampleableDistribution for SwitchedDistribution<'a, D, T, U>
+impl<'a, D, T, U> SamplableDistribution for SwitchedDistribution<'a, D, T, U>
 where
-    D: SampleableDistribution<Value = T, Condition = U>,
+    D: SamplableDistribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: Event,
 {

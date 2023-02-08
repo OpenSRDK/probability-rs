@@ -67,7 +67,7 @@ impl ConditionDifferentiableDistribution for Bernoulli {
     }
 }
 
-impl SampleableDistribution for Bernoulli {
+impl SamplableDistribution for Bernoulli {
     fn sample(
         &self,
         theta: &Self::Condition,

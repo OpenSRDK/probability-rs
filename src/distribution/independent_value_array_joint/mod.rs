@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, IndependentJoint,
-    RandomVariable, SampleableDistribution,
+    RandomVariable, SamplableDistribution,
 };
 use crate::{DistributionError, ValueDifferentiableDistribution};
 use opensrdk_linear_algebra::Vector;
@@ -151,9 +151,9 @@ where
     }
 }
 
-impl<D, T, U> SampleableDistribution for IndependentValueArrayJoint<D, T, U>
+impl<D, T, U> SamplableDistribution for IndependentValueArrayJoint<D, T, U>
 where
-    D: SampleableDistribution<Value = T, Condition = U>,
+    D: SamplableDistribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
 {

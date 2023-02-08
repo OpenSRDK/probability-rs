@@ -1,4 +1,4 @@
-use crate::{Distribution, DistributionError, RandomVariable, SampleableDistribution};
+use crate::{Distribution, DistributionError, RandomVariable, SamplableDistribution};
 use rand::prelude::*;
 
 /// Sample b from posterior p(b|a) with likelihood p(a|b) and prior p(b)
@@ -8,7 +8,7 @@ where
     P: Distribution<Value = B, Condition = ()>,
     A: RandomVariable,
     B: RandomVariable,
-    PD: SampleableDistribution<Value = B, Condition = B>,
+    PD: SamplableDistribution<Value = B, Condition = B>,
 {
     value: &'a A,
     likelihood: &'a L,
@@ -22,7 +22,7 @@ where
     P: Distribution<Value = B, Condition = ()>,
     A: RandomVariable,
     B: RandomVariable,
-    PD: SampleableDistribution<Value = B, Condition = B>,
+    PD: SamplableDistribution<Value = B, Condition = B>,
 {
     pub fn new(value: &'a A, likelihood: &'a L, prior: &'a P, proposal: &'a PD) -> Self {
         Self {

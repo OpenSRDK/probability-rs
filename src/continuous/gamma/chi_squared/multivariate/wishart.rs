@@ -1,7 +1,7 @@
 // Already finished the implementation of "sampleable distribution".　The implement has commented out.
 
 use crate::{
-    DependentJoint, Distribution, IndependentJoint, RandomVariable, SampleableDistribution,
+    DependentJoint, Distribution, IndependentJoint, RandomVariable, SamplableDistribution,
 };
 use crate::{DistributionError, WishartParams};
 use crate::{ExactMultivariateNormalParams, MultivariateNormal};
@@ -62,7 +62,7 @@ where
     }
 }
 
-impl SampleableDistribution for Wishart {
+impl SamplableDistribution for Wishart {
     fn sample(
         &self,
         theta: &Self::Condition,

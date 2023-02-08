@@ -1,7 +1,7 @@
 use crate::rand::SeedableRng;
 use crate::{
     ContinuousSamplesDistribution, Distribution, DistributionError, RandomVariable,
-    SampleableDistribution,
+    SamplableDistribution,
 };
 use rand::rngs::StdRng;
 
@@ -12,7 +12,7 @@ where
     X: RandomVariable + PartialEq,
     DY: Distribution<Value = Y, Condition = X>,
     DX: Distribution<Value = X, Condition = X>,
-    PD: SampleableDistribution<Value = X, Condition = (Vec<X>, Vec<Y>)>,
+    PD: SamplableDistribution<Value = X, Condition = (Vec<X>, Vec<Y>)>,
 {
     observable: Vec<Y>,
     distr_x: DX,
@@ -26,7 +26,7 @@ where
     X: RandomVariable + PartialEq,
     DY: Distribution<Value = Y, Condition = X>,
     DX: Distribution<Value = X, Condition = X>,
-    PD: SampleableDistribution<Value = X, Condition = (Vec<X>, Vec<Y>)>,
+    PD: SamplableDistribution<Value = X, Condition = (Vec<X>, Vec<Y>)>,
 {
     pub fn new(
         observable: Vec<Y>,

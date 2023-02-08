@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, IndependentJoint,
-    RandomVariable, SampleableDistribution, ValueDifferentiableDistribution,
+    RandomVariable, SamplableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, StudentTError};
 use rand::prelude::*;
@@ -79,7 +79,7 @@ where
     }
 }
 
-impl SampleableDistribution for StudentT {
+impl SamplableDistribution for StudentT {
     fn sample(
         &self,
         theta: &Self::Condition,
@@ -156,7 +156,7 @@ impl RandomVariable for StudentTParams {
 #[cfg(test)]
 mod tests {
     use crate::{
-        ConditionDifferentiableDistribution, Distribution, SampleableDistribution, StudentT,
+        ConditionDifferentiableDistribution, Distribution, SamplableDistribution, StudentT,
         StudentTParams, ValueDifferentiableDistribution,
     };
     use rand::prelude::*;

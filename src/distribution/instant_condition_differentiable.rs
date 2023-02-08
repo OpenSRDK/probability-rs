@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, DistributionError,
-    IndependentJoint, InstantDistribution, RandomVariable, SampleableDistribution,
+    IndependentJoint, InstantDistribution, RandomVariable, SamplableDistribution,
 };
 use rand::prelude::*;
 use std::{
@@ -128,7 +128,7 @@ where
     }
 }
 
-impl<T, U, FF, FS, G> SampleableDistribution
+impl<T, U, FF, FS, G> SamplableDistribution
     for ConditionDifferentiableInstantDistribution<T, U, FF, FS, G>
 where
     T: RandomVariable,
