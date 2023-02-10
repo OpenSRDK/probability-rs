@@ -89,36 +89,50 @@ fn gp_regression(x: Vec<Vec<f64>>, y: &Vec<f64>, xs: &Vec<f64>) -> NormalParams 
     NormalParams { mu, sigma }
 }
 
-fn maximize_ucb(data: &Data, n: usize) -> f64 {
-    let func_to_maximize = |xs: Vec<f64>| {
-        let theta: NormalParams = gp_regression(data.x_history, &data.y_history, &xs);
-        let ucb = UpperConfidenceBound { trial: n };
-        ucb.value(&theta)
-    };
-
-    let solution = fmax(
-        |x: &DVector<f64>| func_to_maximize(x),
-        data.x_history.to_vec(),
-        0.01,
-    );
-    let xs = solution.point[0];
-    xs
+fn calc_ucb(data: &Data, n: usize, xs: &Vec<f64>) -> f64 {
+    let theta: NormalParams = gp_regression(data.x_history, &data.y_history, &xs);
+    let ucb = UpperConfidenceBound { trial: n };
+    ucb.value(&theta)
 }
 
-fn maximize_ei(data: &Data, n: usize) -> f64 {
-    let func_to_maximize = |xs: Vec<f64>| {
-        let theta: NormalParams = gp_regression(data.x_history, &data.y_history, &xs);
-        let ei = ExpectedImprovement {
-            f_vec: data.y_history,
-        };
-        ei.value(&theta)
+fn calc_ei(data: &Data, n: usize, xs: &Vec<f64>) -> f64 {
+    let theta: NormalParams = gp_regression(data.x_history, &data.y_history, &xs);
+    let ei = ExpectedImprovement {
+        f_vec: data.y_history,
     };
-
-    let solution = fmax(
-        |x: &DVector<f64>| func_to_maximize(x),
-        data.x_history.to_vec(),
-        0.01,
-    );
-    let xs = solution.point[0];
-    xs
+    ei.value(&theta)
 }
+
+// fn maximize_ucb(data: &Data, n: usize) -> f64 {
+//     let func_to_maximize = |xs: Vec<f64>| {
+//         let theta: NormalParams = gp_regression(data.x_history, &data.y_history, &xs);
+//         let ucb = UpperConfidenceBound { trial: n };
+//         ucb.value(&theta)
+//     };
+
+//     let solution = fmax(
+//         |x: &DVector<f64>| func_to_maximize(x),
+//         data.x_history.to_vec(),
+//         0.01,
+//     );
+//     let xs = solution.point[0];
+//     xs
+// }
+
+// fn maximize_ei(data: &Data, n: usize) -> f64 {
+//     let func_to_maximize = |xs: Vec<f64>| {
+//         let theta: NormalParams = gp_regression(data.x_history, &data.y_history, &xs);
+//         let ei = ExpectedImprovement {
+//             f_vec: data.y_history,
+//         };
+//         ei.value(&theta)
+//     };
+
+//     let solution = fmax(
+//         |x: &DVector<f64>| func_to_maximize(x),
+//         data.x_history.to_vec(),
+//         0.01,
+//     );
+//     let xs = solution.point[0];
+//     xs
+// }
