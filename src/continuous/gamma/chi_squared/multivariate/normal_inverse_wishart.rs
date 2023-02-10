@@ -1,8 +1,9 @@
 // Already finished the implementation of "sampleable distribution".　The implement has commented out.
 
 use crate::{
-    DependentJoint, Distribution, ExactMultivariateNormalParams, IndependentJoint, InverseWishart,
-    InverseWishartParams, MultivariateNormal, RandomVariable, SampleableDistribution,
+    DependentJoint, Distribution, EllipticalParams, ExactMultivariateNormalParams,
+    IndependentJoint, InverseWishart, InverseWishartParams, MultivariateNormal, RandomVariable,
+    SamplableDistribution,
 };
 use crate::{DistributionError, NormalInverseWishartParams};
 use opensrdk_linear_algebra::pp::trf::PPTRF;
@@ -90,7 +91,7 @@ where
     }
 }
 
-impl SampleableDistribution for NormalInverseWishart {
+impl SamplableDistribution for NormalInverseWishart {
     fn sample(
         &self,
         theta: &Self::Condition,

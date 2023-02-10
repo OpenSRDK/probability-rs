@@ -1,6 +1,6 @@
 use crate::{
     CauchyParams, ConditionDifferentiableDistribution, DependentJoint, Distribution,
-    IndependentJoint, RandomVariable, SampleableDistribution, ValueDifferentiableDistribution,
+    IndependentJoint, RandomVariable, SamplableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, StudentT, StudentTParams};
 use rand::prelude::*;
@@ -45,7 +45,7 @@ where
     }
 }
 
-impl SampleableDistribution for Cauchy {
+impl SamplableDistribution for Cauchy {
     fn sample(
         &self,
         theta: &Self::Condition,

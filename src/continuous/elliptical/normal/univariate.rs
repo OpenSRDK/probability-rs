@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, IndependentJoint,
-    NormalParams, RandomVariable, SampleableDistribution, ValueDifferentiableDistribution,
+    NormalParams, RandomVariable, SamplableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, NormalError};
 use rand::prelude::*;
@@ -47,7 +47,7 @@ where
     }
 }
 
-impl SampleableDistribution for Normal {
+impl SamplableDistribution for Normal {
     fn sample(
         &self,
         theta: &Self::Condition,
@@ -91,7 +91,7 @@ impl ConditionDifferentiableDistribution for Normal {
         let sigma = theta.sigma();
         let mu = theta.mu();
         let f_mu = (x - mu) / sigma.powi(2);
-        let f_sigma = (x - mu).powi(2) / sigma.powi(3);
+        let f_sigma = (x - mu).powi(2) / sigma.powi(3) - 1.0 / sigma;
         Ok(vec![f_mu, f_sigma])
     }
 }
@@ -100,7 +100,7 @@ impl ConditionDifferentiableDistribution for Normal {
 mod tests {
     use crate::{
         ConditionDifferentiableDistribution, Distribution, Normal, NormalParams,
-        SampleableDistribution, ValueDifferentiableDistribution,
+        SamplableDistribution, ValueDifferentiableDistribution,
     };
     use rand::prelude::*;
 
@@ -117,6 +117,7 @@ mod tests {
             .unwrap();
 
         println!("{}", x);
+        let result = n.p_kernel(&0.5, &NormalParams::new(0.0, 1.0).unwrap());
     }
 
     #[test]
@@ -136,10 +137,10 @@ mod tests {
     fn it_works_3() {
         let n = Normal;
 
-        let mu = 2.0;
-        let sigma = 3.0;
+        let mu = 0.0;
+        let sigma = 5.0;
 
-        let x = 0.5;
+        let x = 1.0;
 
         let f = n.ln_diff_condition(&x, &NormalParams::new(mu, sigma).unwrap());
         println!("{:#?}", f);

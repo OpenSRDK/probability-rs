@@ -8,10 +8,10 @@ use rayon::prelude::*;
 /// # Pitman-Yor process
 pub struct PitmanYorGibbsSampler<'a, L, T, U, G0>
 where
-    L: SampleableDistribution<Value = T, Condition = U>,
+    L: SamplableDistribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
-    G0: SampleableDistribution<Value = U, Condition = ()>,
+    G0: SamplableDistribution<Value = U, Condition = ()>,
 {
     base: &'a PitmanYorProcessParams<G0, U>,
     switch: &'a ClusterSwitch<U>,
@@ -21,10 +21,10 @@ where
 
 impl<'a, L, T, U, G0> PitmanYorGibbsSampler<'a, L, T, U, G0>
 where
-    L: SampleableDistribution<Value = T, Condition = U>,
+    L: SamplableDistribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
-    G0: SampleableDistribution<Value = U, Condition = ()>,
+    G0: SamplableDistribution<Value = U, Condition = ()>,
 {
     pub fn new(
         base: &'a PitmanYorProcessParams<G0, U>,
@@ -57,7 +57,7 @@ where
         let likelihood = self
             .likelihood
             .switch(switch.theta())
-            .condition(likelihood_condition);
+            .map_condition(likelihood_condition);
 
         let prior_condition = |_: &()| {
             Ok(PitmanYorGibbsParams::new(
@@ -66,7 +66,7 @@ where
                 switch.s().len(),
             ))
         };
-        let prior = PitmanYorGibbs::new().condition(prior_condition);
+        let prior = PitmanYorGibbs::new().map_condition(prior_condition);
 
         let posterior = DiscretePosterior::new(
             likelihood,
@@ -85,7 +85,7 @@ where
     fn sample_theta(
         &self,
         x_in_k: &Vec<T>,
-        proposal: &impl SampleableDistribution<Value = U, Condition = U>,
+        proposal: &impl SamplableDistribution<Value = U, Condition = U>,
     ) -> Result<U, DistributionError> {
         let x_likelihood = vec![self.likelihood.clone(); x_in_k.len()]
             .into_iter()
@@ -100,7 +100,7 @@ where
 
     pub fn step_sample(
         &self,
-        proposal: &impl SampleableDistribution<Value = U, Condition = U>,
+        proposal: &impl SamplableDistribution<Value = U, Condition = U>,
         rng: &mut dyn RngCore,
     ) -> Result<ClusterSwitch<U>, DistributionError> {
         let n = self.switch.s().len();

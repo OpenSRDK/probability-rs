@@ -1,4 +1,4 @@
-use crate::{Categorical, CategoricalParams, DistributionError, SampleableDistribution};
+use crate::{Categorical, CategoricalParams, DistributionError, SamplableDistribution};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
@@ -71,7 +71,7 @@ impl<T> DiscreteSamplesDistribution<T>
 where
     T: RandomVariable + Eq + Hash,
 {
-    pub fn mean(&self) -> Result<T, DistributionError> {
+    pub fn sum(&self) -> Result<T, DistributionError> {
         let n = self.n;
         if n == 0 {
             return Err(DistributionError::InvalidParameters(
@@ -92,6 +92,15 @@ where
         }
 
         T::restore(sum.elems(), &info)
+    }
+
+    pub fn mean(&mut self) -> Result<T, DistributionError> {
+        let (sum, info) = self.sum().unwrap().transform_vec();
+        let elems = sum
+            .iter()
+            .map(|elem| elem / self.n_map.len() as f64)
+            .collect::<Vec<f64>>();
+        T::restore(&elems, &info)
     }
 }
 
@@ -133,7 +142,7 @@ where
     }
 }
 
-impl<T> SampleableDistribution for DiscreteSamplesDistribution<T>
+impl<T> SamplableDistribution for DiscreteSamplesDistribution<T>
 where
     T: RandomVariable + Eq + Hash,
 {

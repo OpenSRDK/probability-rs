@@ -1,8 +1,8 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, ExactEllipticalParams,
     ExactMultivariateStudentTParams, IndependentJoint, MultivariateStudentT,
-    MultivariateStudentTParams, MultivariateStudentTWrapper, RandomVariable,
-    SampleableDistribution, ValueDifferentiableDistribution,
+    MultivariateStudentTParams, MultivariateStudentTWrapper, RandomVariable, SamplableDistribution,
+    ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, EllipticalParams};
 use opensrdk_linear_algebra::Vector;
@@ -83,7 +83,7 @@ where
     }
 }
 
-impl SampleableDistribution for MultivariateCauchy {
+impl SamplableDistribution for MultivariateCauchy {
     fn sample(
         &self,
         theta: &Self::Condition,
@@ -146,7 +146,7 @@ impl ConditionDifferentiableDistribution for MultivariateCauchy {
 mod tests {
     use crate::{
         ConditionDifferentiableDistribution, Distribution, ExactMultivariateCauchyParams,
-        MultivariateCauchy, SampleableDistribution, ValueDifferentiableDistribution,
+        MultivariateCauchy, SamplableDistribution, ValueDifferentiableDistribution,
     };
     use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
     use rand::prelude::*;

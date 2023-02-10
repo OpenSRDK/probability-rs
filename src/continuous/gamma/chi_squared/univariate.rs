@@ -1,6 +1,6 @@
 // Already finished the implementation of "sampleable distribution".　The implement has commented out.
 
-use crate::{ChiSquaredParams, DistributionError, SampleableDistribution};
+use crate::{ChiSquaredParams, DistributionError, SamplableDistribution};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::ChiSquared as RandChiSquared;
@@ -51,7 +51,7 @@ where
     }
 }
 
-impl SampleableDistribution for ChiSquared {
+impl SamplableDistribution for ChiSquared {
     fn sample(
         &self,
         theta: &Self::Condition,

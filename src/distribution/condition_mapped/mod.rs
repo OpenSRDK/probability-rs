@@ -1,10 +1,10 @@
-pub mod condition_differentiable;
+pub mod differentiable;
 
-pub use condition_differentiable::*;
+pub use differentiable::*;
 
 use crate::{
     DependentJoint, Distribution, DistributionError, Event, IndependentJoint, RandomVariable,
-    SampleableDistribution, ValueDifferentiableDistribution,
+    SamplableDistribution, ValueDifferentiableDistribution,
 };
 use rand::prelude::*;
 use std::{
@@ -14,7 +14,7 @@ use std::{
 };
 
 #[derive(Clone)]
-pub struct ConditionedDistribution<D, T, U1, U2, F>
+pub struct ConditionMappedDistribution<D, T, U1, U2, F>
 where
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
@@ -27,7 +27,7 @@ where
     phantom: PhantomData<U2>,
 }
 
-impl<D, T, U1, U2, F> ConditionedDistribution<D, T, U1, U2, F>
+impl<D, T, U1, U2, F> ConditionMappedDistribution<D, T, U1, U2, F>
 where
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
@@ -44,7 +44,7 @@ where
     }
 }
 
-impl<D, T, U1, U2, F> Debug for ConditionedDistribution<D, T, U1, U2, F>
+impl<D, T, U1, U2, F> Debug for ConditionMappedDistribution<D, T, U1, U2, F>
 where
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
@@ -61,7 +61,7 @@ where
     }
 }
 
-impl<D, T, U1, U2, F> Distribution for ConditionedDistribution<D, T, U1, U2, F>
+impl<D, T, U1, U2, F> Distribution for ConditionMappedDistribution<D, T, U1, U2, F>
 where
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
@@ -81,7 +81,7 @@ where
     }
 }
 
-pub trait ConditionableDistribution: Distribution + Sized {
+pub trait ConditionMappableDistribution: Distribution + Sized {
     /// .
     ///
     /// # Examples
@@ -89,34 +89,36 @@ pub trait ConditionableDistribution: Distribution + Sized {
     /// ```
     /// // Example template not implemented for trait functions
     /// ```
-    fn condition<U2, F>(
+    fn map_condition<U2, F>(
         self,
         condition: F,
-    ) -> ConditionedDistribution<Self, Self::Value, Self::Condition, U2, F>
+    ) -> ConditionMappedDistribution<Self, Self::Value, Self::Condition, U2, F>
     where
         U2: Event,
         F: Fn(&U2) -> Result<Self::Condition, DistributionError> + Clone + Send + Sync;
 }
 
-impl<D, T, U1> ConditionableDistribution for D
+impl<D, T, U1> ConditionMappableDistribution for D
 where
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: Event,
 {
-    fn condition<U2, F>(
+    fn map_condition<U2, F>(
         self,
         condition: F,
-    ) -> ConditionedDistribution<Self, Self::Value, Self::Condition, U2, F>
+    ) -> ConditionMappedDistribution<Self, Self::Value, Self::Condition, U2, F>
     where
         U2: Event,
         F: Fn(&U2) -> Result<Self::Condition, DistributionError> + Clone + Send + Sync,
     {
-        ConditionedDistribution::<Self, Self::Value, Self::Condition, U2, F>::new(self, condition)
+        ConditionMappedDistribution::<Self, Self::Value, Self::Condition, U2, F>::new(
+            self, condition,
+        )
     }
 }
 
-impl<D, T, U1, U2, Rhs, TRhs, F> Mul<Rhs> for ConditionedDistribution<D, T, U1, U2, F>
+impl<D, T, U1, U2, Rhs, TRhs, F> Mul<Rhs> for ConditionMappedDistribution<D, T, U1, U2, F>
 where
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
@@ -133,7 +135,7 @@ where
     }
 }
 
-impl<D, T, U1, U2, Rhs, URhs, F> BitAnd<Rhs> for ConditionedDistribution<D, T, U1, U2, F>
+impl<D, T, U1, U2, Rhs, URhs, F> BitAnd<Rhs> for ConditionMappedDistribution<D, T, U1, U2, F>
 where
     D: Distribution<Value = T, Condition = U1>,
     T: RandomVariable,
@@ -150,7 +152,8 @@ where
     }
 }
 
-impl<D, T, U1, U2, F> ValueDifferentiableDistribution for ConditionedDistribution<D, T, U1, U2, F>
+impl<D, T, U1, U2, F> ValueDifferentiableDistribution
+    for ConditionMappedDistribution<D, T, U1, U2, F>
 where
     D: Distribution<Value = T, Condition = U1> + ValueDifferentiableDistribution,
     T: RandomVariable,
@@ -171,9 +174,9 @@ where
     }
 }
 
-impl<D, T, U1, U2, F> SampleableDistribution for ConditionedDistribution<D, T, U1, U2, F>
+impl<D, T, U1, U2, F> SamplableDistribution for ConditionMappedDistribution<D, T, U1, U2, F>
 where
-    D: SampleableDistribution<Value = T, Condition = U1>,
+    D: SamplableDistribution<Value = T, Condition = U1>,
     T: RandomVariable,
     U1: Event,
     U2: Event,
@@ -191,8 +194,8 @@ where
 #[cfg(test)]
 mod tests {
     use crate::{
-        ConditionableDistribution, Distribution, ExactMultivariateNormalParams, MultivariateNormal,
-        SampleableDistribution, ValueDifferentiableDistribution,
+        ConditionMappableDistribution, Distribution, ExactMultivariateNormalParams,
+        MultivariateNormal, SamplableDistribution, ValueDifferentiableDistribution,
     };
     use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
     use rand::prelude::*;
@@ -213,7 +216,7 @@ mod tests {
         .unwrap();
         println!("{:#?}", lsigma);
 
-        let distr = MultivariateNormal::new().condition(|theta: &Vec<f64>| {
+        let distr = MultivariateNormal::new().map_condition(|theta: &Vec<f64>| {
             let f_mu = mu
                 .iter()
                 .enumerate()
@@ -245,7 +248,7 @@ mod tests {
         .unwrap();
         println!("{:#?}", lsigma);
 
-        let distr = MultivariateNormal::new().condition(|theta: &Vec<f64>| {
+        let distr = MultivariateNormal::new().map_condition(|theta: &Vec<f64>| {
             let f_mu = mu
                 .iter()
                 .enumerate()

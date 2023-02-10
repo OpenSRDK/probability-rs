@@ -1,4 +1,4 @@
-use crate::{Categorical, CategoricalParams, DistributionError, SampleableDistribution};
+use crate::{Categorical, CategoricalParams, DistributionError, SamplableDistribution};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use opensrdk_linear_algebra::*;
 use rand::prelude::*;
@@ -61,6 +61,15 @@ where
 
         T::restore(sum.elems(), &info)
     }
+
+    pub fn mean(&mut self) -> Result<T, DistributionError> {
+        let (sum, info) = self.sum().unwrap().transform_vec();
+        let elems = sum
+            .iter()
+            .map(|elem| elem / self.samples.len() as f64)
+            .collect::<Vec<f64>>();
+        T::restore(&elems, &info)
+    }
 }
 
 impl<T> Distribution for ContinuousSamplesDistribution<T>
@@ -112,7 +121,7 @@ where
     }
 }
 
-impl<T> SampleableDistribution for ContinuousSamplesDistribution<T>
+impl<T> SamplableDistribution for ContinuousSamplesDistribution<T>
 where
     T: RandomVariable + PartialEq,
 {

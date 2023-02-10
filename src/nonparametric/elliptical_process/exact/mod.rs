@@ -1,6 +1,5 @@
 pub mod regressor;
 
-pub use rayon::prelude::*;
 pub use regressor::*;
 
 use super::{BaseEllipticalProcessParams, EllipticalProcessParams};
@@ -17,11 +16,11 @@ where
     K: PositiveDefiniteKernel<T>,
     T: RandomVariable,
 {
-    base: BaseEllipticalProcessParams<K, T>,
-    mu: Vec<f64>,
-    lsigma: POTRF,
-    sigma_inv_y: Matrix,
-    mahalanobis_squared: f64,
+    pub base: BaseEllipticalProcessParams<K, T>,
+    pub mu: Vec<f64>,
+    pub lsigma: POTRF,
+    pub sigma_inv_y: Matrix,
+    pub mahalanobis_squared: f64,
 }
 
 impl<K, T> ExactEllipticalProcessParams<K, T>
@@ -147,22 +146,21 @@ mod tests {
         let normal = MultivariateNormal::new();
         let mut _rng = StdRng::from_seed([1; 32]);
 
-        let samples = samples(10);
+        let samples = samples(8);
         let x = samples.par_iter().map(|v| vec![v.0]).collect::<Vec<_>>();
         let y = samples.par_iter().map(|v| v.1).collect::<Vec<_>>();
         let y2 = vec![1.0; y.len()];
-        let kernel = RBF + Periodic;
+        let kernel = RBF;
         let theta = vec![1.0; kernel.params_len()];
-        let sigma = 1.0;
+        let sigma = 2.0;
 
         let params = &BaseEllipticalProcessParams::new(kernel, x, theta, sigma)
             .unwrap()
             .exact(&y)
             .unwrap();
 
-        let p = normal.p_kernel(&y2, params);
-        // let f = normal.ln_diff_condition(&y2, params);
-        // println!("{:#?}", f);
+        let f = normal.ln_diff_condition(&y2, params).unwrap();
+        println!("{:#?}", f);
     }
 
     fn func(x: f64) -> f64 {

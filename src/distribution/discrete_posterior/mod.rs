@@ -72,7 +72,7 @@ where
     }
 }
 
-impl<L, P, A, B> SampleableDistribution for DiscretePosterior<L, P, A, B>
+impl<L, P, A, B> SamplableDistribution for DiscretePosterior<L, P, A, B>
 where
     L: Distribution<Value = A, Condition = B>,
     P: Distribution<Value = B, Condition = ()>,
@@ -106,8 +106,8 @@ mod tests {
         // range.insert(true);
         // range.insert(false);
         let model = DiscretePosterior::new(
-            Normal.condition(|x: &bool| NormalParams::new(if *x { 10.0 } else { 0.0 }, 1.0)),
-            Bernoulli.condition(|_x: &()| BernoulliParams::new(0.5)),
+            Normal.map_condition(|x: &bool| NormalParams::new(if *x { 10.0 } else { 0.0 }, 1.0)),
+            Bernoulli.map_condition(|_x: &()| BernoulliParams::new(0.5)),
             range,
         );
 

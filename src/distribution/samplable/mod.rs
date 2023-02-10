@@ -2,7 +2,7 @@ use rand::RngCore;
 
 use crate::{Distribution, DistributionError};
 
-pub trait SampleableDistribution: Distribution {
+pub trait SamplableDistribution: Distribution {
     fn sample(
         &self,
         theta: &Self::Condition,

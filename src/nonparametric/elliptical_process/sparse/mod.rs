@@ -1,5 +1,6 @@
 pub mod regressor;
 
+use opensrdk_linear_algebra::pp::trf::PPTRF;
 pub use rayon::prelude::*;
 pub use regressor::*;
 
