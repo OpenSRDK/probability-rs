@@ -1,6 +1,7 @@
 pub mod expected_improvement;
 pub mod upper_confidence_bound;
 
+use cmaes::{fmax, DVector};
 pub use expected_improvement::*;
 use opensrdk_kernel_method::{Periodic, PositiveDefiniteKernel, RBF};
 pub use upper_confidence_bound::*;
@@ -56,36 +57,26 @@ fn calc_ei(data: &Data, n: usize, xs: &Vec<f64>) -> f64 {
     ei.value(&theta)
 }
 
-// fn maximize_ucb(data: &Data, n: usize) -> f64 {
-//     let func_to_maximize = |xs: Vec<f64>| {
-//         let theta: NormalParams = gp_regression(data.x_history, &data.y_history, &xs);
-//         let ucb = UpperConfidenceBound { trial: n };
-//         ucb.value(&theta)
-//     };
+fn maximize_ucb(data: &Data, n: usize) -> Vec<f64> {
+    let func_to_maximize = |xs: Vec<f64>| calc_ucb(data, n, &xs);
 
-//     let solution = fmax(
-//         |x: &DVector<f64>| func_to_maximize(x),
-//         data.x_history.to_vec(),
-//         0.01,
-//     );
-//     let xs = solution.point[0];
-//     xs
-// }
+    let solution = fmax(
+        |x: &DVector<f64>| func_to_maximize(x.iter().cloned().collect::<Vec<_>>()),
+        data.x_history.iter().cloned().collect::<DVector<_>>(),
+        0.01,
+    );
+    let xs = solution.point.iter().cloned().collect::<Vec<_>>();
+    xs
+}
 
-// fn maximize_ei(data: &Data, n: usize) -> f64 {
-//     let func_to_maximize = |xs: Vec<f64>| {
-//         let theta: NormalParams = gp_regression(data.x_history, &data.y_history, &xs);
-//         let ei = ExpectedImprovement {
-//             f_vec: data.y_history,
-//         };
-//         ei.value(&theta)
-//     };
+fn maximize_ei(data: &Data, n: usize) -> Vec<f64> {
+    let func_to_maximize = |xs: Vec<f64>| calc_ei(data, n, &xs);
 
-//     let solution = fmax(
-//         |x: &DVector<f64>| func_to_maximize(x),
-//         data.x_history.to_vec(),
-//         0.01,
-//     );
-//     let xs = solution.point[0];
-//     xs
-// }
+    let solution = fmax(
+        |x: &DVector<f64>| func_to_maximize(x.iter().cloned().collect::<Vec<_>>()),
+        data.x_history.to_vec(),
+        0.01,
+    );
+    let xs = solution.point.iter().cloned().collect::<Vec<_>>();
+    xs
+}
