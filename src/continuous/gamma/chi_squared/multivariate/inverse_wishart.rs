@@ -1,6 +1,6 @@
 use super::wishart::Wishart;
 use crate::{
-    DependentJoint, Distribution, IndependentJoint, RandomVariable, SampleableDistribution,
+    DependentJoint, Distribution, IndependentJoint, RandomVariable, SamplableDistribution,
     WishartParams,
 };
 use crate::{DistributionError, InverseWishartParams};
@@ -27,7 +27,7 @@ impl Distribution for InverseWishart {
     type Condition = InverseWishartParams;
 
     /// x must be cholesky decomposed
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let lpsi = theta.lpsi().0.to_mat();
         let nu = theta.nu();
 
@@ -63,7 +63,7 @@ where
     }
 }
 
-impl SampleableDistribution for InverseWishart {
+impl SamplableDistribution for InverseWishart {
     fn sample(
         &self,
         theta: &Self::Condition,

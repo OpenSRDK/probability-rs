@@ -1,8 +1,8 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, ExactEllipticalParams,
     ExactMultivariateStudentTParams, IndependentJoint, MultivariateStudentT,
-    MultivariateStudentTParams, MultivariateStudentTWrapper, RandomVariable,
-    SampleableDistribution, ValueDifferentiableDistribution,
+    MultivariateStudentTParams, MultivariateStudentTWrapper, RandomVariable, SamplableDistribution,
+    ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, EllipticalParams};
 use opensrdk_linear_algebra::Vector;
@@ -40,10 +40,10 @@ where
     type Value = Vec<f64>;
     type Condition = T;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let studentt_params = MultivariateStudentTWrapper::new(theta);
 
-        MultivariateStudentT::new().fk(x, &studentt_params)
+        MultivariateStudentT::new().p_kernel(x, &studentt_params)
     }
 
     // fn sample(
@@ -83,7 +83,7 @@ where
     }
 }
 
-impl SampleableDistribution for MultivariateCauchy {
+impl SamplableDistribution for MultivariateCauchy {
     fn sample(
         &self,
         theta: &Self::Condition,
@@ -146,7 +146,7 @@ impl ConditionDifferentiableDistribution for MultivariateCauchy {
 mod tests {
     use crate::{
         ConditionDifferentiableDistribution, Distribution, ExactMultivariateCauchyParams,
-        MultivariateCauchy, SampleableDistribution, ValueDifferentiableDistribution,
+        MultivariateCauchy, SamplableDistribution, ValueDifferentiableDistribution,
     };
     use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
     use rand::prelude::*;

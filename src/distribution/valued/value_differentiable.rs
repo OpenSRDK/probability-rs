@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, DistributionError, Event,
-    IndependentJoint, RandomVariable, SampleableDistribution, ValueDifferentiableDistribution,
+    IndependentJoint, RandomVariable, SamplableDistribution, ValueDifferentiableDistribution,
     ValuedDistribution,
 };
 use opensrdk_linear_algebra::{Matrix, MatrixError, Vector};
@@ -74,14 +74,14 @@ where
     type Value = T2;
     type Condition = U;
 
-    fn fk(
+    fn p_kernel(
         &self,
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<f64, crate::DistributionError> {
         self.valued_distribution
             .distribution
-            .fk(&(self.valued_distribution.value)(x)?, theta)
+            .p_kernel(&(self.valued_distribution.value)(x)?, theta)
     }
 }
 
@@ -176,7 +176,7 @@ where
     }
 }
 
-impl<D, T1, T2, U, F, G> SampleableDistribution
+impl<D, T1, T2, U, F, G> SamplableDistribution
     for ValueDifferentiableValuedDistribution<D, T1, T2, U, F, G>
 where
     D: Distribution<Value = T1, Condition = U>,

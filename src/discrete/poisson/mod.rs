@@ -4,7 +4,7 @@ pub use params::*;
 
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, IndependentJoint,
-    RandomVariable, SampleableDistribution,
+    RandomVariable, SamplableDistribution,
 };
 use crate::{DiscreteDistribution, DistributionError};
 use rand::prelude::*;
@@ -32,7 +32,7 @@ impl Distribution for Poisson {
     type Value = u64;
     type Condition = PoissonParams;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let lambda = theta.lambda();
 
         Ok(lambda.powi(*x as i32) / factorial(*x) as f64 * (-lambda).exp())
@@ -77,7 +77,7 @@ impl ConditionDifferentiableDistribution for Poisson {
     }
 }
 
-impl SampleableDistribution for Poisson {
+impl SamplableDistribution for Poisson {
     fn sample(
         &self,
         theta: &Self::Condition,

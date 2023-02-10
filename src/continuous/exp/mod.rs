@@ -1,5 +1,5 @@
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
-use crate::{DistributionError, SampleableDistribution};
+use crate::{DistributionError, SamplableDistribution};
 use rand::prelude::*;
 use rand_distr::Exp as RandExp;
 use std::{ops::BitAnd, ops::Mul};
@@ -22,7 +22,7 @@ impl Distribution for Exp {
     type Value = f64;
     type Condition = ExpParams;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let lambda = theta.lambda();
 
         Ok(lambda * (-lambda * x).exp())
@@ -53,7 +53,7 @@ where
     }
 }
 
-impl SampleableDistribution for Exp {
+impl SamplableDistribution for Exp {
     fn sample(
         &self,
         theta: &Self::Condition,

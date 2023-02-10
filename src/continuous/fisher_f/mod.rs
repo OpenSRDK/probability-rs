@@ -1,5 +1,5 @@
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
-use crate::{DistributionError, SampleableDistribution};
+use crate::{DistributionError, SamplableDistribution};
 use rand::prelude::*;
 use rand_distr::FisherF as RandFisherF;
 use std::{ops::BitAnd, ops::Mul};
@@ -25,7 +25,7 @@ impl Distribution for FisherF {
     type Value = f64;
     type Condition = FisherFParams;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let m = theta.m();
         let n = theta.n();
 
@@ -57,7 +57,7 @@ where
     }
 }
 
-impl SampleableDistribution for FisherF {
+impl SamplableDistribution for FisherF {
     fn sample(
         &self,
         theta: &Self::Condition,

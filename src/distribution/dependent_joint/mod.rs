@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, Distribution, IndependentJoint, RandomVariable,
-    SampleableDistribution, ValueDifferentiableDistribution,
+    SamplableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, Event};
 use opensrdk_linear_algebra::Vector;
@@ -45,8 +45,8 @@ where
     type Value = (T, UL);
     type Condition = UR;
 
-    fn fk(&self, x: &(T, UL), theta: &UR) -> Result<f64, DistributionError> {
-        Ok(self.lhs.fk(&x.0, &x.1)? * self.rhs.fk(&x.1, theta)?)
+    fn p_kernel(&self, x: &(T, UL), theta: &UR) -> Result<f64, DistributionError> {
+        Ok(self.lhs.p_kernel(&x.0, &x.1)? * self.rhs.p_kernel(&x.1, theta)?)
     }
 }
 
@@ -102,7 +102,7 @@ where
         theta: &Self::Condition,
     ) -> Result<Vec<f64>, crate::DistributionError> {
         // let diff_l = &self.lhs.ln_diff_value(&x.0, &x.1)?;
-        // let diff = (diff_l.clone().col_mat() * &self.rhs.fk(&x.1, theta)?).vec();
+        // let diff = (diff_l.clone().col_mat() * &self.rhs.p_kernel(&x.1, theta)?).vec();
         let diff_a = self.lhs.ln_diff_value(&x.0, &x.1).unwrap();
         let diff_b = self.lhs.ln_diff_condition(&x.0, &x.1)?.col_mat()
             + self.rhs.ln_diff_value(&x.1, &theta)?.col_mat();
@@ -129,10 +129,10 @@ where
     }
 }
 
-impl<L, R, T, UL, UR> SampleableDistribution for DependentJoint<L, R, T, UL, UR>
+impl<L, R, T, UL, UR> SamplableDistribution for DependentJoint<L, R, T, UL, UR>
 where
-    L: SampleableDistribution<Value = T, Condition = UL>,
-    R: SampleableDistribution<Value = UL, Condition = UR>,
+    L: SamplableDistribution<Value = T, Condition = UL>,
+    R: SamplableDistribution<Value = UL, Condition = UR>,
     T: RandomVariable,
     UL: RandomVariable,
     UR: Event,
@@ -152,7 +152,8 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let model = Normal.condition(|x: &f64| NormalParams::new(1.0, x.powi(2) + 1.0)) & Normal;
+        let model =
+            Normal.map_condition(|x: &f64| NormalParams::new(1.0, x.powi(2) + 1.0)) & Normal;
         let mut rng = StdRng::from_seed([1; 32]);
 
         let x = model
@@ -175,9 +176,9 @@ mod tests {
 
     #[test]
     fn it_works3() {
-        let model_prior = Normal.condition(|x: &f64| NormalParams::new(1.0, x.powi(2) + 1.0));
+        let model_prior = Normal.map_condition(|x: &f64| NormalParams::new(1.0, x.powi(2) + 1.0));
         let g = |theta: &f64| mat!(0.0, 2.0 * theta);
-        let model = ConditionDifferentiableConditionedDistribution::new(model_prior, g) & Normal;
+        let model = DifferentiableConditionMappedDistribution::new(model_prior, g) & Normal;
 
         let f = model
             .ln_diff_condition(&(1.0, 2.0), &NormalParams::new(0.0, 1.0).unwrap())

@@ -1,6 +1,6 @@
 use super::utils::ref_to_slice;
 use crate::nonparametric::EllipticalProcessParams;
-use crate::{DistributionError, NormalParams};
+use crate::{DistributionError, EllipticalParams, NormalParams};
 use crate::{ExactEllipticalParams, RandomVariable};
 use opensrdk_kernel_method::PositiveDefiniteKernel;
 

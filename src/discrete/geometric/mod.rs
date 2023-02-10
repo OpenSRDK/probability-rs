@@ -3,7 +3,7 @@ pub mod params;
 pub use params::*;
 
 use crate::{
-    DependentJoint, Distribution, IndependentJoint, RandomVariable, SampleableDistribution,
+    DependentJoint, Distribution, IndependentJoint, RandomVariable, SamplableDistribution,
 };
 use crate::{DiscreteDistribution, DistributionError};
 use rand::prelude::*;
@@ -24,7 +24,7 @@ impl Distribution for Geometric {
     type Value = u64;
     type Condition = GeometricParams;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let p = theta.p();
 
         Ok((1.0 - p).powi((x - 1) as i32) * p)
@@ -57,7 +57,7 @@ where
     }
 }
 
-impl SampleableDistribution for Geometric {
+impl SamplableDistribution for Geometric {
     fn sample(
         &self,
         theta: &Self::Condition,

@@ -1,4 +1,4 @@
-use crate::{Distribution, DistributionError, RandomVariable, SampleableDistribution};
+use crate::{Distribution, DistributionError, RandomVariable, SamplableDistribution};
 use rand::prelude::*;
 use rayon::prelude::*;
 use std::f64::consts::PI;
@@ -8,7 +8,7 @@ use std::f64::consts::PI;
 pub struct EllipticalSliceSampler<'a, L, P, A, B>
 where
     L: Distribution<Value = A, Condition = B>,
-    P: SampleableDistribution<Value = B, Condition = ()>,
+    P: SamplableDistribution<Value = B, Condition = ()>,
     A: RandomVariable,
     B: RandomVariable,
 {
@@ -20,7 +20,7 @@ where
 impl<'a, L, P, A, B> EllipticalSliceSampler<'a, L, P, A, B>
 where
     L: Distribution<Value = A, Condition = B>,
-    P: SampleableDistribution<Value = B, Condition = ()>,
+    P: SamplableDistribution<Value = B, Condition = ()>,
     A: RandomVariable,
     B: RandomVariable,
 {
@@ -47,7 +47,7 @@ where
 
         let mut b = self.prior.sample(&(), rng)?;
 
-        let rho = self.likelihood.fk(self.value, &b)? * rng.gen_range(0.0..1.0);
+        let rho = self.likelihood.p_kernel(self.value, &b)? * rng.gen_range(0.0..1.0);
         let mut theta = rng.gen_range(0.0..2.0 * PI);
 
         let mut start = theta - 2.0 * PI;
@@ -60,7 +60,7 @@ where
             buf.0 = Self::step(buf.0, theta, &nu.0);
 
             b = B::restore(&buf.0, &buf.1)?;
-            if rho < self.likelihood.fk(self.value, &b)? {
+            if rho < self.likelihood.p_kernel(self.value, &b)? {
                 break;
             }
 

@@ -1,5 +1,5 @@
 use crate::{
-    ConditionDifferentiableDistribution, DistributionError, SampleableDistribution,
+    ConditionDifferentiableDistribution, DistributionError, SamplableDistribution,
     ValueDifferentiableDistribution,
 };
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
@@ -27,11 +27,11 @@ where
     type Value = Vec<T>;
     type Condition = Vec<U>;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         x.iter()
             .zip(theta.iter())
             .enumerate()
-            .map(|(i, (xi, thetai))| self.distributions[i].fk(xi, thetai))
+            .map(|(i, (xi, thetai))| self.distributions[i].p_kernel(xi, thetai))
             .product()
     }
 }
@@ -140,9 +140,9 @@ where
     }
 }
 
-impl<D, T, U> SampleableDistribution for IndependentArrayJoint<D, T, U>
+impl<D, T, U> SamplableDistribution for IndependentArrayJoint<D, T, U>
 where
-    D: SampleableDistribution<Value = T, Condition = U>,
+    D: SamplableDistribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
 {

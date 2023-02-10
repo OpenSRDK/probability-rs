@@ -3,7 +3,7 @@ pub mod exact;
 pub use exact::*;
 
 use crate::{DistributionError, EllipticalError, RandomVariable};
-use opensrdk_linear_algebra::*;
+use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
 use rayon::prelude::*;
 
 pub trait EllipticalParams: RandomVariable {

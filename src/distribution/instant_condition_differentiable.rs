@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, DistributionError,
-    IndependentJoint, InstantDistribution, RandomVariable, SampleableDistribution,
+    IndependentJoint, InstantDistribution, RandomVariable, SamplableDistribution,
 };
 use rand::prelude::*;
 use std::{
@@ -64,12 +64,12 @@ where
     type Value = T;
     type Condition = U;
 
-    fn fk(
+    fn p_kernel(
         &self,
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<f64, crate::DistributionError> {
-        self.instant_distribution.fk(x, theta)
+        self.instant_distribution.p_kernel(x, theta)
     }
 }
 
@@ -128,7 +128,7 @@ where
     }
 }
 
-impl<T, U, FF, FS, G> SampleableDistribution
+impl<T, U, FF, FS, G> SamplableDistribution
     for ConditionDifferentiableInstantDistribution<T, U, FF, FS, G>
 where
     T: RandomVariable,

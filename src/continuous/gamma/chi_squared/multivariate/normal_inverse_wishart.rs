@@ -1,8 +1,9 @@
 // Already finished the implementation of "sampleable distribution".　The implement has commented out.
 
 use crate::{
-    DependentJoint, Distribution, ExactMultivariateNormalParams, IndependentJoint, InverseWishart,
-    InverseWishartParams, MultivariateNormal, RandomVariable, SampleableDistribution,
+    DependentJoint, Distribution, EllipticalParams, ExactMultivariateNormalParams,
+    IndependentJoint, InverseWishart, InverseWishartParams, MultivariateNormal, RandomVariable,
+    SamplableDistribution,
 };
 use crate::{DistributionError, NormalInverseWishartParams};
 use opensrdk_linear_algebra::pp::trf::PPTRF;
@@ -30,7 +31,7 @@ impl Distribution for NormalInverseWishart {
     type Value = ExactMultivariateNormalParams;
     type Condition = NormalInverseWishartParams;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let mu0 = theta.mu0().clone();
         let lambda = theta.lambda();
         let lpsi = theta.lpsi().clone();
@@ -43,7 +44,7 @@ impl Distribution for NormalInverseWishart {
         let n = MultivariateNormal::new();
         let w_inv = InverseWishart;
 
-        Ok(n.fk(
+        Ok(n.p_kernel(
             mu,
             &ExactMultivariateNormalParams::new(
                 mu0,
@@ -55,7 +56,7 @@ impl Distribution for NormalInverseWishart {
                     .unwrap(),
                 ),
             )?,
-        )? * w_inv.fk(lsigma, &InverseWishartParams::new(lpsi, nu)?)?)
+        )? * w_inv.p_kernel(lsigma, &InverseWishartParams::new(lpsi, nu)?)?)
     }
 }
 
@@ -90,7 +91,7 @@ where
     }
 }
 
-impl SampleableDistribution for NormalInverseWishart {
+impl SamplableDistribution for NormalInverseWishart {
     fn sample(
         &self,
         theta: &Self::Condition,

@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, RandomVariable,
-    SampleableDistribution, ValueDifferentiableDistribution,
+    SamplableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, Event};
 use rand::prelude::*;
@@ -45,8 +45,8 @@ where
     type Value = (TL, TR);
     type Condition = U;
 
-    fn fk(&self, x: &(TL, TR), theta: &U) -> Result<f64, DistributionError> {
-        Ok(self.lhs.fk(&x.0, theta)? * self.rhs.fk(&x.1, theta)?)
+    fn p_kernel(&self, x: &(TL, TR), theta: &U) -> Result<f64, DistributionError> {
+        Ok(self.lhs.p_kernel(&x.0, theta)? * self.rhs.p_kernel(&x.1, theta)?)
     }
 }
 
@@ -127,10 +127,10 @@ where
     }
 }
 
-impl<L, R, TL, TR, U> SampleableDistribution for IndependentJoint<L, R, TL, TR, U>
+impl<L, R, TL, TR, U> SamplableDistribution for IndependentJoint<L, R, TL, TR, U>
 where
-    L: SampleableDistribution<Value = TL, Condition = U>,
-    R: SampleableDistribution<Value = TR, Condition = U>,
+    L: SamplableDistribution<Value = TL, Condition = U>,
+    R: SamplableDistribution<Value = TR, Condition = U>,
     TL: RandomVariable,
     TR: RandomVariable,
     U: Event,

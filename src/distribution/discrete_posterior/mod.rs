@@ -39,7 +39,10 @@ where
             .range
             .par_iter()
             .map(|u| -> Result<_, DistributionError> {
-                Ok((self.likelihood.fk(theta, u)? * self.prior.fk(u, &())?, u))
+                Ok((
+                    self.likelihood.p_kernel(theta, u)? * self.prior.p_kernel(u, &())?,
+                    u,
+                ))
             })
             .collect::<Result<Vec<(f64, &B)>, _>>()?;
         Ok(weighted)
@@ -64,12 +67,12 @@ where
     type Value = B;
     type Condition = A;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
-        Ok(self.likelihood.fk(theta, x)? * self.prior.fk(x, &())?)
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+        Ok(self.likelihood.p_kernel(theta, x)? * self.prior.p_kernel(x, &())?)
     }
 }
 
-impl<L, P, A, B> SampleableDistribution for DiscretePosterior<L, P, A, B>
+impl<L, P, A, B> SamplableDistribution for DiscretePosterior<L, P, A, B>
 where
     L: Distribution<Value = A, Condition = B>,
     P: Distribution<Value = B, Condition = ()>,
@@ -103,14 +106,14 @@ mod tests {
         // range.insert(true);
         // range.insert(false);
         let model = DiscretePosterior::new(
-            Normal.condition(|x: &bool| NormalParams::new(if *x { 10.0 } else { 0.0 }, 1.0)),
-            Bernoulli.condition(|_x: &()| BernoulliParams::new(0.5)),
+            Normal.map_condition(|x: &bool| NormalParams::new(if *x { 10.0 } else { 0.0 }, 1.0)),
+            Bernoulli.map_condition(|_x: &()| BernoulliParams::new(0.5)),
             range,
         );
 
         // println!("{:?}", model.weighted(&1.0).unwrap());
-        let true_result = model.fk(&true, &1.0).unwrap();
-        let false_result = model.fk(&false, &1.0).unwrap();
+        let true_result = model.p_kernel(&true, &1.0).unwrap();
+        let false_result = model.p_kernel(&false, &1.0).unwrap();
         assert!(true_result < false_result);
     }
 }

@@ -1,6 +1,6 @@
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, IndependentJoint,
-    RandomVariable, SampleableDistribution, ValueDifferentiableDistribution,
+    RandomVariable, SamplableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, StudentTError};
 use rand::prelude::*;
@@ -16,7 +16,7 @@ impl Distribution for StudentT {
     type Value = f64;
     type Condition = StudentTParams;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let nu = theta.nu();
         let mu = theta.mu();
         let sigma = theta.sigma();
@@ -79,7 +79,7 @@ where
     }
 }
 
-impl SampleableDistribution for StudentT {
+impl SamplableDistribution for StudentT {
     fn sample(
         &self,
         theta: &Self::Condition,
@@ -156,7 +156,7 @@ impl RandomVariable for StudentTParams {
 #[cfg(test)]
 mod tests {
     use crate::{
-        ConditionDifferentiableDistribution, Distribution, SampleableDistribution, StudentT,
+        ConditionDifferentiableDistribution, Distribution, SamplableDistribution, StudentT,
         StudentTParams, ValueDifferentiableDistribution,
     };
     use rand::prelude::*;

@@ -47,15 +47,15 @@ where
         let mut ed = 1.0;
 
         let r = shrink(x)?;
-        let slice = self.likelihood.fk(&self.value, &x)? * self.prior.fk(&x, &())?
+        let slice = self.likelihood.p_kernel(&self.value, &x)? * self.prior.p_kernel(&x, &())?
             - 2.0 * rng.gen_range(0.0f64..1.0f64).ln();
 
         for _iter in 0..max_iter {
             let rnew = rng.gen_range(st..ed);
             let expanded = expand(rnew)?;
 
-            let newlik = self.likelihood.fk(&self.value, &expanded)?
-                * self.prior.fk(&expanded, &())?
+            let newlik = self.likelihood.p_kernel(&self.value, &expanded)?
+                * self.prior.p_kernel(&expanded, &())?
                 - (2.0 * rnew * (1.0 - rnew));
 
             if newlik > slice {

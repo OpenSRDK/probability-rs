@@ -3,7 +3,7 @@ pub mod params;
 pub use params::*;
 
 use crate::{
-    DependentJoint, Distribution, IndependentJoint, RandomVariable, SampleableDistribution,
+    DependentJoint, Distribution, IndependentJoint, RandomVariable, SamplableDistribution,
 };
 use crate::{DiscreteDistribution, DistributionError};
 use num_integer::binomial;
@@ -27,7 +27,7 @@ impl Distribution for Binomial {
     type Value = u64;
     type Condition = BinomialParams;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let n = theta.n();
         let p = theta.p();
 
@@ -61,7 +61,7 @@ where
     }
 }
 
-impl SampleableDistribution for Binomial {
+impl SamplableDistribution for Binomial {
     fn sample(
         &self,
         theta: &Self::Condition,

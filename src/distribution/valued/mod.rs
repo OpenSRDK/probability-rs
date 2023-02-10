@@ -4,7 +4,7 @@ pub use value_differentiable::*;
 
 use crate::{
     ConditionDifferentiableDistribution, DependentJoint, Distribution, DistributionError, Event,
-    IndependentJoint, RandomVariable, SampleableDistribution,
+    IndependentJoint, RandomVariable, SamplableDistribution,
 };
 use rand::prelude::*;
 use std::{
@@ -72,12 +72,12 @@ where
     type Value = T2;
     type Condition = U;
 
-    fn fk(
+    fn p_kernel(
         &self,
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<f64, crate::DistributionError> {
-        self.distribution.fk(&(self.value)(x)?, theta)
+        self.distribution.p_kernel(&(self.value)(x)?, theta)
     }
 }
 
@@ -168,9 +168,9 @@ where
     }
 }
 
-impl<D, T1, T2, U, F> SampleableDistribution for ValuedDistribution<D, T1, T2, U, F>
+impl<D, T1, T2, U, F> SamplableDistribution for ValuedDistribution<D, T1, T2, U, F>
 where
-    D: SampleableDistribution<Value = T1, Condition = U>,
+    D: SamplableDistribution<Value = T1, Condition = U>,
     T1: RandomVariable,
     T2: RandomVariable,
     U: Event,

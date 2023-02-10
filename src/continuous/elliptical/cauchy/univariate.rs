@@ -1,6 +1,6 @@
 use crate::{
     CauchyParams, ConditionDifferentiableDistribution, DependentJoint, Distribution,
-    IndependentJoint, RandomVariable, SampleableDistribution, ValueDifferentiableDistribution,
+    IndependentJoint, RandomVariable, SamplableDistribution, ValueDifferentiableDistribution,
 };
 use crate::{DistributionError, StudentT, StudentTParams};
 use rand::prelude::*;
@@ -14,10 +14,10 @@ impl Distribution for Cauchy {
     type Value = f64;
     type Condition = CauchyParams;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let studentt_params = StudentTParams::new(1.0, theta.mu(), theta.sigma())?;
 
-        StudentT.fk(x, &studentt_params)
+        StudentT.p_kernel(x, &studentt_params)
     }
 }
 
@@ -45,7 +45,7 @@ where
     }
 }
 
-impl SampleableDistribution for Cauchy {
+impl SamplableDistribution for Cauchy {
     fn sample(
         &self,
         theta: &Self::Condition,

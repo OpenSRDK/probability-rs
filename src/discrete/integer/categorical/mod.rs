@@ -27,7 +27,7 @@ impl Distribution for Categorical {
     type Value = usize;
     type Condition = CategoricalParams;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let k = *x;
         if k < theta.p().len() {
             return Err(DistributionError::InvalidParameters(
@@ -64,7 +64,7 @@ where
     }
 }
 
-impl SampleableDistribution for Categorical {
+impl SamplableDistribution for Categorical {
     fn sample(
         &self,
         theta: &Self::Condition,
@@ -82,7 +82,7 @@ impl SampleableDistribution for Categorical {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Categorical, CategoricalParams, Distribution, SampleableDistribution};
+    use crate::{Categorical, CategoricalParams, Distribution, SamplableDistribution};
     use rand::prelude::*;
     #[test]
     fn it_works() {

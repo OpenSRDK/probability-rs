@@ -1,5 +1,5 @@
 use crate::{
-    DependentJoint, Distribution, IndependentJoint, RandomVariable, SampleableDistribution,
+    DependentJoint, Distribution, IndependentJoint, RandomVariable, SamplableDistribution,
 };
 use rand::prelude::*;
 use std::{
@@ -45,12 +45,12 @@ where
     type Value = (T, V);
     type Condition = (U, V);
 
-    fn fk(
+    fn p_kernel(
         &self,
         x: &Self::Value,
         theta: &Self::Condition,
     ) -> Result<f64, crate::DistributionError> {
-        self.distribution.fk(&x.0, &theta.0)
+        self.distribution.p_kernel(&x.0, &theta.0)
     }
 }
 pub trait TransformableDistribution: Distribution + Sized {
@@ -112,9 +112,9 @@ where
     }
 }
 
-impl<D, T, U, V> SampleableDistribution for TransformedDistribution<D, T, U, V>
+impl<D, T, U, V> SamplableDistribution for TransformedDistribution<D, T, U, V>
 where
-    D: SampleableDistribution<Value = T, Condition = U>,
+    D: SamplableDistribution<Value = T, Condition = U>,
     T: RandomVariable,
     U: RandomVariable,
     V: RandomVariable,

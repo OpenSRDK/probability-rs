@@ -1,5 +1,5 @@
 use crate::{
-    ConditionDifferentiableDistribution, DistributionError, SampleableDistribution,
+    ConditionDifferentiableDistribution, DistributionError, SamplableDistribution,
     ValueDifferentiableDistribution,
 };
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
@@ -24,7 +24,7 @@ impl Distribution for Beta {
     type Value = f64;
     type Condition = BetaParams;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let alpha = theta.alpha();
         let beta = theta.beta();
 
@@ -130,7 +130,7 @@ where
     }
 }
 
-impl SampleableDistribution for Beta {
+impl SamplableDistribution for Beta {
     fn sample(
         &self,
         theta: &Self::Condition,
@@ -151,8 +151,8 @@ impl SampleableDistribution for Beta {
 #[cfg(test)]
 mod tests {
     use crate::{
-        Beta, BetaParams, ConditionDifferentiableDistribution, Distribution,
-        SampleableDistribution, ValueDifferentiableDistribution,
+        Beta, BetaParams, ConditionDifferentiableDistribution, Distribution, SamplableDistribution,
+        ValueDifferentiableDistribution,
     };
     use rand::prelude::*;
 

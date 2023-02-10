@@ -1,5 +1,5 @@
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
-use crate::{DistributionError, SampleableDistribution};
+use crate::{DistributionError, SamplableDistribution};
 use rand::prelude::*;
 use std::marker::PhantomData;
 use std::{
@@ -58,7 +58,7 @@ where
     type Value = T;
     type Condition = U;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         (self.fk)(x, theta)
     }
 }
@@ -95,7 +95,7 @@ where
     }
 }
 
-impl<T, U, FF, FS> SampleableDistribution for InstantDistribution<T, U, FF, FS>
+impl<T, U, FF, FS> SamplableDistribution for InstantDistribution<T, U, FF, FS>
 where
     T: RandomVariable,
     U: RandomVariable,

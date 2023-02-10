@@ -1,6 +1,6 @@
 // Already finished the implementation of "sampleable distribution".　The implement has commented out.
 
-use crate::{ChiSquaredParams, DistributionError, SampleableDistribution};
+use crate::{ChiSquaredParams, DistributionError, SamplableDistribution};
 use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 use rand::prelude::*;
 use rand_distr::ChiSquared as RandChiSquared;
@@ -20,7 +20,7 @@ impl Distribution for ChiSquared {
     type Value = f64;
     type Condition = ChiSquaredParams;
 
-    fn fk(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
+    fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
         let k = theta.k();
 
         Ok(x.powf(k / 2.0 - 1.0) * (-x / 2.0).exp())
@@ -51,7 +51,7 @@ where
     }
 }
 
-impl SampleableDistribution for ChiSquared {
+impl SamplableDistribution for ChiSquared {
     fn sample(
         &self,
         theta: &Self::Condition,
