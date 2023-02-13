@@ -2,7 +2,7 @@ use super::AcquisitionFunctions;
 // use crate::{Normal, NormalParams};
 
 pub struct ExpectedImprovement {
-    f_vec: Vec<f64>,
+    pub f_vec: Vec<f64>,
 }
 
 impl AcquisitionFunctions for ExpectedImprovement {

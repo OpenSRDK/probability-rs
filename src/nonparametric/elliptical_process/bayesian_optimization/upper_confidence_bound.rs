@@ -3,7 +3,7 @@ use num_integer::sqrt;
 use super::AcquisitionFunctions;
 
 pub struct UpperConfidenceBound {
-    trial: usize,
+    pub trial: usize,
 }
 
 impl AcquisitionFunctions for UpperConfidenceBound {
