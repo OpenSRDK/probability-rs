@@ -1,3 +1,4 @@
+pub mod bayesian_optimization;
 pub mod exact;
 pub mod ey;
 pub mod kernel_matrix;
@@ -6,6 +7,7 @@ pub mod params_diff_kernel_matrix;
 pub mod regressor;
 pub mod sparse;
 
+pub use bayesian_optimization::*;
 pub use exact::*;
 pub use ey::*;
 pub use kernel_matrix::*;
