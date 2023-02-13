@@ -60,9 +60,18 @@ fn calc_ei(data: &Data, n: usize, xs: &Vec<f64>) -> f64 {
 fn maximize_ucb(data: &Data, n: usize) -> Vec<f64> {
     let func_to_maximize = |xs: Vec<f64>| calc_ucb(data, n, &xs);
 
+    let mean_x: Vec<f64> = vec![];
+
+    for k in 1..data.y_history.len() {
+        let xk = data.x_history.iter().map(|x| x[k]).collect::<Vec<f64>>();
+        let sum_xk: f64 = xk.iter().sum();
+        let mean_xk: f64 = sum_xk / xk.len() as f64;
+        mean_x.push(mean_xk);
+    }
+
     let solution = fmax(
         |x: &DVector<f64>| func_to_maximize(x.iter().cloned().collect::<Vec<_>>()),
-        data.x_history.iter().cloned().collect::<DVector<_>>(),
+        mean_x,
         0.01,
     );
     let xs = solution.point.iter().cloned().collect::<Vec<_>>();
@@ -72,9 +81,18 @@ fn maximize_ucb(data: &Data, n: usize) -> Vec<f64> {
 fn maximize_ei(data: &Data, n: usize) -> Vec<f64> {
     let func_to_maximize = |xs: Vec<f64>| calc_ei(data, n, &xs);
 
+    let mean_x: Vec<f64> = vec![];
+
+    for k in 1..data.y_history.len() {
+        let xk = data.x_history.iter().map(|x| x[k]).collect::<Vec<f64>>();
+        let sum_xk: f64 = xk.iter().sum();
+        let mean_xk: f64 = sum_xk / xk.len() as f64;
+        mean_x.push(mean_xk);
+    }
+
     let solution = fmax(
         |x: &DVector<f64>| func_to_maximize(x.iter().cloned().collect::<Vec<_>>()),
-        data.x_history.to_vec(),
+        mean_x,
         0.01,
     );
     let xs = solution.point.iter().cloned().collect::<Vec<_>>();
