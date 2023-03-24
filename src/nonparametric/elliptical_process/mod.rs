@@ -1,5 +1,6 @@
 pub mod exact;
 pub mod ey;
+pub mod gaussian_process;
 pub mod kernel_matrix;
 pub mod kiss_love;
 pub mod params_diff_kernel_matrix;
@@ -8,6 +9,7 @@ pub mod sparse;
 
 pub use exact::*;
 pub use ey::*;
+pub use gaussian_process::*;
 pub use kernel_matrix::*;
 pub use kiss_love::*;
 pub use params_diff_kernel_matrix::*;
