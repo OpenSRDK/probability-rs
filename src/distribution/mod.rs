@@ -13,13 +13,15 @@ pub mod independent_value_array_joint;
 pub mod instant;
 pub mod instant_condition_differentiable;
 pub mod instant_value_differentiable;
-pub mod joint;
+pub mod joint_array_distribution;
+pub mod joint_distribution;
 pub mod random_variable;
 pub mod samplable;
 pub mod switched;
 pub mod transformed;
 pub mod valued;
 
+use super::ContinuousDistribution;
 pub use condition_mapped::*;
 pub use conditionalize_latent::*;
 pub use continuous_samples::*;
@@ -33,7 +35,74 @@ pub use independent_array_joint::*;
 pub use independent_joint::*;
 pub use independent_value_array_joint::*;
 pub use instant::*;
-pub use joint::*;
+pub use joint_array_distribution::*;
+pub use joint_distribution::*;
+use serde::Serialize;
+use std::ops::Mul;
+
+#[derive(Clone, Debug, Serialize)]
+pub struct JointArrayDistribution<D> {
+    distributions: Vec<D>,
+}
+
+pub trait DistributionProduct<D>
+where
+    D: ContinuousDistribution,
+{
+    /// p(x|a) = Π p(xi|ai)
+    fn distribution_product(self) -> JointArrayDistribution<D>;
+}
+
+impl<I, D> DistributionProduct<D> for I
+where
+    I: Iterator<Item = D>,
+    D: ContinuousDistribution,
+{
+    fn distribution_product(self) -> JointArrayDistribution<D> {
+        let distributions = self.collect::<Vec<_>>();
+
+        JointArrayDistribution { distributions }
+    }
+}
+
+impl<D, Rhs> Mul<Rhs> for JointArrayDistribution<D>
+where
+    D: ContinuousDistribution,
+    Rhs: ContinuousDistribution,
+{
+    type Output = JointDistribution<Self, Rhs>;
+
+    fn mul(self, rhs: Rhs) -> Self::Output {
+        JointDistribution::new(self, rhs)
+    }
+}
+
+impl<D> ContinuousDistribution for JointArrayDistribution<D>
+where
+    D: ContinuousDistribution,
+{
+    fn value_ids(&self) -> std::collections::HashSet<&str> {
+        self.distributions
+            .iter()
+            .flat_map(|d| d.value_ids().into_iter())
+            .collect()
+    }
+
+    fn conditions(&self) -> Vec<&opensrdk_symbolic_computation::Expression> {
+        self.distributions
+            .iter()
+            .flat_map(|d| d.conditions().into_iter())
+            .collect()
+    }
+
+    fn pdf(&self) -> opensrdk_symbolic_computation::Expression {
+        self.distributions.iter().map(|d| d.pdf()).fold(
+            opensrdk_symbolic_computation::Expression::from(1.0),
+            |acc, x| acc * x,
+        )
+    }
+}
+
 pub use random_variable::*;
 pub use samplable::*;
 pub use switched::*;

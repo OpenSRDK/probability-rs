@@ -1,6 +1,6 @@
 use std::ops::Mul;
 
-use super::ContinuousDistribution;
+use crate::ContinuousDistribution;
 use serde::Serialize;
 
 #[derive(Clone, Debug, Serialize)]
