@@ -1,21 +1,22 @@
 use std::collections::HashMap;
 
 use opensrdk_kernel_method::PositiveDefiniteKernel;
-use opensrdk_symbolic_computation::{ConstantValue, Expression, ExpressionArray};
+use opensrdk_symbolic_computation::{
+    new_partial_variable, ConstantValue, Expression, ExpressionArray,
+};
 
 use crate::ContinuousDistribution;
 
-pub struct SteinVariationalGradientDescent<'a, D, K, T>
+pub struct SteinVariationalGradientDescent<'a, D, K>
 where
     D: ContinuousDistribution,
     K: PositiveDefiniteKernel,
-    T: Expression::PartialVariable,
 {
     likelihood: &'a D,
     prior: &'a D,
     kernel: &'a K,
     kernel_params: &'a [f64],
-    samples: Vec<Expression::PartialVariable>,
+    samples: Vec<ExpressionArray>,
 }
 
 impl<'a, D, K> SteinVariationalGradientDescent<'a, D, K>
@@ -28,7 +29,7 @@ where
         prior: &'a D,
         kernel: &'a K,
         kernel_params: &'a [f64],
-        samples: Vec<Expression::PartialVariable>,
+        samples: Vec<ExpressionArray>,
     ) -> Self {
         Self {
             likelihood,
@@ -43,17 +44,21 @@ where
         let n = self.samples.samples().len();
         let m = self.samples.samples()[0].len();
         let theta_vec = self.likelihood.conditions().clone();
+        let factory = |i: &usize| theta_vec[i];
+        let sizes = ;
+        let theta_array = theta_vec.iter().index();
         let phi_sum = self
             .samples
             .iter()
             .map(|theta_j| {
+                let samples_array = new_partial_variable(theta_j);
                 let kernel = self
                     .kernel
-                    .expression(&theta_vec, &theta_j, self.kernel_params)
+                    .expression(&theta_vec, samples_array, self.kernel_params)
                     .unwrap();
                 let kernel_diff = self
                     .kernel
-                    .expression(&theta_vec, &theta_j, self.kernel_params)
+                    .expression(&theta_vec, samples_array, self.kernel_params)
                     .unwrap()
                     .ln()
                     .differential(self.kernel.value_ids()); //variable_ids is value;
@@ -70,6 +75,7 @@ where
                 kernel * p_diff + kernel_diff
             })
             .fold(vec![0.0; m].col_mat(), |sum, x| sum + x);
+
         let phi = phi_sum
             .vec()
             .iter()
