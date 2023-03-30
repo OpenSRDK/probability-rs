@@ -1,20 +1,21 @@
 use std::collections::HashMap;
 
 use opensrdk_kernel_method::PositiveDefiniteKernel;
-use opensrdk_symbolic_computation::{ConstantValue, Expression};
+use opensrdk_symbolic_computation::{ConstantValue, Expression, ExpressionArray};
 
 use crate::ContinuousDistribution;
 
-pub struct SteinVariationalGradientDescent<'a, D, K>
+pub struct SteinVariationalGradientDescent<'a, D, K, T>
 where
     D: ContinuousDistribution,
     K: PositiveDefiniteKernel,
+    T: Expression::PartialVariable,
 {
     likelihood: &'a D,
     prior: &'a D,
     kernel: &'a K,
     kernel_params: &'a [f64],
-    samples: Vec<Expression>,
+    samples: Vec<Expression::PartialVariable>,
 }
 
 impl<'a, D, K> SteinVariationalGradientDescent<'a, D, K>
@@ -27,7 +28,7 @@ where
         prior: &'a D,
         kernel: &'a K,
         kernel_params: &'a [f64],
-        samples: Vec<Expression>,
+        samples: Vec<Expression::PartialVariable>,
     ) -> Self {
         Self {
             likelihood,
@@ -41,7 +42,7 @@ where
     pub fn direction(&self, assignment: &HashMap<&str, ConstantValue>) -> Vec<f64> {
         let n = self.samples.samples().len();
         let m = self.samples.samples()[0].len();
-        let theta_vec = self.likelihood.theta.clone().transform_vec().0;
+        let theta_vec = self.likelihood.conditions().clone();
         let phi_sum = self
             .samples
             .iter()
@@ -52,22 +53,20 @@ where
                     .unwrap();
                 let kernel_diff = self
                     .kernel
-                    .expession(&theta_vec, &theta_j, self.kernel_params)
+                    .expression(&theta_vec, &theta_j, self.kernel_params)
+                    .unwrap()
                     .ln()
-                    .differential() //variable_ids is value
-                    .unwrap();
+                    .differential(self.kernel.value_ids()); //variable_ids is value;
                 let p_diff = self
                     .likelihood
                     .pdf()
                     .ln()
-                    .differential(&["mu", "sigma"]) //variable_ids is condition
-                    .unwrap()
+                    .differential(self.likelihood.condition_ids()) //variable_ids is condition
                     + self
                         .prior
                         .pdf()
                         .ln()
-                        .differential(&["mu", "sigma"]) //variable_ids is value
-                        .unwrap();
+                        .differential(self.prior.value_ids()); //variable_ids is value;
                 kernel * p_diff + kernel_diff
             })
             .fold(vec![0.0; m].col_mat(), |sum, x| sum + x);
