@@ -44,9 +44,10 @@ where
         let n = self.samples.samples().len();
         let m = self.samples.samples()[0].len();
         let theta_vec = self.likelihood.conditions().clone();
-        let factory = |i: &usize| theta_vec[i];
-        let sizes = ;
+        let factory = |i: &[usize]| theta_vec[i[0].clone()].clone();
+        let sizes = vec![1usize; theta_vec.len()];
         let theta_array = theta_vec.iter().index();
+        let expression_orig = ExpressionArray::new(vec![0.0; m]);
         let phi_sum = self
             .samples
             .iter()
@@ -72,9 +73,10 @@ where
                         .pdf()
                         .ln()
                         .differential(self.prior.value_ids()); //variable_ids is value;
-                kernel * p_diff + kernel_diff
+                let expression_result = kernel * p_diff + kernel_diff;
+                result
             })
-            .fold(vec![0.0; m].col_mat(), |sum, x| sum + x);
+            .fold(expression_orig, |sum, x| sum.index() + x);
 
         let phi = phi_sum
             .vec()
