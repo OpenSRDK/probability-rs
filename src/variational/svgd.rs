@@ -56,35 +56,51 @@ where
                 let kernel = self
                     .kernel
                     .expression(&theta_vec, samples_array, self.kernel_params)
-                    .unwrap();
+                    .unwrap()
+                    .assign(assignment);
                 let kernel_diff = self
                     .kernel
                     .expression(&theta_vec, samples_array, self.kernel_params)
                     .unwrap()
                     .ln()
-                    .differential(self.kernel.value_ids()); //variable_ids is value;
-                let p_diff = self
+                    .differential(self.kernel.value_ids())
+                    .iter()
+                    .map(|i| i.assign(assignment))
+                    .collect::<Vec<Expression>>();
+                let p_diff_lhs = self
                     .likelihood
                     .pdf()
                     .ln()
-                    .differential(self.likelihood.condition_ids()) //variable_ids is condition
-                    + self
-                        .prior
-                        .pdf()
-                        .ln()
-                        .differential(self.prior.value_ids()); //variable_ids is value;
-                let expression_result = kernel * p_diff + kernel_diff;
+                    .differential(self.likelihood.condition_ids())
+                    .iter()
+                    .map(|i| i.assign(assignment))
+                    .collect::<Vec<Expression>>();
+                let p_diff_rhs = self
+                    .prior
+                    .pdf()
+                    .ln()
+                    .differential(self.prior.value_ids())
+                    .iter()
+                    .map(|i| i.assign(assignment))
+                    .collect::<Vec<Expression>>();
+                let result = kernel_diff
+                    .iter()
+                    .enumerate()
+                    .map(|(i, kernel_diff_i)| {
+                        (kernel_diff_i + kernel * (p_diff_lhs[i] + p_diff_rhs[i])).into_scalar()
+                    })
+                    .collect::<Vec<f64>>();
                 result
             })
-            .fold(expression_orig, |sum, x| sum.index() + x);
+            .fold(vec![0.0; m], |sum, x| {
+                sum.iter()
+                    .enumerate()
+                    .map(|(i, sum_i)| sum_i + x[i])
+                    .collect::<Vec<f64>>()
+            });
 
-        let phi = phi_sum
-            .vec()
-            .iter()
-            .map(|i| i / n as f64)
-            .collect::<Vec<Expression>>();
-        let result = phi.assign(assignment);
-        Ok(result)
+        let phi = phi_sum.iter().map(|i| i / n as f64).collect::<Vec<f64>>();
+        Ok(phi)
     }
 
     pub fn update_sample(
@@ -92,7 +108,31 @@ where
         assignment: &HashMap<&str, ConstantValue>,
         step_size: f64,
     ) -> Vec<f64> {
-        let direction = self.direction(assignment);
-        todo!()
+        let samples_len = self.samples.len();
+        let mut phi = vec![0.0; samples_len];
+        let epsilon = 0.0001;
+        let stein_mut = &mut SteinVariationalGradientDescent::new(
+            self.likelihood,
+            self.prior,
+            self.kernel,
+            self.kernel_params,
+            self.samples,
+        );
+        for i in 0..step_size {
+            let direction = stein_mut.direction(assignment);
+            let samples_new = stein_mut
+                .samples
+                .iter()
+                .zip(phi.iter())
+                .map(|(theta_i, phi_i)| theta_i + phi_i * &epsilon)
+                .collect::<Vec<f64>>();
+            stein_mut = &mut SteinVariationalGradientDescent::new(
+                self.likelihood,
+                self.prior,
+                self.kernel,
+                self.kernel_params,
+                samples_new,
+            );
+        }
     }
 }
