@@ -120,12 +120,16 @@ where
         );
         for i in 0..step_size {
             let direction = stein_mut.direction(assignment);
+            let assignment;
             let samples_new = stein_mut
                 .samples
                 .iter()
                 .zip(phi.iter())
-                .map(|(theta_i, phi_i)| theta_i + phi_i * &epsilon)
-                .collect::<Vec<f64>>();
+                .map(|(theta_i, phi_i)| {
+                    let elem = theta_i + phi_i * &epsilon;
+                    elem
+                })
+                .collect::<Vec<ExpressionArray>>();
             stein_mut = &mut SteinVariationalGradientDescent::new(
                 self.likelihood,
                 self.prior,
@@ -133,6 +137,27 @@ where
                 self.kernel_params,
                 samples_new,
             );
+        }
+
+        // Assign parameters which is not estimated
+
+        for _i in 0..step_size {
+            //let stein_ref = &stein;
+            let samples_new = stein_mut
+                .samples
+                .iter()
+                .map(|theta| {
+                    // Change ExpressionArray to HashMap
+                    phi = stein_mut.direction(&theta).unwrap();
+                    let theta_new = theta
+                        .iter()
+                        .zip(phi.iter())
+                        .map(|(theta_i, phi_i)| theta_i + phi_i * &epsilon)
+                        .collect::<Vec<f64>>();
+                    theta_new
+                })
+                .collect::<Vec<ExpressionArray>>();
+            stein_mut.samples = samples_new;
         }
     }
 }
