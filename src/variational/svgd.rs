@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, ptr::hash};
 
 use opensrdk_kernel_method::PositiveDefiniteKernel;
 use opensrdk_symbolic_computation::{
@@ -98,7 +98,6 @@ where
                     .map(|(i, sum_i)| sum_i + x[i])
                     .collect::<Vec<f64>>()
             });
-
         let phi = phi_sum.iter().map(|i| i / n as f64).collect::<Vec<f64>>();
         Ok(phi)
     }
@@ -111,6 +110,11 @@ where
         let samples_len = self.samples.len();
         let mut phi = vec![0.0; samples_len];
         let epsilon = 0.0001;
+
+        // Assign parameters which is not estimated
+        //let likelihood_assign = self.likelihood.expression().assign(assignment);
+        //let prior_assign = self.prior.expression().assign(assignment);
+
         let stein_mut = &mut SteinVariationalGradientDescent::new(
             self.likelihood,
             self.prior,
@@ -118,16 +122,32 @@ where
             self.kernel_params,
             self.samples,
         );
+        let str = self.likelihood.condition_ids();
+
         for i in 0..step_size {
-            let direction = stein_mut.direction(assignment);
-            let assignment;
             let samples_new = stein_mut
                 .samples
                 .iter()
-                .zip(phi.iter())
-                .map(|(theta_i, phi_i)| {
-                    let elem = theta_i + phi_i * &epsilon;
-                    elem
+                .map(|theta| {
+                    let theta_map = HashMap::new();
+                    let len = theta.elems().len();
+
+                    for i in 0..len {
+                        let elem = theta.elems().get(&vec![i]).unwrap().into_scalar();
+                        theta_map.insert(str[i], elem)
+                    }
+
+                    phi = stein_mut.direction(theta_map).unwrap();
+                    let theta_new = theta
+                        .iter()
+                        .zip(phi.iter())
+                        .map(|(theta_i, phi_i)| {
+                            let elem = theta_i + phi_i * &epsilon;
+                            let elem_assign = elem.assign(assignment);
+                            elem
+                        })
+                        .collect::<Vec<Expression>>();
+                    theta_new
                 })
                 .collect::<Vec<ExpressionArray>>();
             stein_mut = &mut SteinVariationalGradientDescent::new(
@@ -138,8 +158,6 @@ where
                 samples_new,
             );
         }
-
-        // Assign parameters which is not estimated
 
         for _i in 0..step_size {
             //let stein_ref = &stein;
