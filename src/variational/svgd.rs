@@ -43,11 +43,13 @@ where
     pub fn direction(&self, assignment: &HashMap<&str, ConstantValue>) -> Vec<f64> {
         let n = self.samples.samples().len();
         let m = self.samples.samples()[0].len();
+
         let theta_vec = self.likelihood.conditions().clone();
         let factory = |i: &[usize]| theta_vec[i[0].clone()].clone();
-        let sizes = vec![1usize; theta_vec.len()];
-        let theta_array = theta_vec.iter().index();
-        let expression_orig = ExpressionArray::new(vec![0.0; m]);
+        let sizes: Vec<usize> = (0usize..theta_vec.len()).collect();
+        let theta_array_orig = ExpressionArray::from_factory(sizes, factory);
+        let theta_array = new_partial_variable(theta_array_orig);
+
         let phi_sum = self
             .samples
             .iter()
@@ -55,12 +57,12 @@ where
                 let samples_array = new_partial_variable(theta_j);
                 let kernel = self
                     .kernel
-                    .expression(&theta_vec, samples_array, self.kernel_params)
+                    .expression(theta_array, samples_array, self.kernel_params)
                     .unwrap()
                     .assign(assignment);
                 let kernel_diff = self
                     .kernel
-                    .expression(&theta_vec, samples_array, self.kernel_params)
+                    .expression(theta_array, samples_array, self.kernel_params)
                     .unwrap()
                     .ln()
                     .differential(self.kernel.value_ids())
@@ -87,7 +89,13 @@ where
                     .iter()
                     .enumerate()
                     .map(|(i, kernel_diff_i)| {
-                        (kernel_diff_i + kernel * (p_diff_lhs[i] + p_diff_rhs[i])).into_scalar()
+                        let expression: Expression =
+                            (kernel_diff_i + kernel * (p_diff_lhs[i] + p_diff_rhs[i]));
+
+                        if let Expression::Constant(value) = expression {
+                            let constantValue: ConstantValue = value;
+                            constantValue.into_scalar()
+                        }
                     })
                     .collect::<Vec<f64>>();
                 result
@@ -133,7 +141,13 @@ where
                     let len = theta.elems().len();
 
                     for i in 0..len {
-                        let elem = theta.elems().get(&vec![i]).unwrap().into_scalar();
+                        let expression = theta.elems().get(&vec![i]).unwrap();
+
+                        let elem = if let Expression::Constant(value) = expression {
+                            let constantValue: ConstantValue = value;
+                            constantValue.into_scalar()
+                        };
+
                         theta_map.insert(str[i], elem)
                     }
 
