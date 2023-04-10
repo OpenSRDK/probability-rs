@@ -130,7 +130,11 @@ where
             self.kernel_params,
             self.samples,
         );
+
         let str = self.likelihood.condition_ids();
+        let str_vec: Vec<_> = str.into_iter().collect();
+
+        let theta_len = str_vec.len();
 
         for i in 0..step_size {
             let samples_new = stein_mut
@@ -145,25 +149,34 @@ where
 
                         let elem = if let Expression::Constant(value) = expression {
                             let constantValue: ConstantValue = value;
-                            constantValue.into_scalar()
+                            constantValue //.into_scalar()
                         };
 
-                        theta_map.insert(str[i], elem)
+                        theta_map.insert(str_vec[i], elem)
                     }
 
-                    phi = stein_mut.direction(theta_map).unwrap();
+                    phi = stein_mut.direction(&theta_map).unwrap();
+
                     let theta_new = theta
+                        .elems()
                         .iter()
                         .zip(phi.iter())
                         .map(|(theta_i, phi_i)| {
-                            let elem = theta_i + phi_i * &epsilon;
+                            let theta_i_elem = theta_i.1;
+                            let elem = *theta_i_elem
+                                + Expression::from(phi_i) * Expression::from(&epsilon);
                             let elem_assign = elem.assign(assignment);
                             elem
                         })
                         .collect::<Vec<Expression>>();
-                    theta_new
+
+                    let factory = |i: &[usize]| theta_new[i[0].clone()].clone();
+                    let sizes: Vec<usize> = (0usize..theta_new.len()).collect();
+                    let theta_new_array = ExpressionArray::from_factory(sizes, factory);
+                    theta_new_array
                 })
                 .collect::<Vec<ExpressionArray>>();
+
             stein_mut = &mut SteinVariationalGradientDescent::new(
                 self.likelihood,
                 self.prior,
@@ -172,24 +185,20 @@ where
                 samples_new,
             );
         }
+        let result_orig = stein_mut
+            .samples
+            .iter()
+            .map(|result_array_orig| {
+                let result_array = new_partial_variable(result_array_orig);
+                result_array
+            })
+            .fold(Expression::from(vec![0.0; theta_len]), |sum, x| sum + x);
 
-        for _i in 0..step_size {
-            //let stein_ref = &stein;
-            let samples_new = stein_mut
-                .samples
-                .iter()
-                .map(|theta| {
-                    // Change ExpressionArray to HashMap
-                    phi = stein_mut.direction(&theta).unwrap();
-                    let theta_new = theta
-                        .iter()
-                        .zip(phi.iter())
-                        .map(|(theta_i, phi_i)| theta_i + phi_i * &epsilon)
-                        .collect::<Vec<f64>>();
-                    theta_new
-                })
-                .collect::<Vec<ExpressionArray>>();
-            stein_mut.samples = samples_new;
+        let result = if let Expression::Constant(value) = result_orig {
+            let constantValue: ConstantValue = value;
+            constantValue.into_tensor()
         }
+        .to_vec();
+        result
     }
 }
