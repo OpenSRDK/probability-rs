@@ -85,7 +85,25 @@ impl From<Box<dyn Error + Send + Sync>> for DistributionError {
 
 /// The trait which all structs of distribution must implement.
 /// - `fk`: The kernel part of probability density function `f`. The kernel means that it doesn't need normalization term of probability density function.
-pub trait Distribution: Clone + Debug + Serialize {
+// pub trait Distribution: Clone + Debug + Serialize {
+//     fn value_ids(&self) -> HashSet<&str>;
+
+//     fn conditions(&self) -> Vec<&Expression>;
+
+//     fn condition_ids(&self) -> HashSet<&str> {
+//         self.conditions()
+//             .iter()
+//             .map(|v| v.variable_ids())
+//             .flatten()
+//             .collect::<HashSet<_>>()
+//             .difference(&self.value_ids())
+//             .cloned()
+//             .collect()
+//     }
+
+//     fn pdf(&self) -> Expression;
+// }
+pub trait ContinuousDistribution: Clone + Debug + Serialize {
     fn value_ids(&self) -> HashSet<&str>;
 
     fn conditions(&self) -> Vec<&Expression>;
@@ -107,31 +125,9 @@ pub trait Distribution: Clone + Debug + Serialize {
         self.pdf().ln()
     }
 }
-pub trait ContinuousDistribution: Distribution {
-    fn value_ids(&self) -> HashSet<&str>;
 
-    fn conditions(&self) -> Vec<&Expression>;
-
-    fn condition_ids(&self) -> HashSet<&str> {
-        self.conditions()
-            .iter()
-            .map(|v| v.variable_ids())
-            .flatten()
-            .collect::<HashSet<_>>()
-            .difference(&self.value_ids())
-            .cloned()
-            .collect()
-    }
-
-    fn pdf(&self) -> Expression;
-
-    fn ln_pdf(&self) -> Expression {
-        self.pdf().ln()
-    }
-}
-
-pub trait DiscreteDistribution: Distribution {
-    fn fm(&self) -> Expression {
-        self.pdf()
-    }
-}
+// pub trait DiscreteDistribution: Clone + Debug + Serialize {
+//     fn fm(&self) -> Expression {
+//         self.pdf()
+//     }
+// }

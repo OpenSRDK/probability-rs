@@ -1,9 +1,4 @@
-use crate::nonparametric::ExactEllipticalProcessParams;
-use crate::{
-    ConditionDifferentiableDistribution, ContinuousDistribution, DependentJoint, Distribution,
-    ExactEllipticalParams, IndependentJoint, JointDistribution, RandomVariable,
-    SamplableDistribution, ValueDifferentiableDistribution,
-};
+use crate::{ContinuousDistribution, JointDistribution};
 use crate::{DistributionError, EllipticalParams};
 use opensrdk_kernel_method::PositiveDefiniteKernel;
 use opensrdk_linear_algebra::{DiagonalMatrix, Matrix, SymmetricPackedMatrix, Vector};
@@ -67,5 +62,20 @@ impl ContinuousDistribution for MultivariateNormal {
             .exp();
 
         pdf_expression
+    }
+
+    fn condition_ids(&self) -> HashSet<&str> {
+        self.conditions()
+            .iter()
+            .map(|v| v.variable_ids())
+            .flatten()
+            .collect::<HashSet<_>>()
+            .difference(&self.value_ids())
+            .cloned()
+            .collect()
+    }
+
+    fn ln_pdf(&self) -> Expression {
+        self.pdf().ln()
     }
 }

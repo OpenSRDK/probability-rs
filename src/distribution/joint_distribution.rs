@@ -60,4 +60,19 @@ where
     fn pdf(&self) -> opensrdk_symbolic_computation::Expression {
         self.dl.pdf() * self.dr.pdf()
     }
+
+    fn condition_ids(&self) -> std::collections::HashSet<&str> {
+        self.conditions()
+            .iter()
+            .map(|v| v.variable_ids())
+            .flatten()
+            .collect::<std::collections::HashSet<_>>()
+            .difference(&self.value_ids())
+            .cloned()
+            .collect()
+    }
+
+    fn ln_pdf(&self) -> opensrdk_symbolic_computation::Expression {
+        self.pdf().ln()
+    }
 }

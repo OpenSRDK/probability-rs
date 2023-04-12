@@ -1,11 +1,11 @@
-use rand::RngCore;
+// use rand::RngCore;
 
-use crate::{Distribution, DistributionError};
+// use crate::{Distribution, DistributionError};
 
-pub trait SamplableDistribution: Distribution {
-    fn sample(
-        &self,
-        theta: &Self::Condition,
-        rng: &mut dyn RngCore,
-    ) -> Result<Self::Value, DistributionError>;
-}
+// pub trait SamplableDistribution: Distribution {
+//     fn sample(
+//         &self,
+//         theta: &Self::Condition,
+//         rng: &mut dyn RngCore,
+//     ) -> Result<Self::Value, DistributionError>;
+// }

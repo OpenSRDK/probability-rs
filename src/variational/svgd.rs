@@ -41,8 +41,8 @@ where
     }
 
     pub fn direction(&self, assignment: &HashMap<&str, ConstantValue>) -> Vec<f64> {
-        let n = self.samples.samples().len();
-        let m = self.samples.samples()[0].len();
+        let n = self.samples.len();
+        let m = self.samples[0].len();
 
         let theta_vec = self.likelihood.conditions().clone();
         let factory = |i: &[usize]| theta_vec[i[0].clone()].clone();
@@ -50,19 +50,25 @@ where
         let theta_array_orig = ExpressionArray::from_factory(sizes, factory);
         let theta_array = new_partial_variable(theta_array_orig);
 
+        let kernel_params_expression = self
+            .kernel_params
+            .iter()
+            .map(|elem| Expression::from(*elem))
+            .collect::<Vec<Expression>>();
+
         let phi_sum = self
             .samples
             .iter()
             .map(|theta_j| {
-                let samples_array = new_partial_variable(theta_j);
+                let samples_array = new_partial_variable(theta_j.clone());
                 let kernel = self
                     .kernel
-                    .expression(theta_array, samples_array, self.kernel_params)
+                    .expression(theta_array, samples_array, &kernel_params_expression)
                     .unwrap()
                     .assign(assignment);
                 let kernel_diff = self
                     .kernel
-                    .expression(theta_array, samples_array, self.kernel_params)
+                    .expression(theta_array, samples_array, &kernel_params_expression)
                     .unwrap()
                     .ln()
                     .differential(self.kernel.value_ids())
@@ -90,7 +96,7 @@ where
                     .enumerate()
                     .map(|(i, kernel_diff_i)| {
                         let expression: Expression =
-                            (kernel_diff_i + kernel * (p_diff_lhs[i] + p_diff_rhs[i]));
+                            (kernel_diff_i.clone() + kernel * (p_diff_lhs[i] + p_diff_rhs[i]));
 
                         if let Expression::Constant(value) = expression {
                             let constantValue: ConstantValue = value;
@@ -203,17 +209,15 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use opensrdk_kernel_method::RBF;
-    use opensrdk_linear_algebra::{mat, SymmetricPackedMatrix};
-    use opensrdk_symbolic_computation::{new_variable, Expression};
+    use opensrdk_linear_algebra::{mat, Matrix, SymmetricPackedMatrix};
+    use opensrdk_symbolic_computation::{new_variable, Expression, ExpressionArray};
     use rand::{prelude::StdRng, Rng, SeedableRng};
     use rand_distr::StandardNormal;
 
-    use crate::{
-        ConditionMappableDistribution, ContinuousSamplesDistribution,
-        DifferentiableConditionMappedDistribution, DistributionValueProduct, ExactEllipticalParams,
-        MultivariateNormal, Normal, NormalParams,
-    };
+    use crate::MultivariateNormal;
 
     use super::SteinVariationalGradientDescent;
     use opensrdk_kernel_method::*;
@@ -227,30 +231,26 @@ mod tests {
             .into_iter()
             .map(|_| {
                 let x = rng2.gen_range(-8.0..=8.0);
-                let y = 1.0 + 0.5 * x + rng.sample::<f64, _>(StandardNormal);
+                let y = 0.5 * x + rng.sample::<f64, _>(StandardNormal);
 
                 vec![x, y]
             })
             .collect::<Vec<Vec<f64>>>();
 
-        let x = &samples_xy
-            .iter()
-            .map(|v| vec![1.0, v[0]])
-            .collect::<Vec<_>>();
+        let x = &samples_xy.iter().map(|v| v[0]).collect::<Vec<_>>();
         let y = &samples_xy.iter().map(|v| v[1]).collect::<Vec<_>>();
 
         let sigma = Expression::from(0.5f64);
 
         let value = y.clone();
 
-        let theta_0 = new_variable("alpha".to_owned());
         let theta_1 = new_variable("beta".to_owned());
 
         let likelihood = (1..x.len())
             .map(|i| {
                 MultivariateNormal::new(
                     Expression::from(y[i]),
-                    theta_0 * Expression::from(x[i][0]) + theta_1 * Expression::from(x[i][1]),
+                    theta_1 * Expression::from(x[i]),
                     sigma,
                     1usize,
                 )
@@ -258,38 +258,34 @@ mod tests {
             .fold(
                 MultivariateNormal::new(
                     Expression::from(y[0]),
-                    theta_0 * Expression::from(x[0][0]) + theta_1 * Expression::from(x[0][1]),
+                    theta_1 * Expression::from(x[0]),
                     sigma,
                     1usize,
                 ),
                 |sum, x| sum.mul(x),
             );
 
-        // let dim = x[0].len();
-        // let prior_sigma_sym =
-        //     SymmetricPackedMatrix::from(dim, vec![0.5; dim * (dim + 1) / 2]).unwrap();
-        // let prior_sigma = prior_sigma_sym.pptrf().unwrap();
+        let dim = x[0].len();
+        let prior_sigma =
+            Expression::from(Matrix::from(dim, vec![0.5; dim * (dim + 1) / 2]).unwrap());
 
-        // let prior_mu = vec![0.5; dim];
-        // let prior_params =
-        //     ExactEllipticalParams::new(prior_mu.clone(), prior_sigma.clone()).unwrap();
-        // let prior = MultivariateNormal::new().map_condition(|_| Ok(prior_params.clone()));
+        let prior_mu = Expression::from(vec![0.5; dim]);
+        let prior = MultivariateNormal::new(theta_1, prior_sigma, prior_mu, dim);
 
-        // let kernel = RBF;
-        // let kernel_params = [0.5, 0.5];
-        // let samples_orig = (0..10)
-        //     .into_iter()
-        //     .map(|v| {
-        //         let mut rng3 = StdRng::from_seed([v; 32]);
-        //         let theta_0 = rng3.gen_range(-5.0..=5.0);
-        //         let mut rng4 = StdRng::from_seed([v * 2; 32]);
-        //         let theta_1 = rng4.gen_range(-5.0..=5.0);
-        //         vec![theta_0, theta_1]
-        //     })
-        //     .collect::<Vec<Vec<f64>>>();
-        // let samples = &mut ContinuousSamplesDistribution::new(samples_orig);
+        let kernel = RBF;
+        let kernel_params = [0.5, 0.5];
+        let samples_orig = (0..10)
+            .into_iter()
+            .map(|v| {
+                let mut rng3 = StdRng::from_seed([v; 32]);
+                let theta_0 = rng3.gen_range(-5.0..=5.0);
+                theta_0
+            })
+            .collect::<Vec<f64>>();
 
-        // let theta = vec![0.1, 0.1];
+        let factory = |i: &[usize]| samples_orig[i[0].clone()].clone();
+        let sizes: Vec<usize> = (0usize..samples_orig.len()).collect();
+        let samples = ExpressionArray::from_factory(sizes, factory);
 
         let stein_test = SteinVariationalGradientDescent::new(
             &likelihood,
@@ -298,6 +294,8 @@ mod tests {
             &kernel_params,
             samples,
         );
+
+        let hash = HashMap::new();
 
         let phi = &stein_test.update_sample(&hash, 100f64);
 

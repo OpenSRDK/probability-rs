@@ -5,4 +5,7 @@
   "rust-analyzer.diagnostics.disabled": [
     "unresolved-proc-macro"
   ],
+  "rust-analyzer.linkedProjects": [
+    "./Cargo.toml"
+  ],
 }

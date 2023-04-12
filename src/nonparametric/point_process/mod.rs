@@ -1,31 +1,31 @@
-pub mod dirichlet_process;
+// pub mod dirichlet_process;
 
-pub use dirichlet_process::*;
+// pub use dirichlet_process::*;
 
-use crate::{Distribution, RandomVariable};
-use std::collections::HashSet;
+// use crate::{Distribution, RandomVariable};
+// use std::collections::HashSet;
 
-#[derive(Clone, Debug)]
-pub struct BaselineMeasure<D, T>
-where
-    D: Distribution<Value = T, Condition = ()>,
-    T: RandomVariable,
-{
-    pub distr: D,
-}
+// #[derive(Clone, Debug)]
+// pub struct BaselineMeasure<D, T>
+// where
+//     D: Distribution<Value = T, Condition = ()>,
+//     T: RandomVariable,
+// {
+//     pub distr: D,
+// }
 
-impl<D, T> BaselineMeasure<D, T>
-where
-    D: Distribution<Value = T, Condition = ()>,
-    T: RandomVariable,
-{
-    pub fn new(distr: D) -> Self {
-        Self { distr }
-    }
-}
+// impl<D, T> BaselineMeasure<D, T>
+// where
+//     D: Distribution<Value = T, Condition = ()>,
+//     T: RandomVariable,
+// {
+//     pub fn new(distr: D) -> Self {
+//         Self { distr }
+//     }
+// }
 
-pub type DiscreteMeasurableSpace = HashSet<usize>;
+// pub type DiscreteMeasurableSpace = HashSet<usize>;
 
-pub trait DiscreteMeasure {
-    fn measure(&self, a: DiscreteMeasurableSpace) -> f64;
-}
+// pub trait DiscreteMeasure {
+//     fn measure(&self, a: DiscreteMeasurableSpace) -> f64;
+// }
