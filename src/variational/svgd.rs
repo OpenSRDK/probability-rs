@@ -42,7 +42,7 @@ where
 
     pub fn direction(&self, assignment: &HashMap<&str, ConstantValue>) -> Vec<f64> {
         let n = self.samples.len();
-        let m = self.samples[0].len();
+        let m = self.samples[0].elems().len();
 
         let theta_vec = self.likelihood.conditions().clone();
         let factory = |i: &[usize]| theta_vec[i[0].clone()].clone();
@@ -56,6 +56,13 @@ where
             .map(|elem| Expression::from(*elem))
             .collect::<Vec<Expression>>();
 
+        let theta_ids = &self
+            .likelihood
+            .condition_ids()
+            .iter()
+            .map(|i| *i)
+            .collect::<Vec<_>>();
+
         let phi_sum = self
             .samples
             .iter()
@@ -63,45 +70,56 @@ where
                 let samples_array = new_partial_variable(theta_j.clone());
                 let kernel = self
                     .kernel
-                    .expression(theta_array, samples_array, &kernel_params_expression)
+                    .expression(
+                        theta_array.clone(),
+                        samples_array.clone(),
+                        &kernel_params_expression,
+                    )
                     .unwrap()
                     .assign(assignment);
                 let kernel_diff = self
                     .kernel
-                    .expression(theta_array, samples_array, &kernel_params_expression)
+                    .expression(
+                        theta_array.clone(),
+                        samples_array.clone(),
+                        &kernel_params_expression,
+                    )
                     .unwrap()
                     .ln()
-                    .differential(self.kernel.value_ids())
+                    .differential(theta_ids)
                     .iter()
-                    .map(|i| i.assign(assignment))
+                    .map(|i| i.clone().assign(assignment))
                     .collect::<Vec<Expression>>();
                 let p_diff_lhs = self
                     .likelihood
                     .pdf()
                     .ln()
-                    .differential(self.likelihood.condition_ids())
+                    .differential(theta_ids)
                     .iter()
-                    .map(|i| i.assign(assignment))
+                    .map(|i| i.clone().assign(assignment))
                     .collect::<Vec<Expression>>();
                 let p_diff_rhs = self
                     .prior
                     .pdf()
                     .ln()
-                    .differential(self.prior.value_ids())
+                    .differential(theta_ids)
                     .iter()
-                    .map(|i| i.assign(assignment))
+                    .map(|i| i.clone().assign(assignment))
                     .collect::<Vec<Expression>>();
                 let result = kernel_diff
                     .iter()
                     .enumerate()
                     .map(|(i, kernel_diff_i)| {
-                        let expression: Expression =
-                            (kernel_diff_i.clone() + kernel * (p_diff_lhs[i] + p_diff_rhs[i]));
+                        let expression: Expression = (kernel_diff_i.clone()
+                            + kernel.clone() * (p_diff_lhs[i].clone() + p_diff_rhs[i].clone()));
 
-                        if let Expression::Constant(value) = expression {
-                            let constantValue: ConstantValue = value;
-                            constantValue.into_scalar()
-                        }
+                        let result_elem = if let Expression::Constant(value) = expression {
+                            let constant_value: ConstantValue = value;
+                            constant_value.into_scalar()
+                        } else {
+                            todo!()
+                        };
+                        result_elem
                     })
                     .collect::<Vec<f64>>();
                 result
@@ -113,7 +131,7 @@ where
                     .collect::<Vec<f64>>()
             });
         let phi = phi_sum.iter().map(|i| i / n as f64).collect::<Vec<f64>>();
-        Ok(phi)
+        phi
     }
 
     pub fn update_sample(
@@ -130,7 +148,7 @@ where
             self.prior,
             self.kernel,
             self.kernel_params,
-            self.samples,
+            self.samples.clone(),
         );
 
         let str = self.likelihood.condition_ids();
@@ -138,26 +156,28 @@ where
 
         let theta_len = str_vec.len();
 
-        for i in 0..step_size {
+        for i in 0..step_size as usize {
             let samples_new = stein_mut
                 .samples
                 .iter()
                 .map(|theta| {
-                    let theta_map = HashMap::new();
+                    let theta_map = &mut HashMap::new();
                     let len = theta.elems().len();
 
                     for i in 0..len {
                         let expression = theta.elems().get(&vec![i]).unwrap();
 
                         let elem = if let Expression::Constant(value) = expression {
-                            let constantValue: ConstantValue = value;
+                            let constantValue: ConstantValue = value.clone();
                             constantValue
+                        } else {
+                            todo!()
                         };
 
-                        theta_map.insert(str_vec[i], elem)
+                        theta_map.insert(str_vec[i], elem);
                     }
 
-                    phi = stein_mut.direction(&theta_map).unwrap();
+                    phi = stein_mut.direction(&theta_map);
 
                     let theta_new = theta
                         .elems()
@@ -165,10 +185,10 @@ where
                         .zip(phi.iter())
                         .map(|(theta_i, phi_i)| {
                             let theta_i_elem = theta_i.1;
-                            let elem = *theta_i_elem
-                                + Expression::from(phi_i) * Expression::from(&epsilon);
+                            let elem = theta_i_elem.clone()
+                                + Expression::from(phi_i.clone()) * Expression::from(epsilon);
                             let elem_assign = elem.assign(assignment);
-                            elem
+                            elem_assign
                         })
                         .collect::<Vec<Expression>>();
 
@@ -179,7 +199,7 @@ where
                 })
                 .collect::<Vec<ExpressionArray>>();
 
-            stein_mut = &mut SteinVariationalGradientDescent::new(
+            let stein_mut = &mut SteinVariationalGradientDescent::new(
                 self.likelihood,
                 self.prior,
                 self.kernel,
@@ -191,7 +211,7 @@ where
             .samples
             .iter()
             .map(|result_array_orig| {
-                let result_array = new_partial_variable(result_array_orig);
+                let result_array = new_partial_variable(result_array_orig.clone());
                 result_array
             })
             .fold(Expression::from(vec![0.0; theta_len]), |sum, x| sum + x)
@@ -200,6 +220,8 @@ where
         let result = if let Expression::Constant(value) = result_orig {
             let constantValue: ConstantValue = value;
             constantValue.into_tensor()
+        } else {
+            todo!()
         }
         .to_vec();
 
@@ -212,12 +234,13 @@ mod tests {
     use std::collections::HashMap;
 
     use opensrdk_kernel_method::RBF;
-    use opensrdk_linear_algebra::{mat, Matrix, SymmetricPackedMatrix};
-    use opensrdk_symbolic_computation::{new_variable, Expression, ExpressionArray};
+    use opensrdk_symbolic_computation::{
+        new_variable, opensrdk_linear_algebra::Matrix, Expression, ExpressionArray,
+    };
     use rand::{prelude::StdRng, Rng, SeedableRng};
     use rand_distr::StandardNormal;
 
-    use crate::MultivariateNormal;
+    use crate::{JointDistribution, MultivariateNormal};
 
     use super::SteinVariationalGradientDescent;
     use opensrdk_kernel_method::*;
@@ -246,7 +269,7 @@ mod tests {
 
         let theta_1 = new_variable("beta".to_owned());
 
-        let likelihood = (1..x.len())
+        let likelihood: JointDistribution<Lhs, Rhs> = (1..x.len())
             .map(|i| {
                 MultivariateNormal::new(
                     Expression::from(y[i]),
@@ -262,10 +285,10 @@ mod tests {
                     sigma,
                     1usize,
                 ),
-                |sum, x| sum.mul(x),
+                |sum, x| JointDistribution::new(sum, x),
             );
 
-        let dim = x[0].len();
+        let dim = 1usize;
         let prior_sigma =
             Expression::from(Matrix::from(dim, vec![0.5; dim * (dim + 1) / 2]).unwrap());
 
@@ -283,9 +306,15 @@ mod tests {
             })
             .collect::<Vec<f64>>();
 
-        let factory = |i: &[usize]| samples_orig[i[0].clone()].clone();
-        let sizes: Vec<usize> = (0usize..samples_orig.len()).collect();
-        let samples = ExpressionArray::from_factory(sizes, factory);
+        let samples = samples_orig
+            .iter()
+            .map(|samples_orig_elem| {
+                let factory = |i: &[usize]| Expression::from(samples_orig_elem.clone());
+                let sizes: Vec<usize> = vec![1usize];
+                let samples_elem = ExpressionArray::from_factory(sizes, factory);
+                samples_elem
+            })
+            .collect::<Vec<ExpressionArray>>();
 
         let stein_test = SteinVariationalGradientDescent::new(
             &likelihood,
