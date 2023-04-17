@@ -7,26 +7,28 @@ use opensrdk_symbolic_computation::{
 
 use crate::ContinuousDistribution;
 
-pub struct SteinVariationalGradientDescent<'a, D, K>
+pub struct SteinVariationalGradientDescent<'a, D, P, K>
 where
     D: ContinuousDistribution,
+    P: ContinuousDistribution,
     K: PositiveDefiniteKernel,
 {
     likelihood: &'a D,
-    prior: &'a D,
+    prior: &'a P,
     kernel: &'a K,
     kernel_params: &'a [f64],
     samples: Vec<ExpressionArray>,
 }
 
-impl<'a, D, K> SteinVariationalGradientDescent<'a, D, K>
+impl<'a, D, P, K> SteinVariationalGradientDescent<'a, D, P, K>
 where
     D: ContinuousDistribution,
+    P: ContinuousDistribution,
     K: PositiveDefiniteKernel,
 {
     pub fn new(
         likelihood: &'a D,
-        prior: &'a D,
+        prior: &'a P,
         kernel: &'a K,
         kernel_params: &'a [f64],
         samples: Vec<ExpressionArray>,
@@ -156,6 +158,8 @@ where
 
         let theta_len = str_vec.len();
 
+        println!("{:?}", "two");
+
         for i in 0..step_size as usize {
             let samples_new = stein_mut
                 .samples
@@ -206,6 +210,7 @@ where
                 self.kernel_params,
                 samples_new,
             );
+            println!("{:?}", i);
         }
         let result_orig = stein_mut
             .samples
@@ -238,9 +243,11 @@ mod tests {
         new_variable, opensrdk_linear_algebra::Matrix, Expression, ExpressionArray,
     };
     use rand::{prelude::StdRng, Rng, SeedableRng};
-    use rand_distr::StandardNormal;
+    use rand_distr::{Distribution, StandardNormal};
 
-    use crate::{JointDistribution, MultivariateNormal};
+    use crate::{
+        ContinuousDistribution, DistributionProduct, JointDistribution, MultivariateNormal,
+    };
 
     use super::SteinVariationalGradientDescent;
     use opensrdk_kernel_method::*;
@@ -269,24 +276,16 @@ mod tests {
 
         let theta_1 = new_variable("beta".to_owned());
 
-        let likelihood: JointDistribution<Lhs, Rhs> = (1..x.len())
+        let likelihood = (0..x.len())
             .map(|i| {
                 MultivariateNormal::new(
                     Expression::from(y[i]),
-                    theta_1 * Expression::from(x[i]),
-                    sigma,
+                    theta_1.clone() * Expression::from(x[i]),
+                    sigma.clone(),
                     1usize,
                 )
             })
-            .fold(
-                MultivariateNormal::new(
-                    Expression::from(y[0]),
-                    theta_1 * Expression::from(x[0]),
-                    sigma,
-                    1usize,
-                ),
-                |sum, x| JointDistribution::new(sum, x),
-            );
+            .distribution_product();
 
         let dim = 1usize;
         let prior_sigma =
@@ -316,6 +315,8 @@ mod tests {
             })
             .collect::<Vec<ExpressionArray>>();
 
+        println!("{:?}", "one");
+
         let stein_test = SteinVariationalGradientDescent::new(
             &likelihood,
             &prior,
@@ -326,7 +327,7 @@ mod tests {
 
         let hash = HashMap::new();
 
-        let phi = &stein_test.update_sample(&hash, 100f64);
+        let phi = &stein_test.update_sample(&hash, 10f64);
 
         println!("{:?}", phi)
     }
