@@ -20,8 +20,8 @@ pub struct MultivariateNormal {
 
 impl MultivariateNormal {
     pub fn new(x: Expression, mu: Expression, sigma: Expression, d: usize) -> MultivariateNormal {
-        if x.sizes() != vec![Size::Many, Size::One] {
-            panic!("x must be a 2 rank vector");
+        if x.sizes() != vec![Size::Many, Size::One] && x.sizes() != vec![] {
+            panic!("x must be a scalar or a 2 rank vector");
         }
         MultivariateNormal { x, mu, sigma, d }
     }

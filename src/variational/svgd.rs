@@ -119,7 +119,7 @@ where
                             let constant_value: ConstantValue = value;
                             constant_value.into_scalar()
                         } else {
-                            todo!()
+                            panic!("This isn't ConstantValue !");
                         };
                         result_elem
                     })
@@ -175,7 +175,7 @@ where
                             let constantValue: ConstantValue = value.clone();
                             constantValue
                         } else {
-                            todo!()
+                            panic!("This isn't ConstantValue !");
                         };
 
                         theta_map.insert(str_vec[i], elem);
@@ -226,7 +226,7 @@ where
             let constantValue: ConstantValue = value;
             constantValue.into_tensor()
         } else {
-            todo!()
+            panic!("This isn't ConstantValue !");
         }
         .to_vec();
 
@@ -257,7 +257,7 @@ mod tests {
         let mut rng = StdRng::from_seed([1; 32]);
         let mut rng2 = StdRng::from_seed([32; 32]);
 
-        let samples_xy = (0..20)
+        let samples_xy = (0..10)
             .into_iter()
             .map(|_| {
                 let x = rng2.gen_range(-8.0..=8.0);
@@ -271,8 +271,6 @@ mod tests {
         let y = &samples_xy.iter().map(|v| v[1]).collect::<Vec<_>>();
 
         let sigma = Expression::from(0.5f64);
-
-        let value = y.clone();
 
         let theta_1 = new_variable("beta".to_owned());
 
@@ -327,7 +325,7 @@ mod tests {
 
         let hash = HashMap::new();
 
-        let phi = &stein_test.update_sample(&hash, 10f64);
+        let phi = &stein_test.update_sample(&hash, 3f64);
 
         println!("{:?}", phi)
     }
