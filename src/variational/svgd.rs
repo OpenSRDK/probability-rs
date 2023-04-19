@@ -47,16 +47,20 @@ where
         let m = self.samples[0].elems().len();
 
         let theta_vec = self.likelihood.conditions().clone();
+        println!("{:?}", theta_vec);
         let factory = |i: &[usize]| theta_vec[i[0].clone()].clone();
-        let sizes: Vec<usize> = (0usize..theta_vec.len()).collect();
+        let sizes: Vec<usize> = vec![theta_vec.len()];
+        println!("{:?}", "two point five");
         let theta_array_orig = ExpressionArray::from_factory(sizes, factory);
         let theta_array = new_partial_variable(theta_array_orig);
+        println!("{:?}", "three");
 
         let kernel_params_expression = self
             .kernel_params
             .iter()
             .map(|elem| Expression::from(*elem))
             .collect::<Vec<Expression>>();
+        println!("{:?}", "four");
 
         let theta_ids = &self
             .likelihood
@@ -64,6 +68,7 @@ where
             .iter()
             .map(|i| *i)
             .collect::<Vec<_>>();
+        println!("{:?}", "five");
 
         let phi_sum = self
             .samples
@@ -132,6 +137,8 @@ where
                     .map(|(i, sum_i)| sum_i + x[i])
                     .collect::<Vec<f64>>()
             });
+        println!("{:?}", "six");
+
         let phi = phi_sum.iter().map(|i| i / n as f64).collect::<Vec<f64>>();
         phi
     }
@@ -157,8 +164,6 @@ where
         let str_vec: Vec<_> = str.into_iter().collect();
 
         let theta_len = str_vec.len();
-
-        println!("{:?}", "two");
 
         for i in 0..step_size as usize {
             let samples_new = stein_mut
@@ -240,7 +245,7 @@ mod tests {
 
     use opensrdk_kernel_method::RBF;
     use opensrdk_symbolic_computation::{
-        new_variable, opensrdk_linear_algebra::Matrix, Expression, ExpressionArray,
+        new_variable, opensrdk_linear_algebra::Matrix, ConstantValue, Expression, ExpressionArray,
     };
     use rand::{prelude::StdRng, Rng, SeedableRng};
     use rand_distr::{Distribution, StandardNormal};
@@ -320,11 +325,33 @@ mod tests {
             &prior,
             &kernel,
             &kernel_params,
-            samples,
+            samples.clone(),
         );
 
         let hash = HashMap::new();
 
+        // let str = &likelihood.condition_ids();
+        // let str_vec: Vec<_> = str.into_iter().collect();
+
+        // let theta_map = &mut HashMap::new();
+        // let theta_len = str_vec.len();
+        // let len = &samples.clone()[0].elems().len();
+
+        // for i in 0..*len {
+        //     let expression = samples[0].elems().get(&vec![i]).unwrap();
+
+        //     let elem = if let Expression::Constant(value) = expression {
+        //         let constantValue: ConstantValue = value.clone();
+        //         constantValue
+        //     } else {
+        //         panic!("This isn't ConstantValue !");
+        //     };
+
+        //     theta_map.insert(str_vec[i], elem);
+        // }
+        // println!("{:?}", "two");
+
+        // let phi = &stein_test.direction(&hash);
         let phi = &stein_test.update_sample(&hash, 3f64);
 
         println!("{:?}", phi)
