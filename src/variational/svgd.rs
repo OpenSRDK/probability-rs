@@ -2,7 +2,7 @@ use std::{collections::HashMap, ptr::hash};
 
 use opensrdk_kernel_method::PositiveDefiniteKernel;
 use opensrdk_symbolic_computation::{
-    new_partial_variable, ConstantValue, Expression, ExpressionArray,
+    new_partial_variable, new_variable, ConstantValue, Expression, ExpressionArray,
 };
 
 use crate::ContinuousDistribution;
@@ -46,7 +46,8 @@ where
         let n = self.samples.len();
         let m = self.samples[0].elems().len();
 
-        let theta_vec = self.likelihood.conditions().clone();
+        //let theta_vec = self.likelihood.conditions().clone();
+        let theta_vec = vec![new_variable("beta".to_owned())];
         println!("{:?}", theta_vec);
         let factory = |i: &[usize]| theta_vec[i[0].clone()].clone();
         let sizes: Vec<usize> = vec![theta_vec.len()];
