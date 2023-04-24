@@ -1,10 +1,10 @@
 // // Already finished the implementation of "sampleable distribution".　The implement has commented out.
 
-// pub mod chi_squared;
-// pub mod params;
+pub mod chi_squared;
+pub mod params;
 
-// pub use chi_squared::*;
-// pub use params::*;
+pub use chi_squared::*;
+pub use params::*;
 
 // use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 // use crate::{DistributionError, SamplableDistribution};
