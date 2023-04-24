@@ -1,103 +1,83 @@
-// // Already finished the implementation of "sampleable distribution".　The implement has commented out.
+// Already finished the implementation of "sampleable distribution".　The implement has commented out.
 
-// use crate::{
-//     DependentJoint, Distribution, IndependentJoint, RandomVariable, SamplableDistribution,
-// };
-// use crate::{DistributionError, WishartParams};
-// use crate::{ExactMultivariateNormalParams, MultivariateNormal};
-// use opensrdk_linear_algebra::pp::trf::PPTRF;
-// use opensrdk_linear_algebra::*;
-// use rand::prelude::*;
-// use std::{ops::BitAnd, ops::Mul};
+use crate::{
+    DependentJoint, Distribution, IndependentJoint, RandomVariable, SamplableDistribution,
+};
+use crate::{DistributionError, WishartParams};
+use crate::{ExactMultivariateNormalParams, MultivariateNormal};
+use opensrdk_linear_algebra::pp::trf::PPTRF;
+use opensrdk_linear_algebra::*;
+use rand::prelude::*;
+use std::{ops::BitAnd, ops::Mul};
 
-// /// Wishart distribution
-// #[derive(Clone, Debug)]
-// pub struct Wishart;
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Wishart {
+    x: Expression,
+    nu: Expression,
+    w: Expression,
+    d: usize,
+}
 
-// #[derive(thiserror::Error, Debug)]
-// pub enum WishartError {
-//     #[error("Dimension mismatch")]
-//     DimensionMismatch,
-//     #[error("'n' must be >= dimension")]
-//     NMustBeGTEDimension,
-// }
+impl Wishart {
+    pub fn new(x: Expression, nu: Expression, w: Expression) -> MultivariateWishart {
+        if x.mathematical_sizes() != vec![Size::Many, Size::One] && x.mathematical_sizes() != vec![]
+        {
+            panic!("x must be a scalar or a 2 rank vector");
+        }
+        Wishart { x, nu, w, d }
+    }
+}
 
-// impl Distribution for Wishart {
-//     type Value = PPTRF;
-//     type Condition = WishartParams;
+#[derive(thiserror::Error, Debug)]
+pub enum WishartError {
+    #[error("Dimension mismatch")]
+    DimensionMismatch,
+    #[error("'n' must be >= dimension")]
+    NMustBeGTEDimension,
+}
 
-//     /// x must be cholesky decomposed
-//     fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
-//         let lv = theta.lv();
-//         let n = theta.n();
+impl<Rhs> Mul<Rhs> for Wishart
+where
+    Rhs: ContinuousDistribution,
+{
+    type Output = JointDistribution<Self, Rhs>;
 
-//         let p = x.0.dim() as f64;
-//         let lx = x.0.to_mat();
+    fn mul(self, rhs: Rhs) -> Self::Output {
+        JointDistribution::new(self, rhs)
+    }
+}
 
-//         Ok(lx.trdet().powf(n + p + 1.0) * (-0.5 * lv.clone().pptrs(&lx * lx.t())?.tr()).exp())
-//     }
-// }
+impl ContinuousDistribution for Wishart {
+    fn value_ids(&self) -> HashSet<&str> {
+        self.x.variable_ids()
+    }
 
-// impl<Rhs, TRhs> Mul<Rhs> for Wishart
-// where
-//     Rhs: Distribution<Value = TRhs, Condition = WishartParams>,
-//     TRhs: RandomVariable,
-// {
-//     type Output = IndependentJoint<Self, Rhs, PPTRF, TRhs, WishartParams>;
+    fn conditions(&self) -> Vec<&Expression> {
+        vec![&self.nu, &self.w]
+    }
 
-//     fn mul(self, rhs: Rhs) -> Self::Output {
-//         IndependentJoint::new(self, rhs)
-//     }
-// }
+    fn pdf(&self) -> Expression {
+        let x = self.x.clone();
+        let nu = self.nu.clone();
+        let w = self.w.clone();
 
-// impl<Rhs, URhs> BitAnd<Rhs> for Wishart
-// where
-//     Rhs: Distribution<Value = WishartParams, Condition = URhs>,
-//     URhs: RandomVariable,
-// {
-//     type Output = DependentJoint<Self, Rhs, PPTRF, WishartParams, URhs>;
+        let pdf_expression = todo!();
 
-//     fn bitand(self, rhs: Rhs) -> Self::Output {
-//         DependentJoint::new(self, rhs)
-//     }
-// }
+        pdf_expression
+    }
 
-// impl SamplableDistribution for Wishart {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let lv = theta.lv();
-//         let n = theta.n() as usize;
+    fn condition_ids(&self) -> HashSet<&str> {
+        self.conditions()
+            .iter()
+            .map(|v| v.variable_ids())
+            .flatten()
+            .collect::<HashSet<_>>()
+            .difference(&self.value_ids())
+            .cloned()
+            .collect()
+    }
 
-//         let p = lv.0.dim();
-
-//         let normal = MultivariateNormal::new();
-//         let normal_params = ExactMultivariateNormalParams::new(vec![0.0; p], lv.clone())?;
-
-//         let w = (0..n)
-//             .into_iter()
-//             .map(|_| normal.sample(&normal_params, rng))
-//             .try_fold::<Matrix, _, Result<Matrix, DistributionError>>(
-//                 Matrix::new(p, p),
-//                 |acc, v: Result<Vec<f64>, DistributionError>| {
-//                     let v = v?;
-//                     Ok(acc + v.clone().row_mat() * v.col_mat())
-//                 },
-//             )?;
-
-//         Ok(SymmetricPackedMatrix::from_mat(&w)
-//             .unwrap()
-//             .pptrf()
-//             .unwrap())
-//     }
-// }
-
-// #[cfg(test)]
-// mod tests {
-//     #[test]
-//     fn it_works() {
-//         assert_eq!(2 + 2, 4);
-//     }
-// }
+    fn ln_pdf(&self) -> Expression {
+        self.pdf().ln()
+    }
+}
