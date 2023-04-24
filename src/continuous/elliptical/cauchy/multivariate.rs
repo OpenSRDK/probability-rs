@@ -1,146 +1,71 @@
-// use crate::{
-//     ConditionDifferentiableDistribution, DependentJoint, Distribution, ExactEllipticalParams,
-//     ExactMultivariateStudentTParams, IndependentJoint, MultivariateStudentT,
-//     MultivariateStudentTParams, MultivariateStudentTWrapper, RandomVariable, SamplableDistribution,
-//     ValueDifferentiableDistribution,
-// };
-// use crate::{DistributionError, EllipticalParams};
-// use opensrdk_linear_algebra::Vector;
-// use rand::prelude::*;
-// use std::marker::PhantomData;
-// use std::{ops::BitAnd, ops::Mul};
+use crate::{ContinuousDistribution, JointDistribution};
+use opensrdk_symbolic_computation::{Expression, Size};
+use serde::{Deserialize, Serialize};
+use std::{collections::HashSet, f64::consts::PI, ops::Mul};
 
-// /// Multivariate cauchy distribution
-// #[derive(Clone, Debug)]
-// pub struct MultivariateCauchy<T = ExactEllipticalParams>
-// where
-//     T: EllipticalParams,
-// {
-//     phantom: PhantomData<T>,
-// }
+/// Multivariate cauchy distribution
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct MultivariateCauchy {
+    x: Expression,
+    x0: Expression,
+    gamma: Expression,
+}
 
-// impl<T> MultivariateCauchy<T>
-// where
-//     T: EllipticalParams,
-// {
-//     pub fn new() -> Self {
-//         Self {
-//             phantom: PhantomData,
-//         }
-//     }
-// }
+impl MultivariateCauchy {
+    pub fn new(x: Expression, x0: Expression, gamma: Expression) -> MultivariateCauchy {
+        if x.mathematical_sizes() != vec![Size::Many, Size::One] && x.mathematical_sizes() != vec![]
+        {
+            panic!("x must be a scalar or a 2 rank vector");
+        }
+        MultivariateCauchy { x, x0, gamma }
+    }
+}
 
-// #[derive(thiserror::Error, Debug)]
-// pub enum MultivariateCauchyError {}
+impl<Rhs> Mul<Rhs> for MultivariateCauchy
+where
+    Rhs: ContinuousDistribution,
+{
+    type Output = JointDistribution<Self, Rhs>;
 
-// impl<T> Distribution for MultivariateCauchy<T>
-// where
-//     T: EllipticalParams,
-// {
-//     type Value = Vec<f64>;
-//     type Condition = T;
+    fn mul(self, rhs: Rhs) -> Self::Output {
+        JointDistribution::new(self, rhs)
+    }
+}
 
-//     fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
-//         let studentt_params = MultivariateStudentTWrapper::new(theta);
+impl ContinuousDistribution for MultivariateCauchy {
+    fn value_ids(&self) -> HashSet<&str> {
+        self.x.variable_ids()
+    }
 
-//         MultivariateStudentT::new().p_kernel(x, &studentt_params)
-//     }
+    fn conditions(&self) -> Vec<&Expression> {
+        vec![&self.x0, &self.gamma]
+    }
 
-//     // fn sample(
-//     //     &self,
-//     //     theta: &Self::Condition,
-//     //     rng: &mut dyn RngCore,
-//     // ) -> Result<Self::Value, DistributionError> {
-//     //     let studentt_params = MultivariateStudentTWrapper::new(theta);
+    fn pdf(&self) -> Expression {
+        let x = self.x.clone();
+        let x0 = self.x0.clone();
+        let gamma = self.gamma.clone();
 
-//     //     MultivariateStudentT::new().sample(&studentt_params, rng)
-//     // }
-// }
+        let pdf_expression = gamma / (PI * (gamma.pow(2.0.into()) + (x - x0).pow(2.0.into())));
 
-// impl<T, Rhs, TRhs> Mul<Rhs> for MultivariateCauchy<T>
-// where
-//     T: EllipticalParams,
-//     Rhs: Distribution<Value = TRhs, Condition = T>,
-//     TRhs: RandomVariable,
-// {
-//     type Output = IndependentJoint<Self, Rhs, Vec<f64>, TRhs, T>;
+        pdf_expression
+    }
 
-//     fn mul(self, rhs: Rhs) -> Self::Output {
-//         IndependentJoint::new(self, rhs)
-//     }
-// }
+    fn condition_ids(&self) -> HashSet<&str> {
+        self.conditions()
+            .iter()
+            .map(|v| v.variable_ids())
+            .flatten()
+            .collect::<HashSet<_>>()
+            .difference(&self.value_ids())
+            .cloned()
+            .collect()
+    }
 
-// impl<T, Rhs, URhs> BitAnd<Rhs> for MultivariateCauchy<T>
-// where
-//     T: EllipticalParams,
-//     Rhs: Distribution<Value = T, Condition = URhs>,
-//     URhs: RandomVariable,
-// {
-//     type Output = DependentJoint<Self, Rhs, Vec<f64>, T, URhs>;
-
-//     fn bitand(self, rhs: Rhs) -> Self::Output {
-//         DependentJoint::new(self, rhs)
-//     }
-// }
-
-// impl SamplableDistribution for MultivariateCauchy {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let studentt_params_orig = MultivariateStudentTWrapper::new(theta);
-//         let studentt_params = ExactMultivariateStudentTParams::new(
-//             studentt_params_orig.nu(),
-//             studentt_params_orig.elliptical().mu().clone(),
-//             studentt_params_orig.elliptical().lsigma().clone(),
-//         )
-//         .unwrap();
-//         MultivariateStudentT::new().sample(&studentt_params, rng)
-//     }
-// }
-
-// impl ValueDifferentiableDistribution for MultivariateCauchy {
-//     fn ln_diff_value(
-//         &self,
-//         x: &Self::Value,
-//         theta: &Self::Condition,
-//     ) -> Result<Vec<f64>, DistributionError> {
-//         let x_mat = x.clone().row_mat();
-//         let mu_mat = theta.mu().clone().row_mat();
-//         let x_mu = x_mat - mu_mat;
-//         let x_mu_t = x_mu.t();
-//         let sigma_inv = theta.lsigma().clone().pptri()?.to_mat();
-
-//         let n = x.len() as f64;
-//         let d = (&x_mu * &sigma_inv * &x_mu_t)[(0, 0)];
-//         let f_x = -(1.0 + n) / (1.0 + &d) * x_mu * sigma_inv;
-//         Ok(f_x.vec())
-//     }
-// }
-
-// impl ConditionDifferentiableDistribution for MultivariateCauchy {
-//     fn ln_diff_condition(
-//         &self,
-//         x: &Self::Value,
-//         theta: &Self::Condition,
-//     ) -> Result<Vec<f64>, DistributionError> {
-//         let x_mat = x.clone().row_mat();
-//         let mu_mat = theta.mu().clone().row_mat();
-//         let x_mu = x_mat - mu_mat;
-//         let x_mu_t = x_mu.t();
-//         let sigma_inv = theta.lsigma().clone().pptri()?.to_mat();
-//         let n = x.len() as f64;
-//         let d = (&x_mu * &sigma_inv * &x_mu_t)[(0, 0)];
-//         let m = sigma_inv
-//             .clone()
-//             .hadamard_prod(&sigma_inv)
-//             .hadamard_prod(&sigma_inv);
-//         let f_mu = (1.0 + n) / (1.0 + &d) * (&x_mu * &sigma_inv);
-//         let f_lsigma = (1.0 + n) / (1.0 + &d) * (&x_mu * &m * &x_mu_t);
-//         Ok([f_mu.vec(), f_lsigma.vec()].concat())
-//     }
-// }
+    fn ln_pdf(&self) -> Expression {
+        self.pdf().ln()
+    }
+}
 
 // #[cfg(test)]
 // mod tests {
