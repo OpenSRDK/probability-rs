@@ -46,7 +46,8 @@ impl ContinuousDistribution for MultivariateCauchy {
         let x0 = self.x0.clone();
         let gamma = self.gamma.clone();
 
-        let pdf_expression = gamma / (PI * (gamma.pow(2.0.into()) + (x - x0).pow(2.0.into())));
+        let pdf_expression =
+            gamma.clone() / (PI * (gamma.pow(2.0.into()) + (x - x0).pow(2.0.into())));
 
         pdf_expression
     }
