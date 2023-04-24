@@ -71,11 +71,32 @@ where
             .collect::<Vec<_>>();
         println!("{:?}", "five");
 
+        let samples_array = new_partial_variable(self.samples[0].clone());
+        println!("{:?}", samples_array);
+        println!("{:?}", theta_array);
+        println!("{:?}", kernel_params_expression);
+
         let phi_sum = self
             .samples
             .iter()
             .map(|theta_j| {
                 let samples_array = new_partial_variable(theta_j.clone());
+                let p_diff_lhs = self
+                    .likelihood
+                    .pdf()
+                    .ln()
+                    .differential(theta_ids)
+                    .iter()
+                    .map(|i| i.clone().assign(assignment))
+                    .collect::<Vec<Expression>>();
+                let p_diff_rhs = self
+                    .prior
+                    .pdf()
+                    .ln()
+                    .differential(theta_ids)
+                    .iter()
+                    .map(|i| i.clone().assign(assignment))
+                    .collect::<Vec<Expression>>();
                 let kernel = self
                     .kernel
                     .expression(
@@ -93,22 +114,6 @@ where
                         &kernel_params_expression,
                     )
                     .unwrap()
-                    .ln()
-                    .differential(theta_ids)
-                    .iter()
-                    .map(|i| i.clone().assign(assignment))
-                    .collect::<Vec<Expression>>();
-                let p_diff_lhs = self
-                    .likelihood
-                    .pdf()
-                    .ln()
-                    .differential(theta_ids)
-                    .iter()
-                    .map(|i| i.clone().assign(assignment))
-                    .collect::<Vec<Expression>>();
-                let p_diff_rhs = self
-                    .prior
-                    .pdf()
                     .ln()
                     .differential(theta_ids)
                     .iter()
@@ -245,8 +250,11 @@ mod tests {
     use std::collections::HashMap;
 
     use opensrdk_kernel_method::RBF;
+    //use opensrdk_linear_algebra::SymmetricPackedMatrix;
     use opensrdk_symbolic_computation::{
-        new_variable, opensrdk_linear_algebra::Matrix, ConstantValue, Expression, ExpressionArray,
+        new_variable,
+        opensrdk_linear_algebra::{Matrix, SymmetricPackedMatrix},
+        ConstantValue, Expression, ExpressionArray,
     };
     use rand::{prelude::StdRng, Rng, SeedableRng};
     use rand_distr::{Distribution, StandardNormal};
@@ -267,31 +275,37 @@ mod tests {
             .into_iter()
             .map(|_| {
                 let x = rng2.gen_range(-8.0..=8.0);
-                let y = 0.5 * x + rng.sample::<f64, _>(StandardNormal);
+                let y = -0.8 + 0.5 * x + rng.sample::<f64, _>(StandardNormal);
 
                 vec![x, y]
             })
             .collect::<Vec<Vec<f64>>>();
 
-        let x = &samples_xy.iter().map(|v| v[0]).collect::<Vec<_>>();
+        let x = &samples_xy
+            .iter()
+            .map(|v| vec![1.0, v[0]])
+            .collect::<Vec<_>>();
         let y = &samples_xy.iter().map(|v| v[1]).collect::<Vec<_>>();
 
-        let sigma = Expression::from(0.5f64);
+        let dim = x[0].len() + 1usize;
 
+        let sigma = Expression::from(Matrix::from(dim, vec![0.1; dim * dim]).unwrap());
+        // 要修正
+
+        let theta_0 = new_variable("alpha".to_owned());
         let theta_1 = new_variable("beta".to_owned());
 
         let likelihood = (0..x.len())
             .map(|i| {
                 MultivariateNormal::new(
                     Expression::from(y[i]),
-                    theta_1.clone() * Expression::from(x[i]),
+                    theta_0.clone() + theta_1.clone() * Expression::from(x[i][0]),
                     sigma.clone(),
-                    1usize,
+                    2usize,
                 )
             })
             .distribution_product();
 
-        let dim = 1usize;
         let prior_sigma =
             Expression::from(Matrix::from(dim, vec![0.5; dim * (dim + 1) / 2]).unwrap());
 
@@ -304,16 +318,18 @@ mod tests {
             .into_iter()
             .map(|v| {
                 let mut rng3 = StdRng::from_seed([v; 32]);
+                let mut rng4 = StdRng::from_seed([v; 32]);
                 let theta_0 = rng3.gen_range(-5.0..=5.0);
-                theta_0
+                let theta_1 = rng4.gen_range(0.0..=10.0) - 5.0;
+                vec![theta_0, theta_1]
             })
-            .collect::<Vec<f64>>();
+            .collect::<Vec<_>>();
 
         let samples = samples_orig
             .iter()
             .map(|samples_orig_elem| {
-                let factory = |i: &[usize]| Expression::from(samples_orig_elem.clone());
-                let sizes: Vec<usize> = vec![1usize];
+                let factory = |_i: &[usize]| Expression::from(samples_orig_elem.clone());
+                let sizes: Vec<usize> = vec![2usize];
                 let samples_elem = ExpressionArray::from_factory(sizes, factory);
                 samples_elem
             })
@@ -331,29 +347,29 @@ mod tests {
 
         let hash = HashMap::new();
 
-        // let str = &likelihood.condition_ids();
-        // let str_vec: Vec<_> = str.into_iter().collect();
+        let str = &likelihood.condition_ids();
+        let str_vec: Vec<_> = str.into_iter().collect();
 
-        // let theta_map = &mut HashMap::new();
-        // let theta_len = str_vec.len();
-        // let len = &samples.clone()[0].elems().len();
+        let theta_map = &mut HashMap::new();
+        let theta_len = str_vec.len();
+        let len = &samples.clone()[0].elems().len();
 
-        // for i in 0..*len {
-        //     let expression = samples[0].elems().get(&vec![i]).unwrap();
+        for i in 0..*len {
+            let expression = samples[0].elems().get(&vec![i]).unwrap();
 
-        //     let elem = if let Expression::Constant(value) = expression {
-        //         let constantValue: ConstantValue = value.clone();
-        //         constantValue
-        //     } else {
-        //         panic!("This isn't ConstantValue !");
-        //     };
+            let elem = if let Expression::Constant(value) = expression {
+                let constantValue: ConstantValue = value.clone();
+                constantValue
+            } else {
+                panic!("This isn't ConstantValue !");
+            };
 
-        //     theta_map.insert(str_vec[i], elem);
-        // }
-        // println!("{:?}", "two");
+            theta_map.insert(str_vec[i], elem);
+        }
+        println!("{:?}", "two");
 
-        // let phi = &stein_test.direction(&hash);
-        let phi = &stein_test.update_sample(&hash, 3f64);
+        let phi = &stein_test.direction(&hash);
+        //let phi = &stein_test.update_sample(&hash, 3f64);
 
         println!("{:?}", phi)
     }
