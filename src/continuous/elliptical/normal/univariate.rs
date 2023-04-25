@@ -1,100 +1,71 @@
-// use crate::{
-//     ConditionDifferentiableDistribution, DependentJoint, Distribution, IndependentJoint,
-//     NormalParams, RandomVariable, SamplableDistribution, ValueDifferentiableDistribution,
-// };
-// use crate::{DistributionError, NormalError};
-// use rand::prelude::*;
-// use rand_distr::Normal as RandNormal;
-// use std::{ops::BitAnd, ops::Mul};
+use crate::{ContinuousDistribution, JointDistribution};
+use opensrdk_symbolic_computation::{Expression, Size};
+use serde::{Deserialize, Serialize};
+use std::{collections::HashSet, f64::consts::PI, ops::Mul};
 
-// /// Normal distribution
-// #[derive(Clone, Debug)]
-// pub struct Normal;
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct UnivariateNormal {
+    x: Expression,
+    mu: Expression,
+    sigma: Expression,
+}
 
-// impl Distribution for Normal {
-//     type Value = f64;
-//     type Condition = NormalParams;
+impl UnivariateNormal {
+    pub fn new(x: Expression, mu: Expression, sigma: Expression) -> UnivariateNormal {
+        if x.mathematical_sizes() != vec![Size::One, Size::One] && x.mathematical_sizes() != vec![]
+        {
+            panic!("x must be a scalar");
+        }
+        UnivariateNormal { x, mu, sigma }
+    }
+}
 
-//     fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
-//         let mu = theta.mu();
-//         let sigma = theta.sigma();
+impl<Rhs> Mul<Rhs> for UnivariateNormal
+where
+    Rhs: ContinuousDistribution,
+{
+    type Output = JointDistribution<Self, Rhs>;
 
-//         Ok((-(x - mu).powi(2) / (2.0 * sigma.powi(2))).exp())
-//     }
-// }
+    fn mul(self, rhs: Rhs) -> Self::Output {
+        JointDistribution::new(self, rhs)
+    }
+}
 
-// impl<Rhs, TRhs> Mul<Rhs> for Normal
-// where
-//     Rhs: Distribution<Value = TRhs, Condition = NormalParams>,
-//     TRhs: RandomVariable,
-// {
-//     type Output = IndependentJoint<Self, Rhs, f64, TRhs, NormalParams>;
+impl ContinuousDistribution for UnivariateNormal {
+    fn value_ids(&self) -> HashSet<&str> {
+        self.x.variable_ids()
+    }
 
-//     fn mul(self, rhs: Rhs) -> Self::Output {
-//         IndependentJoint::new(self, rhs)
-//     }
-// }
+    fn conditions(&self) -> Vec<&Expression> {
+        vec![&self.mu, &self.sigma]
+    }
 
-// impl<Rhs, URhs> BitAnd<Rhs> for Normal
-// where
-//     Rhs: Distribution<Value = NormalParams, Condition = URhs>,
-//     URhs: RandomVariable,
-// {
-//     type Output = DependentJoint<Self, Rhs, f64, NormalParams, URhs>;
+    fn pdf(&self) -> Expression {
+        let x = self.x.clone();
+        let mu = self.mu.clone();
+        let sigma = self.sigma.clone();
 
-//     fn bitand(self, rhs: Rhs) -> Self::Output {
-//         DependentJoint::new(self, rhs)
-//     }
-// }
+        let pdf_expression = (1.0 / (2.0 * PI).powf(-0.5) * sigma.clone())
+            * (-((x - mu.clone()).pow(2.0.into()) / 2.0 * sigma.clone().pow(2.0.into()))
+                .pow(2.0.into()));
+        pdf_expression
+    }
 
-// impl SamplableDistribution for Normal {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let mu = theta.mu();
-//         let sigma = theta.sigma();
+    fn condition_ids(&self) -> HashSet<&str> {
+        self.conditions()
+            .iter()
+            .map(|v| v.variable_ids())
+            .flatten()
+            .collect::<HashSet<_>>()
+            .difference(&self.value_ids())
+            .cloned()
+            .collect()
+    }
 
-//         let normal = match RandNormal::new(mu, sigma) {
-//             Ok(n) => n,
-//             Err(_) => {
-//                 return Err(DistributionError::InvalidParameters(
-//                     NormalError::SigmaMustBePositive.into(),
-//                 ))
-//             }
-//         };
-
-//         Ok(rng.sample(normal))
-//     }
-// }
-
-// impl ValueDifferentiableDistribution for Normal {
-//     fn ln_diff_value(
-//         &self,
-//         x: &Self::Value,
-//         theta: &Self::Condition,
-//     ) -> Result<Vec<f64>, DistributionError> {
-//         let sigma = theta.sigma();
-//         let mu = theta.mu();
-//         let f_x = -(x - mu) / sigma.powi(2);
-//         Ok(vec![f_x])
-//     }
-// }
-
-// impl ConditionDifferentiableDistribution for Normal {
-//     fn ln_diff_condition(
-//         &self,
-//         x: &Self::Value,
-//         theta: &Self::Condition,
-//     ) -> Result<Vec<f64>, DistributionError> {
-//         let sigma = theta.sigma();
-//         let mu = theta.mu();
-//         let f_mu = (x - mu) / sigma.powi(2);
-//         let f_sigma = (x - mu).powi(2) / sigma.powi(3) - 1.0 / sigma;
-//         Ok(vec![f_mu, f_sigma])
-//     }
-// }
+    fn ln_pdf(&self) -> Expression {
+        self.pdf().ln()
+    }
+}
 
 // #[cfg(test)]
 // mod tests {

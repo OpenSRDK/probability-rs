@@ -3,7 +3,6 @@ use opensrdk_symbolic_computation::{Expression, Size};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, f64::consts::PI, ops::Mul};
 
-/// Multivariate cauchy distribution
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UnivariateCauchy {
     x: Expression,
