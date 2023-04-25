@@ -1,79 +1,64 @@
-// pub mod params;
+use crate::{DiscreteDistribution, JointDistribution};
+use opensrdk_symbolic_computation::{Expression, Size};
+use serde::{Deserialize, Serialize};
+use std::{collections::HashSet, ops::Mul};
 
-// pub use params::*;
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Bernoulli {
+    k: Expression,
+    p: Expression,
+}
 
-// use crate::*;
-// use rand::Rng;
-// use std::ops::{BitAnd, Mul};
+impl Bernoulli {
+    pub fn new(k: Expression, p: Expression) -> Bernoulli {
+        if k.mathematical_sizes() != vec![Size::Many, Size::One] && k.mathematical_sizes() != vec![]
+        {
+            panic!("k must be a scalar or a 2 rank vector");
+        }
+        Bernoulli { k, p }
+    }
+}
 
-// #[derive(Clone, Debug)]
-// pub struct Bernoulli;
-
-// #[derive(thiserror::Error, Debug)]
-// pub enum BernoulliError {
-//     #[error("'p' must be probability.")]
-//     PMustBeProbability,
-// }
-
-// impl Distribution for Bernoulli {
-//     type Value = bool;
-//     type Condition = BernoulliParams;
-
-//     fn p_kernel(
-//         &self,
-//         _x: &Self::Value,
-//         theta: &Self::Condition,
-//     ) -> Result<f64, DistributionError> {
-//         Ok(theta.p())
-//     }
-// }
-
-// impl DiscreteDistribution for Bernoulli {}
-
-// impl<Rhs, TRhs> Mul<Rhs> for Bernoulli
+// impl<Rhs> Mul<Rhs> for Geometric
 // where
-//     Rhs: Distribution<Value = TRhs, Condition = BernoulliParams>,
-//     TRhs: RandomVariable,
+//     Rhs: DiscreteDistribution,
 // {
-//     type Output = IndependentJoint<Self, Rhs, bool, TRhs, BernoulliParams>;
+//     type Output = JointDistribution<Self, Rhs>;
 
 //     fn mul(self, rhs: Rhs) -> Self::Output {
-//         IndependentJoint::new(self, rhs)
+//         JointDistribution::new(self, rhs)
 //     }
 // }
 
-// impl<Rhs, URhs> BitAnd<Rhs> for Bernoulli
-// where
-//     Rhs: Distribution<Value = BernoulliParams, Condition = URhs>,
-//     URhs: RandomVariable,
-// {
-//     type Output = DependentJoint<Self, Rhs, bool, BernoulliParams, URhs>;
+impl DiscreteDistribution for Bernoulli {
+    fn value_ids(&self) -> HashSet<&str> {
+        self.k.variable_ids()
+    }
 
-//     fn bitand(self, rhs: Rhs) -> Self::Output {
-//         DependentJoint::new(self, rhs)
-//     }
-// }
+    fn conditions(&self) -> Vec<&Expression> {
+        vec![&self.p]
+    }
 
-// impl ConditionDifferentiableDistribution for Bernoulli {
-//     fn ln_diff_condition(
-//         &self,
-//         x: &Self::Value,
-//         theta: &Self::Condition,
-//     ) -> Result<Vec<f64>, DistributionError> {
-//         let p = theta.p();
-//         let x_f64 = if *x { 1.0 } else { 0.0 };
-//         let f_p = x_f64 / p - (1.0 - x_f64) / (1.0 - p);
-//         Ok(vec![f_p])
-//     }
-// }
+    fn pmf(&self) -> Expression {
+        let k = self.k.clone();
+        let p = self.p.clone();
+        let pf_expression = p.pow(k) * (1.0 - p).pow(1.0 - k);
 
-// impl SamplableDistribution for Bernoulli {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn rand::RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let u = rng.gen_range(0.0..=1.0);
-//         Ok(u <= theta.p())
-//     }
-// }
+        pf_expression
+    }
+
+    fn condition_ids(&self) -> HashSet<&str> {
+        self.conditions()
+            .iter()
+            .map(|v| v.variable_ids())
+            .flatten()
+            .collect::<HashSet<_>>()
+            .difference(&self.value_ids())
+            .cloned()
+            .collect()
+    }
+
+    fn ln_pmf(&self) -> Expression {
+        self.pmf().ln()
+    }
+}
