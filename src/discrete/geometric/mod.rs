@@ -38,7 +38,7 @@ impl DiscreteDistribution for Geometric {
         vec![&self.p]
     }
 
-    fn pf(&self) -> Expression {
+    fn pmf(&self) -> Expression {
         let k = self.k.clone();
         let p = self.p.clone();
         let pf_expression = (1.0 - p).pow(k - 1.0) * p;
@@ -57,7 +57,7 @@ impl DiscreteDistribution for Geometric {
             .collect()
     }
 
-    fn ln_pf(&self) -> Expression {
-        self.pf().ln()
+    fn ln_pmf(&self) -> Expression {
+        self.pmf().ln()
     }
 }
