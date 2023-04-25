@@ -126,8 +126,25 @@ pub trait ContinuousDistribution: Clone + Debug + Serialize {
     }
 }
 
-// pub trait DiscreteDistribution: Clone + Debug + Serialize {
-//     fn fm(&self) -> Expression {
-//         self.pdf()
-//     }
-// }
+pub trait DiscreteDistribution: Clone + Debug + Serialize {
+    fn value_ids(&self) -> HashSet<&str>;
+
+    fn conditions(&self) -> Vec<&Expression>;
+
+    fn condition_ids(&self) -> HashSet<&str> {
+        self.conditions()
+            .iter()
+            .map(|v| v.variable_ids())
+            .flatten()
+            .collect::<HashSet<_>>()
+            .difference(&self.value_ids())
+            .cloned()
+            .collect()
+    }
+
+    fn pmf(&self) -> Expression;
+
+    fn ln_pmf(&self) -> Expression {
+        self.pmf().ln()
+    }
+}
