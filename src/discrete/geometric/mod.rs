@@ -1,82 +1,63 @@
-// pub mod params;
+use crate::{DiscreteDistribution, JointDistribution};
+use opensrdk_symbolic_computation::{Expression, Size};
+use serde::{Deserialize, Serialize};
+use std::{collections::HashSet, ops::Mul};
 
-// pub use params::*;
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Geometric {
+    k: Expression,
+    p: Expression,
+}
 
-// use crate::{
-//     DependentJoint, Distribution, IndependentJoint, RandomVariable, SamplableDistribution,
-// };
-// use crate::{DiscreteDistribution, DistributionError};
-// use rand::prelude::*;
-// use rand_distr::Geometric as RandGeometric;
-// use std::{ops::BitAnd, ops::Mul};
+impl Geometric {
+    pub fn new(k: Expression, p: Expression) -> Geometric {
+        if k.mathematical_sizes() != vec![Size::Many, Size::One] {
+            panic!("k must be a scalar or a 2 rank vector");
+        }
+        Geometric { k, p }
+    }
+}
 
-// /// Geometric
-// #[derive(Clone, Debug)]
-// pub struct Geometric;
-
-// #[derive(thiserror::Error, Debug)]
-// pub enum GeometricError {
-//     #[error("'p' must be probability.")]
-//     PMustBeProbability,
-// }
-
-// impl Distribution for Geometric {
-//     type Value = u64;
-//     type Condition = GeometricParams;
-
-//     fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
-//         let p = theta.p();
-
-//         Ok((1.0 - p).powi((x - 1) as i32) * p)
-//     }
-// }
-
-// impl DiscreteDistribution for Geometric {}
-
-// impl<Rhs, TRhs> Mul<Rhs> for Geometric
+// impl<Rhs> Mul<Rhs> for Geometric
 // where
-//     Rhs: Distribution<Value = TRhs, Condition = GeometricParams>,
-//     TRhs: RandomVariable,
+//     Rhs: DiscreteDistribution,
 // {
-//     type Output = IndependentJoint<Self, Rhs, u64, TRhs, GeometricParams>;
+//     type Output = JointDistribution<Self, Rhs>;
 
 //     fn mul(self, rhs: Rhs) -> Self::Output {
-//         IndependentJoint::new(self, rhs)
+//         JointDistribution::new(self, rhs)
 //     }
 // }
 
-// impl<Rhs, URhs> BitAnd<Rhs> for Geometric
-// where
-//     Rhs: Distribution<Value = GeometricParams, Condition = URhs>,
-//     URhs: RandomVariable,
-// {
-//     type Output = DependentJoint<Self, Rhs, u64, GeometricParams, URhs>;
+impl DiscreteDistribution for Geometric {
+    fn value_ids(&self) -> HashSet<&str> {
+        self.k.variable_ids()
+    }
 
-//     fn bitand(self, rhs: Rhs) -> Self::Output {
-//         DependentJoint::new(self, rhs)
-//     }
-// }
+    fn conditions(&self) -> Vec<&Expression> {
+        vec![&self.p]
+    }
 
-// impl SamplableDistribution for Geometric {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let p = theta.p();
+    fn pf(&self) -> Expression {
+        let k = self.k.clone();
+        let p = self.p.clone();
+        let pf_expression = (1.0 - p).pow(k - 1.0) * p;
 
-//         let geometric = match RandGeometric::new(p) {
-//             Ok(v) => Ok(v),
-//             Err(e) => Err(DistributionError::Others(e.into())),
-//         }?;
+        pf_expression
+    }
 
-//         Ok(rng.sample(geometric))
-//     }
-// }
-// #[cfg(test)]
-// mod tests {
-//     #[test]
-//     fn it_works() {
-//         assert_eq!(2 + 2, 4);
-//     }
-// }
+    fn condition_ids(&self) -> HashSet<&str> {
+        self.conditions()
+            .iter()
+            .map(|v| v.variable_ids())
+            .flatten()
+            .collect::<HashSet<_>>()
+            .difference(&self.value_ids())
+            .cloned()
+            .collect()
+    }
+
+    fn ln_pf(&self) -> Expression {
+        self.pf().ln()
+    }
+}
