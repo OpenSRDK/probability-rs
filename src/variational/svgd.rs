@@ -252,7 +252,7 @@ mod tests {
     use opensrdk_kernel_method::RBF;
     //use opensrdk_linear_algebra::SymmetricPackedMatrix;
     use opensrdk_symbolic_computation::{
-        new_variable,
+        new_partial_variable, new_variable,
         opensrdk_linear_algebra::{Matrix, SymmetricPackedMatrix},
         ConstantValue, Expression, ExpressionArray,
     };
@@ -275,7 +275,7 @@ mod tests {
             .into_iter()
             .map(|_| {
                 let x = rng2.gen_range(-8.0..=8.0);
-                let y = -0.8 + 0.5 * x + rng.sample::<f64, _>(StandardNormal);
+                let y = 0.5 * x + rng.sample::<f64, _>(StandardNormal);
 
                 vec![x, y]
             })
@@ -287,13 +287,21 @@ mod tests {
             .collect::<Vec<_>>();
         let y = &samples_xy.iter().map(|v| v[1]).collect::<Vec<_>>();
 
-        let dim = x[0].len() + 1usize;
+        let dim = x[0].len();
 
-        let sigma = Expression::from(Matrix::from(dim, vec![0.1; dim * dim]).unwrap());
-        // 要修正
+        let sigma = Expression::from(Matrix::from(1usize, vec![0.1]).unwrap());
 
         let theta_0 = new_variable("alpha".to_owned());
         let theta_1 = new_variable("beta".to_owned());
+
+        let theta_vec = vec![theta_0.clone(), theta_1.clone()];
+
+        let factory = |i: &[usize]| theta_vec[i[0].clone()].clone();
+        let sizes: Vec<usize> = vec![theta_vec.len()];
+        let theta_array_orig = ExpressionArray::from_factory(sizes, factory);
+        let theta_array = new_partial_variable(theta_array_orig);
+
+        println!("{:?}", theta_array.mathematical_sizes());
 
         let likelihood = (0..x.len())
             .map(|i| {
@@ -301,16 +309,16 @@ mod tests {
                     Expression::from(y[i]),
                     theta_0.clone() + theta_1.clone() * Expression::from(x[i][0]),
                     sigma.clone(),
-                    2usize,
+                    1usize,
                 )
             })
             .distribution_product();
 
-        let prior_sigma =
-            Expression::from(Matrix::from(dim, vec![0.5; dim * (dim + 1) / 2]).unwrap());
+        let prior_sigma = Expression::from(Matrix::from(dim, vec![0.5; dim * dim]).unwrap());
+        println!("{:?}", prior_sigma);
 
         let prior_mu = Expression::from(vec![0.5; dim]);
-        let prior = MultivariateNormal::new(theta_1, prior_sigma, prior_mu, dim);
+        let prior = MultivariateNormal::new(theta_array, prior_mu, prior_sigma, dim);
 
         let kernel = RBF;
         let kernel_params = [0.5, 0.5];
