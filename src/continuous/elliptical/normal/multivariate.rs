@@ -108,7 +108,7 @@ mod tests {
         let prior_sigma = Expression::from(Matrix::from(dim, vec![0.5; dim * dim]).unwrap());
         println!("{:?}", prior_sigma);
 
-        let mat = Matrix::from(dim, vec![0.5; dim * dim]).unwrap();
+        let mat = Matrix::from(dim, vec![0.5, 0.5, 0.0, 0.5]).unwrap();
         let getrf = mat.getrf().unwrap();
         println!("{:?}", getrf);
 

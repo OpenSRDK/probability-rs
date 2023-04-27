@@ -47,7 +47,10 @@ where
         let m = self.samples[0].elems().len();
 
         //let theta_vec = self.likelihood.conditions().clone();
-        let theta_vec = vec![new_variable("beta".to_owned())];
+        let theta_vec = vec![
+            new_variable("alpha".to_owned()),
+            new_variable("beta".to_owned()),
+        ];
         println!("{:?}", theta_vec);
         let factory = |i: &[usize]| theta_vec[i[0].clone()].clone();
         let sizes: Vec<usize> = vec![theta_vec.len()];
@@ -81,16 +84,12 @@ where
             .iter()
             .map(|theta_j| {
                 let samples_array = new_partial_variable(theta_j.clone());
+                let p_diff_rhs = self.prior.pdf().ln().differential(theta_ids);
+                //.iter()
+                //.map(|i| i.clone().assign(assignment))
+                //.collect::<Vec<Expression>>();
                 let p_diff_lhs = self
                     .likelihood
-                    .pdf()
-                    .ln()
-                    .differential(theta_ids)
-                    .iter()
-                    .map(|i| i.clone().assign(assignment))
-                    .collect::<Vec<Expression>>();
-                let p_diff_rhs = self
-                    .prior
                     .pdf()
                     .ln()
                     .differential(theta_ids)
@@ -314,7 +313,7 @@ mod tests {
             })
             .distribution_product();
 
-        let prior_sigma = Expression::from(Matrix::from(dim, vec![0.5; dim * dim]).unwrap());
+        let prior_sigma = Expression::from(Matrix::from(dim, vec![0.5, 0.5, 0.0, 0.5]).unwrap());
         println!("{:?}", prior_sigma);
 
         let prior_mu = Expression::from(vec![0.5; dim]);
@@ -353,7 +352,7 @@ mod tests {
             samples.clone(),
         );
 
-        let hash = HashMap::new();
+        //let hash = HashMap::new();
 
         let str = &likelihood.condition_ids();
         let str_vec: Vec<_> = str.into_iter().collect();
@@ -372,11 +371,11 @@ mod tests {
                 panic!("This isn't ConstantValue !");
             };
 
-            theta_map.insert(str_vec[i], elem);
+            theta_map.insert(str_vec[i].clone(), elem);
         }
         println!("{:?}", "two");
 
-        let phi = &stein_test.direction(&hash);
+        let phi = &stein_test.direction(theta_map);
         //let phi = &stein_test.update_sample(&hash, 3f64);
 
         println!("{:?}", phi)
