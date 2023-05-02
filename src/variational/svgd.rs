@@ -336,7 +336,7 @@ mod tests {
             .iter()
             .map(|samples_orig_elem| {
                 let factory = |_i: &[usize]| Expression::from(samples_orig_elem.clone());
-                let sizes: Vec<usize> = vec![2usize];
+                let sizes: Vec<usize> = vec![1usize];
                 let samples_elem = ExpressionArray::from_factory(sizes, factory);
                 samples_elem
             })
@@ -352,7 +352,7 @@ mod tests {
             samples.clone(),
         );
 
-        //let hash = HashMap::new();
+        // let hash = HashMap::new();
 
         let str = &likelihood.condition_ids();
         let str_vec: Vec<_> = str.into_iter().collect();
@@ -361,6 +361,8 @@ mod tests {
         let theta_len = str_vec.len();
         let len = &samples.clone()[0].elems().len();
 
+        println!("{:?}", &samples.clone()[0]);
+        println!("{:?}", len);
         for i in 0..*len {
             let expression = samples[0].elems().get(&vec![i]).unwrap();
 
@@ -374,6 +376,7 @@ mod tests {
             theta_map.insert(str_vec[i].clone(), elem);
         }
         println!("{:?}", "two");
+        println!("{:?}", theta_map);
 
         let phi = &stein_test.direction(theta_map);
         //let phi = &stein_test.update_sample(&hash, 3f64);
