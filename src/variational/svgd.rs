@@ -129,7 +129,9 @@ where
                             let constant_value: ConstantValue = value;
                             constant_value.into_scalar()
                         } else {
-                            panic!("This isn't ConstantValue !");
+                            0f64
+                            //todo!()
+                            //panic!("This isn't ConstantValue !");
                         };
                         result_elem
                     })
@@ -320,7 +322,7 @@ mod tests {
         let prior = MultivariateNormal::new(theta_array, prior_mu, prior_sigma, dim);
 
         let kernel = RBF;
-        let kernel_params = [0.5, 0.5];
+        let kernel_params = [0.5];
         let samples_orig = (0..10)
             .into_iter()
             .map(|v| {
@@ -335,8 +337,8 @@ mod tests {
         let samples = samples_orig
             .iter()
             .map(|samples_orig_elem| {
-                let factory = |_i: &[usize]| Expression::from(samples_orig_elem.clone());
-                let sizes: Vec<usize> = vec![1usize];
+                let factory = |i: &[usize]| Expression::from(samples_orig_elem[i[0]].clone());
+                let sizes: Vec<usize> = vec![2usize];
                 let samples_elem = ExpressionArray::from_factory(sizes, factory);
                 samples_elem
             })
