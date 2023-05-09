@@ -1,6 +1,6 @@
 use std::{collections::HashMap, ptr::hash};
 
-use opensrdk_kernel_method::PositiveDefiniteKernel;
+use opensrdk_kernel_method::{Constant, PositiveDefiniteKernel};
 use opensrdk_symbolic_computation::{
     new_partial_variable, new_variable, ConstantValue, Expression, ExpressionArray,
 };
@@ -234,14 +234,12 @@ where
             .fold(Expression::from(vec![0.0; theta_len]), |sum, x| sum + x)
             .assign(assignment);
 
-        let result = if let Expression::Constant(value) = result_orig {
-            let constantValue: ConstantValue = value;
-            constantValue.into_tensor()
+        let value = if let Expression::Constant(value) = result_orig {
+            value
         } else {
-            panic!("This isn't ConstantValue !");
-        }
-        .to_vec();
-
+            todo!()
+        };
+        let result = value.into_tensor().to_vec();
         result
     }
 }
@@ -380,8 +378,8 @@ mod tests {
         println!("{:?}", "two");
         println!("{:?}", theta_map);
 
-        let phi = &stein_test.direction(theta_map);
-        //let phi = &stein_test.update_sample(&hash, 3f64);
+        //let phi = &stein_test.direction(theta_map);
+        let phi = &stein_test.update_sample(theta_map, 3f64);
 
         println!("{:?}", phi)
     }
