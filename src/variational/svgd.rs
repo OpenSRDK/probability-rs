@@ -125,15 +125,8 @@ where
                         let expression: Expression = (kernel_diff_i.clone()
                             + kernel.clone() * (p_diff_lhs[i].clone() + p_diff_rhs[i].clone()));
 
-                        let result_elem = if let Expression::Constant(value) = expression {
-                            let constant_value: ConstantValue = value;
-                            constant_value.into_scalar()
-                        } else {
-                            0f64
-                            //todo!()
-                            //panic!("This isn't ConstantValue !");
-                        };
-                        result_elem
+                        let result_elem: ConstantValue = expression.into();
+                        result_elem.into_scalar()
                     })
                     .collect::<Vec<f64>>();
                 result
@@ -183,12 +176,7 @@ where
                     for i in 0..len {
                         let expression = theta.elems().get(&vec![i]).unwrap();
 
-                        let elem = if let Expression::Constant(value) = expression {
-                            let constantValue: ConstantValue = value.clone();
-                            constantValue
-                        } else {
-                            panic!("This isn't ConstantValue !");
-                        };
+                        let elem: ConstantValue = expression.clone().into();
 
                         theta_map.insert(str_vec[i], elem);
                     }
@@ -234,11 +222,7 @@ where
             .fold(Expression::from(vec![0.0; theta_len]), |sum, x| sum + x)
             .assign(assignment);
 
-        let value = if let Expression::Constant(value) = result_orig {
-            value
-        } else {
-            todo!()
-        };
+        let value: ConstantValue = result_orig.into();
         let result = value.into_tensor().to_vec();
         result
     }
@@ -366,12 +350,7 @@ mod tests {
         for i in 0..*len {
             let expression = samples[0].elems().get(&vec![i]).unwrap();
 
-            let elem = if let Expression::Constant(value) = expression {
-                let constantValue: ConstantValue = value.clone();
-                constantValue
-            } else {
-                panic!("This isn't ConstantValue !");
-            };
+            let elem: ConstantValue = expression.clone().into();
 
             theta_map.insert(str_vec[i].clone(), elem);
         }
