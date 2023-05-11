@@ -118,6 +118,9 @@ where
                     .iter()
                     .map(|i| i.clone().assign(assignment))
                     .collect::<Vec<Expression>>();
+                println!("{:?}", p_diff_lhs[0]);
+                println!("{:?}", p_diff_rhs[0]);
+                println!("{:?}", kernel_diff[0]);
                 let result = kernel_diff
                     .iter()
                     .enumerate()
@@ -357,8 +360,8 @@ mod tests {
         println!("{:?}", "two");
         println!("{:?}", theta_map);
 
-        //let phi = &stein_test.direction(theta_map);
-        let phi = &stein_test.update_sample(theta_map, 3f64);
+        let phi = &stein_test.direction(theta_map);
+        //let phi = &stein_test.update_sample(theta_map, 3f64);
 
         println!("{:?}", phi)
     }
