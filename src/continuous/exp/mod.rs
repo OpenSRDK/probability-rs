@@ -1,14 +1,7 @@
 use crate::{ContinuousDistribution, JointDistribution};
-use crate::{DistributionError, EllipticalParams};
-use opensrdk_kernel_method::PositiveDefiniteKernel;
-use opensrdk_linear_algebra::{DiagonalMatrix, Matrix, SymmetricPackedMatrix, Vector};
-use opensrdk_symbolic_computation::{Expression, Size};
-use rand::prelude::*;
-use rand_distr::StandardNormal;
+use opensrdk_symbolic_computation::{ConstantValue, Expression, Size};
 use serde::{Deserialize, Serialize};
-use std::marker::PhantomData;
-use std::ops::BitAnd;
-use std::{collections::HashSet, f64::consts::PI, ops::Mul};
+use std::{collections::HashSet, ops::Mul};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ExponentialDistribution {
@@ -48,9 +41,14 @@ impl ContinuousDistribution for ExponentialDistribution {
 
     fn pdf(&self) -> Expression {
         let x = self.x.clone();
-        if x < 0.0 {
-            return 0.0.into();
+
+        if let Expression::Constant(value) = x {
+            let constantValue: ConstantValue = value;
+            if constantValue.into_scalar() < 0.0 {
+                return 0.0.into();
+            }
         }
+
         let lambda = self.lambda.clone();
         let pdf_expression = lambda * (-lambda * x).exp();
 
