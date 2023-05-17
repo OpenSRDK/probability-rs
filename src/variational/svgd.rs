@@ -84,10 +84,14 @@ where
             .iter()
             .map(|theta_j| {
                 let samples_array = new_partial_variable(theta_j.clone());
-                let p_diff_rhs = self.prior.pdf().ln().differential(theta_ids);
-                //.iter()
-                //.map(|i| i.clone().assign(assignment))
-                //.collect::<Vec<Expression>>();
+                let p_diff_rhs = self
+                    .prior
+                    .pdf()
+                    .ln()
+                    .differential(theta_ids)
+                    .iter()
+                    .map(|i| i.clone().assign(assignment))
+                    .collect::<Vec<Expression>>();
                 let p_diff_lhs = self
                     .likelihood
                     .pdf()
@@ -364,5 +368,63 @@ mod tests {
         //let phi = &stein_test.update_sample(theta_map, 3f64);
 
         println!("{:?}", phi)
+    }
+
+    #[test]
+    fn it_works5() {
+        let kernel_orig = RBF;
+        let kernel_params = [0.5];
+        let kernel_params_expression = kernel_params
+            .iter()
+            .map(|elem| Expression::from(*elem))
+            .collect::<Vec<Expression>>();
+
+        let samples_orig = (0..10)
+            .into_iter()
+            .map(|v| {
+                let mut rng3 = StdRng::from_seed([v; 32]);
+                let mut rng4 = StdRng::from_seed([v; 32]);
+                let theta_0 = rng3.gen_range(-5.0..=5.0);
+                let theta_1 = rng4.gen_range(0.0..=10.0) - 5.0;
+                vec![theta_0, theta_1]
+            })
+            .collect::<Vec<_>>();
+
+        let samples = samples_orig
+            .iter()
+            .map(|samples_orig_elem| {
+                let factory = |i: &[usize]| Expression::from(samples_orig_elem[i[0]].clone());
+                let sizes: Vec<usize> = vec![2usize];
+                let samples_elem = ExpressionArray::from_factory(sizes, factory);
+                samples_elem
+            })
+            .collect::<Vec<ExpressionArray>>();
+
+        let samples_array = new_partial_variable(samples[0].clone());
+
+        let theta_vec = vec![
+            new_variable("alpha".to_owned()),
+            new_variable("beta".to_owned()),
+        ];
+        let factory = |i: &[usize]| theta_vec[i[0].clone()].clone();
+        let sizes: Vec<usize> = vec![theta_vec.len()];
+        let theta_array_orig = ExpressionArray::from_factory(sizes, factory);
+        let theta_array = new_partial_variable(theta_array_orig);
+
+        let theta_map = &mut HashMap::new();
+        theta_map.insert("alpha", ConstantValue::Scalar(3f64));
+        theta_map.insert("beta", ConstantValue::Scalar(7f64));
+
+        let kernel = kernel_orig
+            .expression(
+                theta_array.clone(),
+                samples_array.clone(),
+                &kernel_params_expression,
+            )
+            .unwrap();
+        let kernel_expression = kernel.clone().assign(theta_map);
+
+        println!("{:#?}", kernel);
+        println!("{:#?}", kernel_expression);
     }
 }
