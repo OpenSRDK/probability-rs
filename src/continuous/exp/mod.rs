@@ -10,7 +10,7 @@ pub struct ExponentialDistribution {
 }
 
 impl ExponentialDistribution {
-    pub fn new(x: Expression, lambda: Expression, d: usize) -> ExponentialDistribution {
+    pub fn new(x: Expression, lambda: Expression) -> ExponentialDistribution {
         if x.mathematical_sizes() != vec![Size::Many, Size::One] && x.mathematical_sizes() != vec![]
         {
             panic!("x must be a scalar or a 2 rank vector");
@@ -42,7 +42,7 @@ impl ContinuousDistribution for ExponentialDistribution {
     fn pdf(&self) -> Expression {
         let x = self.x.clone();
 
-        if let Expression::Constant(value) = x {
+        if let Expression::Constant(value) = x.clone() {
             let constantValue: ConstantValue = value;
             if constantValue.into_scalar() < 0.0 {
                 return 0.0.into();
@@ -50,7 +50,7 @@ impl ContinuousDistribution for ExponentialDistribution {
         }
 
         let lambda = self.lambda.clone();
-        let pdf_expression = lambda * (-lambda * x).exp();
+        let pdf_expression = lambda.clone() * (-lambda * x).exp();
 
         pdf_expression
     }
