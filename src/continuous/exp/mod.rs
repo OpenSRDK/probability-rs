@@ -43,8 +43,8 @@ impl ContinuousDistribution for ExponentialDistribution {
         let x = self.x.clone();
 
         if let Expression::Constant(value) = x.clone() {
-            let constantValue: ConstantValue = value;
-            if constantValue.into_scalar() < 0.0 {
+            let constant_value: ConstantValue = value;
+            if constant_value.into_scalar() < 0.0 {
                 return 0.0.into();
             }
         }
