@@ -18,8 +18,8 @@ thiserror = "1.0.28"
 rayon = "1.5.1"
 num-integer = "0.1"
 opensrdk-linear-algebra = "0.8.4"
-opensrdk-kernel-method = "0.2.4"
-opensrdk-symbolic-computation = "0.1.4"
+opensrdk-kernel-method = "0.2.5"
+opensrdk-symbolic-computation = "0.2.0"
 special = "0.8.1"
 serde = { version = "1", features = ["derive"] }
 
