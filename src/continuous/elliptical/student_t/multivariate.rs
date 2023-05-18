@@ -1,7 +1,7 @@
 use crate::{ContinuousDistribution, JointDistribution};
 use opensrdk_symbolic_computation::{Expression, Size};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashSet, f64::consts::PI, ops::Mul};
+use std::{collections::HashSet, ops::Mul};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MultivariateStudentT {
