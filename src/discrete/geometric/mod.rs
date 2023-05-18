@@ -1,7 +1,7 @@
-use crate::{DiscreteDistribution, JointDistribution};
+use crate::DiscreteDistribution;
 use opensrdk_symbolic_computation::{Expression, Size};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashSet, ops::Mul};
+use std::collections::HashSet;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Geometric {
@@ -18,17 +18,6 @@ impl Geometric {
     }
 }
 
-// impl<Rhs> Mul<Rhs> for Geometric
-// where
-//     Rhs: DiscreteDistribution,
-// {
-//     type Output = JointDistribution<Self, Rhs>;
-
-//     fn mul(self, rhs: Rhs) -> Self::Output {
-//         JointDistribution::new(self, rhs)
-//     }
-// }
-
 impl DiscreteDistribution for Geometric {
     fn value_ids(&self) -> HashSet<&str> {
         self.k.variable_ids()
@@ -41,7 +30,7 @@ impl DiscreteDistribution for Geometric {
     fn pmf(&self) -> Expression {
         let k = self.k.clone();
         let p = self.p.clone();
-        let pf_expression = (1.0 - p).pow(k - 1.0) * p;
+        let pf_expression = (1.0 - p.clone()).pow(k - 1.0) * p;
 
         pf_expression
     }
