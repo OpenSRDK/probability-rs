@@ -45,9 +45,8 @@ impl ContinuousDistribution for UnivariateNormal {
         let mu = self.mu.clone();
         let sigma = self.sigma.clone();
 
-        let pdf_expression = (1.0 / (2.0 * PI).powf(-0.5) * sigma.clone())
-            * (-((x - mu.clone()).pow(2.0.into()) / 2.0 * sigma.clone().pow(2.0.into()))
-                .pow(2.0.into()));
+        let pdf_expression = (1.0 / ((2.0 * PI).powf(0.5) * sigma.clone()))
+            * -(((x - mu.clone()).pow(2.0.into())) / (2.0 * sigma.clone().pow(2.0.into())));
         pdf_expression
     }
 
