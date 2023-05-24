@@ -428,3 +428,122 @@ mod tests {
         println!("{:#?}", kernel_expression);
     }
 }
+
+// #[cfg(test)]
+// mod tests {
+//     use std::collections::HashMap;
+
+//     use opensrdk_kernel_method::RBF;
+//     use opensrdk_symbolic_computation::{
+//         new_variable, opensrdk_linear_algebra::Matrix, ConstantValue, Expression, ExpressionArray,
+//     };
+//     use rand::{prelude::StdRng, Rng, SeedableRng};
+//     use rand_distr::{Distribution, StandardNormal};
+
+//     use crate::{
+//         ContinuousDistribution, DistributionProduct, JointDistribution, MultivariateNormal,
+//     };
+
+//     use super::SteinVariationalGradientDescent;
+//     use opensrdk_kernel_method::*;
+
+//     #[test]
+//     fn it_works() {
+//         let mut rng = StdRng::from_seed([1; 32]);
+//         let mut rng2 = StdRng::from_seed([32; 32]);
+
+//         let samples_xy = (0..10)
+//             .into_iter()
+//             .map(|_| {
+//                 let x = rng2.gen_range(-8.0..=8.0);
+//                 let y = 0.5 * x + rng.sample::<f64, _>(StandardNormal);
+
+//                 vec![x, y]
+//             })
+//             .collect::<Vec<Vec<f64>>>();
+
+//         let x = &samples_xy.iter().map(|v| v[0]).collect::<Vec<_>>();
+//         let y = &samples_xy.iter().map(|v| v[1]).collect::<Vec<_>>();
+
+//         let sigma = Expression::from(0.5f64);
+
+//         let theta_1 = new_variable("beta".to_owned());
+
+//         let likelihood = (0..x.len())
+//             .map(|i| {
+//                 MultivariateNormal::new(
+//                     Expression::from(y[i]),
+//                     theta_1.clone() * Expression::from(x[i]),
+//                     sigma.clone(),
+//                     1usize,
+//                 )
+//             })
+//             .distribution_product();
+
+//         let dim = 1usize;
+//         let prior_sigma =
+//             Expression::from(Matrix::from(dim, vec![0.5; dim * (dim + 1) / 2]).unwrap());
+
+//         let prior_mu = Expression::from(vec![0.5; dim]);
+//         let prior = MultivariateNormal::new(theta_1, prior_sigma, prior_mu, dim);
+
+//         let kernel = RBF;
+//         let kernel_params = [0.5, 0.5];
+//         let samples_orig = (0..10)
+//             .into_iter()
+//             .map(|v| {
+//                 let mut rng3 = StdRng::from_seed([v; 32]);
+//                 let theta_0 = rng3.gen_range(-5.0..=5.0);
+//                 theta_0
+//             })
+//             .collect::<Vec<f64>>();
+
+//         let samples = samples_orig
+//             .iter()
+//             .map(|samples_orig_elem| {
+//                 let factory = |i: &[usize]| Expression::from(samples_orig_elem.clone());
+//                 let sizes: Vec<usize> = vec![1usize];
+//                 let samples_elem = ExpressionArray::from_factory(sizes, factory);
+//                 samples_elem
+//             })
+//             .collect::<Vec<ExpressionArray>>();
+
+//         println!("{:?}", "one");
+
+//         let stein_test = SteinVariationalGradientDescent::new(
+//             &likelihood,
+//             &prior,
+//             &kernel,
+//             &kernel_params,
+//             samples.clone(),
+//         );
+
+//         let hash = HashMap::new();
+
+//         // let str = &likelihood.condition_ids();
+//         // let str_vec: Vec<_> = str.into_iter().collect();
+
+//         // let theta_map = &mut HashMap::new();
+//         // let theta_len = str_vec.len();
+//         // let len = &samples.clone()[0].elems().len();
+
+//         // for i in 0..*len {
+//         //     let expression = samples[0].elems().get(&vec![i]).unwrap();
+
+//         //     let elem = if let Expression::Constant(value) = expression {
+//         //         let constantValue: ConstantValue = value.clone();
+//         //         constantValue
+//         //     } else {
+//         //         panic!("This isn't ConstantValue !");
+//         //     };
+
+//         //     theta_map.insert(str_vec[i], elem);
+//         // }
+//         // println!("{:?}", "two");
+
+//         // let phi = &stein_test.direction(&hash);
+//         let phi = &stein_test.update_sample(&hash, 3f64);
+
+//         println!("{:?}", phi)
+//     }
+// }

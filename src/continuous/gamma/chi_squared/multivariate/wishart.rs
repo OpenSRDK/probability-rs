@@ -10,9 +10,23 @@
 // use rand::prelude::*;
 // use std::{ops::BitAnd, ops::Mul};
 
-// /// Wishart distribution
-// #[derive(Clone, Debug)]
-// pub struct Wishart;
+// #[derive(Clone, Debug, Serialize, Deserialize)]
+// pub struct Wishart {
+//     x: Expression,
+//     nu: Expression,
+//     w: Expression,
+//     d: usize,
+// }
+
+// impl Wishart {
+//     pub fn new(x: Expression, nu: Expression, w: Expression) -> MultivariateWishart {
+//         if x.mathematical_sizes() != vec![Size::Many, Size::One] && x.mathematical_sizes() != vec![]
+//         {
+//             panic!("x must be a scalar or a 2 rank vector");
+//         }
+//         Wishart { x, nu, w, d }
+//     }
+// }
 
 // #[derive(thiserror::Error, Debug)]
 // pub enum WishartError {
@@ -22,82 +36,48 @@
 //     NMustBeGTEDimension,
 // }
 
-// impl Distribution for Wishart {
-//     type Value = PPTRF;
-//     type Condition = WishartParams;
-
-//     /// x must be cholesky decomposed
-//     fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
-//         let lv = theta.lv();
-//         let n = theta.n();
-
-//         let p = x.0.dim() as f64;
-//         let lx = x.0.to_mat();
-
-//         Ok(lx.trdet().powf(n + p + 1.0) * (-0.5 * lv.clone().pptrs(&lx * lx.t())?.tr()).exp())
-//     }
-// }
-
-// impl<Rhs, TRhs> Mul<Rhs> for Wishart
+// impl<Rhs> Mul<Rhs> for Wishart
 // where
-//     Rhs: Distribution<Value = TRhs, Condition = WishartParams>,
-//     TRhs: RandomVariable,
+//     Rhs: ContinuousDistribution,
 // {
-//     type Output = IndependentJoint<Self, Rhs, PPTRF, TRhs, WishartParams>;
+//     type Output = JointDistribution<Self, Rhs>;
 
 //     fn mul(self, rhs: Rhs) -> Self::Output {
-//         IndependentJoint::new(self, rhs)
+//         JointDistribution::new(self, rhs)
 //     }
 // }
 
-// impl<Rhs, URhs> BitAnd<Rhs> for Wishart
-// where
-//     Rhs: Distribution<Value = WishartParams, Condition = URhs>,
-//     URhs: RandomVariable,
-// {
-//     type Output = DependentJoint<Self, Rhs, PPTRF, WishartParams, URhs>;
-
-//     fn bitand(self, rhs: Rhs) -> Self::Output {
-//         DependentJoint::new(self, rhs)
+// impl ContinuousDistribution for Wishart {
+//     fn value_ids(&self) -> HashSet<&str> {
+//         self.x.variable_ids()
 //     }
-// }
 
-// impl SamplableDistribution for Wishart {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let lv = theta.lv();
-//         let n = theta.n() as usize;
-
-//         let p = lv.0.dim();
-
-//         let normal = MultivariateNormal::new();
-//         let normal_params = ExactMultivariateNormalParams::new(vec![0.0; p], lv.clone())?;
-
-//         let w = (0..n)
-//             .into_iter()
-//             .map(|_| normal.sample(&normal_params, rng))
-//             .try_fold::<Matrix, _, Result<Matrix, DistributionError>>(
-//                 Matrix::new(p, p),
-//                 |acc, v: Result<Vec<f64>, DistributionError>| {
-//                     let v = v?;
-//                     Ok(acc + v.clone().row_mat() * v.col_mat())
-//                 },
-//             )?;
-
-//         Ok(SymmetricPackedMatrix::from_mat(&w)
-//             .unwrap()
-//             .pptrf()
-//             .unwrap())
+//     fn conditions(&self) -> Vec<&Expression> {
+//         vec![&self.nu, &self.w]
 //     }
-// }
 
-// #[cfg(test)]
-// mod tests {
-//     #[test]
-//     fn it_works() {
-//         assert_eq!(2 + 2, 4);
+//     fn pdf(&self) -> Expression {
+//         let x = self.x.clone();
+//         let nu = self.nu.clone();
+//         let w = self.w.clone();
+
+//         let pdf_expression = todo!();
+
+//         pdf_expression
+//     }
+
+//     fn condition_ids(&self) -> HashSet<&str> {
+//         self.conditions()
+//             .iter()
+//             .map(|v| v.variable_ids())
+//             .flatten()
+//             .collect::<HashSet<_>>()
+//             .difference(&self.value_ids())
+//             .cloned()
+//             .collect()
+//     }
+
+//     fn ln_pdf(&self) -> Expression {
+//         self.pdf().ln()
 //     }
 // }

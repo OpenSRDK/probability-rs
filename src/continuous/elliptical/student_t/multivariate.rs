@@ -1,37 +1,68 @@
-// use crate::{
-//     ConditionDifferentiableDistribution, DependentJoint, Distribution, ExactEllipticalParams,
-//     IndependentJoint, RandomVariable, SamplableDistribution, ValueDifferentiableDistribution,
-// };
-// use crate::{DistributionError, EllipticalParams};
-// use opensrdk_linear_algebra::pp::trf::PPTRF;
-// use opensrdk_linear_algebra::*;
-// use rand::prelude::*;
-// use rand_distr::StudentT as RandStudentT;
-// use special::Gamma;
-// use std::marker::PhantomData;
-// use std::{ops::BitAnd, ops::Mul};
+use crate::{ContinuousDistribution, JointDistribution};
+use opensrdk_symbolic_computation::{Expression, Size};
+use serde::{Deserialize, Serialize};
+use std::{collections::HashSet, ops::Mul};
 
-// /// Multivariate Student-t distribution
-// #[derive(Clone, Debug)]
-// pub struct MultivariateStudentT<T = ExactMultivariateStudentTParams, U = ExactEllipticalParams>
-// where
-//     T: MultivariateStudentTParams<U>,
-//     U: EllipticalParams,
-// {
-//     phantom: PhantomData<(T, U)>,
-// }
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct MultivariateStudentT {
+    x: Expression,
+    nu: Expression,
+}
 
-// impl<T, U> MultivariateStudentT<T, U>
-// where
-//     T: MultivariateStudentTParams<U>,
-//     U: EllipticalParams,
-// {
-//     pub fn new() -> Self {
-//         Self {
-//             phantom: PhantomData,
-//         }
-//     }
-// }
+impl MultivariateStudentT {
+    pub fn new(x: Expression, nu: Expression) -> MultivariateStudentT {
+        if x.mathematical_sizes() != vec![Size::Many, Size::One] && x.mathematical_sizes() != vec![]
+        {
+            panic!("x must be a scalar or a 2 rank vector");
+        }
+        MultivariateStudentT { x, nu }
+    }
+}
+
+impl<Rhs> Mul<Rhs> for MultivariateStudentT
+where
+    Rhs: ContinuousDistribution,
+{
+    type Output = JointDistribution<Self, Rhs>;
+
+    fn mul(self, rhs: Rhs) -> Self::Output {
+        JointDistribution::new(self, rhs)
+    }
+}
+
+impl ContinuousDistribution for MultivariateStudentT {
+    fn value_ids(&self) -> HashSet<&str> {
+        self.x.variable_ids()
+    }
+
+    fn conditions(&self) -> Vec<&Expression> {
+        vec![&self.nu]
+    }
+
+    fn pdf(&self) -> Expression {
+        let x = self.x.clone();
+        let nu = self.nu.clone();
+
+        let pdf_expression = todo!();
+
+        pdf_expression
+    }
+
+    fn condition_ids(&self) -> HashSet<&str> {
+        self.conditions()
+            .iter()
+            .map(|v| v.variable_ids())
+            .flatten()
+            .collect::<HashSet<_>>()
+            .difference(&self.value_ids())
+            .cloned()
+            .collect()
+    }
+
+    fn ln_pdf(&self) -> Expression {
+        self.pdf().ln()
+    }
+}
 
 // #[derive(thiserror::Error, Debug)]
 // pub enum MultivariateStudentTError {

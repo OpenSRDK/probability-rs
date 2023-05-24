@@ -1,15 +1,83 @@
 // // Already finished the implementation of "sampleable distribution".　The implement has commented out.
 
-// pub mod chi_squared;
-// pub mod params;
+pub mod chi_squared;
+pub mod params;
 
-// pub use chi_squared::*;
-// pub use params::*;
+use std::collections::HashSet;
+
+pub use chi_squared::*;
+use opensrdk_symbolic_computation::{ConstantValue, Expression};
+pub use params::*;
+use rand_distr::Gamma as RandGamma;
+use serde::{Deserialize, Serialize};
+
+use crate::ContinuousDistribution;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Gamma {
+    x: Expression,
+    shape: Expression,
+    scale: Expression,
+}
+
+impl ContinuousDistribution for Gamma {
+    fn value_ids(&self) -> HashSet<&str> {
+        self.x.variable_ids()
+    }
+
+    fn conditions(&self) -> Vec<&Expression> {
+        vec![&self.shape, &self.scale]
+    }
+
+    fn pdf(&self) -> Expression {
+        let x = self.x.clone();
+        let shape = self.shape.clone();
+        let shapeValue: f64;
+        let scale = self.scale.clone();
+        let scaleValue: f64;
+
+        if let Expression::Constant(value) = shape {
+            let constantValue: ConstantValue = value;
+            let shapeValue = constantValue.into_scalar();
+        } else {
+            panic!("shape must be a constant value");
+        }
+
+        if let Expression::Constant(value) = scale {
+            let constantValue: ConstantValue = value;
+            let scaleValue = constantValue.into_scalar();
+        } else {
+            panic!("scale must be a constant value");
+        }
+
+        // let gamma = match RandGamma::new(shapeValue, scaleValue) {
+        //     Ok(v) => Ok(v),
+        //     Err(e) => Err(e.into()),
+        // }?;
+
+        // let pdf = todo!();
+        todo!()
+    }
+
+    fn condition_ids(&self) -> HashSet<&str> {
+        self.conditions()
+            .iter()
+            .map(|v| v.variable_ids())
+            .flatten()
+            .collect::<HashSet<_>>()
+            .difference(&self.value_ids())
+            .cloned()
+            .collect()
+    }
+
+    fn ln_pdf(&self) -> Expression {
+        self.pdf().ln()
+    }
+}
 
 // use crate::{DependentJoint, Distribution, IndependentJoint, RandomVariable};
 // use crate::{DistributionError, SamplableDistribution};
 // use rand::prelude::*;
-// use rand_distr::Gamma as RandGamma;
 // use std::{ops::BitAnd, ops::Mul};
 
 // /// Gamma distribution

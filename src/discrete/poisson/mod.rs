@@ -1,3 +1,54 @@
+// unfinished because of factorical function.
+use crate::DiscreteDistribution;
+use opensrdk_symbolic_computation::{Expression, Size};
+use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Poisson {
+    lambda: Expression,
+    k: Expression,
+}
+
+impl Poisson {
+    pub fn new(lambda: Expression, k: Expression) -> Poisson {
+        if k.mathematical_sizes() != vec![Size::Many, Size::One] && k.mathematical_sizes() != vec![]
+        {
+            panic!("k must be a scalar or a 2 rank vector");
+        }
+        Poisson { lambda, k }
+    }
+}
+
+impl DiscreteDistribution for Poisson {
+    fn value_ids(&self) -> HashSet<&str> {
+        self.k.variable_ids()
+    }
+
+    fn conditions(&self) -> Vec<&Expression> {
+        vec![&self.lambda, &self.k]
+    }
+
+    fn pmf(&self) -> Expression {
+        todo!();
+    }
+
+    fn condition_ids(&self) -> HashSet<&str> {
+        self.conditions()
+            .iter()
+            .map(|v| v.variable_ids())
+            .flatten()
+            .collect::<HashSet<_>>()
+            .difference(&self.value_ids())
+            .cloned()
+            .collect()
+    }
+
+    fn ln_pmf(&self) -> Expression {
+        self.pmf().ln()
+    }
+}
+
 // pub mod params;
 
 // pub use params::*;

@@ -1,134 +1,150 @@
-// use crate::{
-//     CauchyParams, ConditionDifferentiableDistribution, DependentJoint, Distribution,
-//     IndependentJoint, RandomVariable, SamplableDistribution, ValueDifferentiableDistribution,
-// };
-// use crate::{DistributionError, StudentT, StudentTParams};
-// use rand::prelude::*;
-// use std::{ops::BitAnd, ops::Mul};
+use crate::{ContinuousDistribution, JointDistribution};
+use opensrdk_symbolic_computation::{Expression, Size};
+use serde::{Deserialize, Serialize};
+use std::{collections::HashSet, f64::consts::PI, ops::Mul};
 
-// /// Cauchy distribution
-// #[derive(Clone, Debug)]
-// pub struct Cauchy;
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct UnivariateCauchy {
+    x: Expression,
+    x0: Expression,
+    gamma: Expression,
+}
 
-// impl Distribution for Cauchy {
-//     type Value = f64;
-//     type Condition = CauchyParams;
+impl UnivariateCauchy {
+    pub fn new(x: Expression, x0: Expression, gamma: Expression) -> UnivariateCauchy {
+        if x.mathematical_sizes() != vec![Size::One, Size::One] && x.mathematical_sizes() != vec![]
+        {
+            panic!("x must be a scalar");
+        }
+        UnivariateCauchy { x, x0, gamma }
+    }
+}
 
-//     fn p_kernel(&self, x: &Self::Value, theta: &Self::Condition) -> Result<f64, DistributionError> {
-//         let studentt_params = StudentTParams::new(1.0, theta.mu(), theta.sigma())?;
+impl<Rhs> Mul<Rhs> for UnivariateCauchy
+where
+    Rhs: ContinuousDistribution,
+{
+    type Output = JointDistribution<Self, Rhs>;
 
-//         StudentT.p_kernel(x, &studentt_params)
-//     }
-// }
+    fn mul(self, rhs: Rhs) -> Self::Output {
+        JointDistribution::new(self, rhs)
+    }
+}
 
-// impl<Rhs, TRhs> Mul<Rhs> for Cauchy
-// where
-//     Rhs: Distribution<Value = TRhs, Condition = CauchyParams>,
-//     TRhs: RandomVariable,
-// {
-//     type Output = IndependentJoint<Self, Rhs, f64, TRhs, CauchyParams>;
+impl ContinuousDistribution for UnivariateCauchy {
+    fn value_ids(&self) -> HashSet<&str> {
+        self.x.variable_ids()
+    }
 
-//     fn mul(self, rhs: Rhs) -> Self::Output {
-//         IndependentJoint::new(self, rhs)
-//     }
-// }
+    fn conditions(&self) -> Vec<&Expression> {
+        vec![&self.x0, &self.gamma]
+    }
 
-// impl<Rhs, URhs> BitAnd<Rhs> for Cauchy
-// where
-//     Rhs: Distribution<Value = CauchyParams, Condition = URhs>,
-//     URhs: RandomVariable,
-// {
-//     type Output = DependentJoint<Self, Rhs, f64, CauchyParams, URhs>;
+    fn pdf(&self) -> Expression {
+        let x = self.x.clone();
+        let x0 = self.x0.clone();
+        let gamma = self.gamma.clone();
 
-//     fn bitand(self, rhs: Rhs) -> Self::Output {
-//         DependentJoint::new(self, rhs)
-//     }
-// }
+        let pdf_expression =
+            gamma.clone() / (PI * (gamma.pow(2.0.into()) + (x - x0).pow(2.0.into())));
 
-// impl SamplableDistribution for Cauchy {
-//     fn sample(
-//         &self,
-//         theta: &Self::Condition,
-//         rng: &mut dyn RngCore,
-//     ) -> Result<Self::Value, DistributionError> {
-//         let studentt_params = StudentTParams::new(1.0, theta.mu(), theta.sigma())?;
+        pdf_expression
+    }
 
-//         StudentT.sample(&studentt_params, rng)
-//     }
-// }
+    fn condition_ids(&self) -> HashSet<&str> {
+        self.conditions()
+            .iter()
+            .map(|v| v.variable_ids())
+            .flatten()
+            .collect::<HashSet<_>>()
+            .difference(&self.value_ids())
+            .cloned()
+            .collect()
+    }
 
-// impl ValueDifferentiableDistribution for Cauchy {
-//     fn ln_diff_value(
-//         &self,
-//         x: &Self::Value,
-//         theta: &Self::Condition,
-//     ) -> Result<Vec<f64>, DistributionError> {
-//         let mu = theta.mu();
-//         let x_mu = x - mu;
-//         let sigma = theta.sigma();
-//         let f_x = -2.0 * x_mu / (sigma.powi(2) + x_mu.powi(2));
-//         Ok(vec![f_x])
-//     }
-// }
-
-// impl ConditionDifferentiableDistribution for Cauchy {
-//     fn ln_diff_condition(
-//         &self,
-//         x: &Self::Value,
-//         theta: &Self::Condition,
-//     ) -> Result<Vec<f64>, DistributionError> {
-//         let mu = theta.mu();
-//         let x_mu = x - mu;
-//         let sigma = theta.sigma();
-//         let f_mu = 2.0 * x_mu / (sigma.powi(2) + x_mu.powi(2));
-//         let f_sigma = 2.0 * x_mu.powi(2) / (sigma * (sigma.powi(2) + x_mu.powi(2))) - (1.0 / sigma);
-//         Ok(vec![f_mu, f_sigma])
-//     }
-// }
+    fn ln_pdf(&self) -> Expression {
+        self.pdf().ln()
+    }
+}
 
 // #[cfg(test)]
 // mod tests {
-//     use crate::distribution::Distribution;
-//     use crate::*;
+//     use crate::{
+//         ConditionDifferentiableDistribution, Distribution, ExactMultivariateCauchyParams,
+//         MultivariateCauchy, SamplableDistribution, ValueDifferentiableDistribution,
+//     };
+//     use opensrdk_linear_algebra::{pp::trf::PPTRF, *};
 //     use rand::prelude::*;
-
 //     #[test]
 //     fn it_works() {
-//         let n = Cauchy;
+//         let cauchy = MultivariateCauchy::new();
 //         let mut rng = StdRng::from_seed([1; 32]);
 
-//         let mu = 2.0;
-//         let sigma = 3.0;
+//         let mu = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
+//         let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
+//            1.0,  0.0,  0.0,  0.0,  0.0,  0.0;
+//            2.0,  3.0,  0.0,  0.0,  0.0,  0.0;
+//            4.0,  5.0,  6.0,  0.0,  0.0,  0.0;
+//            7.0,  8.0,  9.0, 10.0,  0.0,  0.0;
+//           11.0, 12.0, 13.0, 14.0, 15.0,  0.0;
+//           16.0, 17.0, 18.0, 19.0, 20.0, 21.0
+//         ))
+//         .unwrap();
+//         println!("{:#?}", lsigma);
 
-//         let x = n
-//             .sample(&CauchyParams::new(mu, sigma).unwrap(), &mut rng)
+//         let x = cauchy
+//             .sample(
+//                 &ExactMultivariateCauchyParams::new(mu, PPTRF(lsigma)).unwrap(),
+//                 &mut rng,
+//             )
 //             .unwrap();
 
-//         println!("{}", x);
+//         println!("{:#?}", x);
 //     }
+
 //     #[test]
 //     fn it_works2() {
-//         let n = Cauchy;
+//         let cauchy = MultivariateCauchy::new();
 
-//         let mu = 2.0;
-//         let sigma = 3.0;
+//         let mu = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
+//         let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
+//            1.0,  0.0,  0.0,  0.0,  0.0,  0.0;
+//            2.0,  3.0,  0.0,  0.0,  0.0,  0.0;
+//            4.0,  5.0,  6.0,  0.0,  0.0,  0.0;
+//            7.0,  8.0,  9.0, 10.0,  0.0,  0.0;
+//           11.0, 12.0, 13.0, 14.0, 15.0,  0.0;
+//           16.0, 17.0, 18.0, 19.0, 20.0, 21.0
+//         ))
+//         .unwrap();
+//         let x = vec![0.0, 1.0, 2.0, 2.0, 2.0, 4.0];
 
-//         let x = 0.5;
-
-//         let f = n.ln_diff_value(&x, &CauchyParams::new(mu, sigma).unwrap());
+//         let f = cauchy.ln_diff_value(
+//             &x,
+//             &ExactMultivariateCauchyParams::new(mu, PPTRF(lsigma)).unwrap(),
+//         );
 //         println!("{:#?}", f);
 //     }
 
 //     #[test]
 //     fn it_works_3() {
-//         let n = Cauchy;
+//         let cauchy = MultivariateCauchy::new();
 
-//         let mu = 2.0;
-//         let sigma = 3.0;
+//         let mu = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
+//         let lsigma = SymmetricPackedMatrix::from_mat(&mat!(
+//            1.0,  0.0,  0.0,  0.0,  0.0,  0.0;
+//            2.0,  3.0,  0.0,  0.0,  0.0,  0.0;
+//            4.0,  5.0,  6.0,  0.0,  0.0,  0.0;
+//            7.0,  8.0,  9.0, 10.0,  0.0,  0.0;
+//           11.0, 12.0, 13.0, 14.0, 15.0,  0.0;
+//           16.0, 17.0, 18.0, 19.0, 20.0, 21.0
+//         ))
+//         .unwrap();
+//         let x = vec![0.0, 1.0, 2.0, 2.0, 2.0, 4.0];
 
-//         let x = 0.5;
-
-//         let f = n.ln_diff_condition(&x, &CauchyParams::new(mu, sigma).unwrap());
+//         let f = cauchy.ln_diff_condition(
+//             &x,
+//             &ExactMultivariateCauchyParams::new(mu, PPTRF(lsigma)).unwrap(),
+//         );
 //         println!("{:#?}", f);
 //     }
 // }
